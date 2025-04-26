@@ -7,17 +7,16 @@ import ScrollToTop from '@/components/ScrollToTop/ScrollToTop';
 export const metadata: Metadata = {
   title: 'Shevon - Full Stack Developer',
   description: 'Full-stack developer specializing in React, Next.js, Node.js, and React Native. Creating innovative web and mobile solutions.',
-  keywords: ['Full Stack Developer', 'React Developer', 'Next.js', 'Node.js', 'React Native', 'Web Development'],
+  publisher: 'Shevon Chisholm',
   authors: [{ name: 'Shevon Chisholm' }],
   creator: 'Shevon Chisholm',
-  publisher: 'Shevon Chisholm',
   robots: 'index, follow',
   metadataBase: new URL('https://shevon-portfolio.vercel.app'),
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' }
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' }
     ],
     apple: [
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
@@ -28,43 +27,15 @@ export const metadata: Metadata = {
     ]
   },
   manifest: '/site.webmanifest',
-  openGraph: {
-    type: 'website',
-    url: 'https://shevon-portfolio.vercel.app',
-    title: 'Shevon - Full Stack Developer',
-    description: 'Full-stack developer specializing in React, Next.js, Node.js, and React Native. Creating innovative web and mobile solutions.',
-    siteName: 'Shevon Chisholm Portfolio',
-    images: [{
-      url: '/android-chrome-512x512.png',
-      width: 512,
-      height: 512,
-      alt: 'Shevon Chisholm - Full Stack Developer'
-    }],
-    locale: 'en_US',
-  },
-  twitter: {
-    card: 'summary',
-    title: 'Shevon - Full Stack Developer',
-    description: 'Full-stack developer specializing in React, Next.js, Node.js, and React Native. Creating innovative web and mobile solutions.',
-    images: [{
-      url: '/android-chrome-512x512.png',
-      width: 512,
-      height: 512,
-      alt: 'Shevon Chisholm - Full Stack Developer'
-    }],
-    creator: '@shevonchisholm',
-  },
   viewport: {
     width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
+    initialScale: 1
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Shevon Chisholm'
-  },
-  themeColor: '#000000',
+  }
 };
 
 export default function RootLayout({

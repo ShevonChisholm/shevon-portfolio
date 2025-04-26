@@ -1,0 +1,219 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Button,
+  Box,
+  useScrollTrigger,
+  Container,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import ThemeToggle from '../ThemeToggle/ThemeToggle';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+
+const navItems = [
+  { label: 'Home', id: 'home' },
+  { label: 'About', id: 'about' },
+  { label: 'Skills', id: 'skills' },
+  { label: 'Projects', id: 'projects' },
+  { label: 'Blog', id: 'blog' },
+  { label: 'Contact', id: 'contact' },
+];
+
+export default function Navbar() {
+  const [activeSection, setActiveSection] = useState('home');
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const trigger = useScrollTrigger({
+    disableHysteresis: true,
+    threshold: 100,
+  });
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = navItems.map(item => ({
+        id: item.id,
+        offset: document.getElementById(item.id)?.offsetTop || 0,
+      }));
+
+      const scrollPosition = window.scrollY + 100;
+
+      const currentSection = sections.reduce((acc, section) => {
+        return scrollPosition >= section.offset ? section.id : acc;
+      }, 'home');
+
+      setActiveSection(currentSection);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleNavClick = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+    if (mobileOpen) setMobileOpen(false);
+  };
+
+  const NavLinks = () => (
+    <>
+      {navItems.map((item) => (
+        <Button
+          key={item.id}
+          onClick={() => handleNavClick(item.id)}
+          sx={{
+            color: theme.palette.text.primary,
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: 0,
+              left: '50%',
+              transform: activeSection === item.id ? 'translateX(-50%)' : 'translateX(-50%) scaleX(0)',
+              width: '100%',
+              height: '2px',
+              bgcolor: theme.palette.primary.main,
+              transition: 'transform 0.3s ease-in-out',
+            },
+            '&:hover::after': {
+              transform: 'translateX(-50%) scaleX(1)',
+            },
+          }}
+        >
+          {item.label}
+        </Button>
+      ))}
+    </>
+  );
+
+  return (
+    <>
+      <AppBar
+        position="fixed"
+        elevation={trigger ? 4 : 0}
+        sx={{
+          bgcolor: trigger ? theme.palette.background.default : 'transparent',
+          transition: 'all 0.3s ease-in-out',
+          backdropFilter: trigger ? 'blur(10px)' : 'none',
+        }}
+      >
+        <Container maxWidth="xl">
+          <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Box
+                  component="img"
+                  src="/logo.svg"
+                  alt="Logo"
+                  sx={{ height: 40, width: 'auto', cursor: 'pointer' }}
+                  onClick={() => handleNavClick('home')}
+                />
+              </motion.div>
+              
+              {!isMobile && (
+                <Box sx={{ ml: 4 }}>
+                  <NavLinks />
+                </Box>
+              )}
+            </Box>
+
+            {isMobile ? (
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                onClick={() => setMobileOpen(true)}
+              >
+                <MenuIcon />
+              </IconButton>
+            ) : (
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <ThemeToggle />
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<FileDownloadIcon />}
+                  href="/resume.pdf"
+                  target="_blank"
+                  sx={{
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                  }}
+                >
+                  Resume
+                </Button>
+              </Box>
+            )}
+          </Toolbar>
+        </Container>
+      </AppBar>
+
+      <AnimatePresence>
+        {isMobile && (
+          <Drawer
+            anchor="right"
+            open={mobileOpen}
+            onClose={() => setMobileOpen(false)}
+            PaperProps={{
+              sx: {
+                width: '70%',
+                maxWidth: 300,
+                bgcolor: theme.palette.background.default,
+              },
+            }}
+          >
+            <List sx={{ mt: 2 }}>
+              {navItems.map((item) => (
+                <ListItem
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  sx={{
+                    bgcolor: activeSection === item.id ? theme.palette.action.selected : 'transparent',
+                  }}
+                >
+                  <ListItemText primary={item.label} />
+                </ListItem>
+              ))}
+              <ListItem>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  startIcon={<FileDownloadIcon />}
+                  href="/resume.pdf"
+                  target="_blank"
+                  sx={{ mt: 2, borderRadius: '8px', textTransform: 'none' }}
+                >
+                  Resume
+                </Button>
+              </ListItem>
+              <ListItem>
+                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <ThemeToggle />
+                </Box>
+              </ListItem>
+            </List>
+          </Drawer>
+        )}
+      </AnimatePresence>
+    </>
+  );
+} 

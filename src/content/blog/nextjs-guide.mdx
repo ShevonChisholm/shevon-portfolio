@@ -1,0 +1,135 @@
+---
+title: "Building Modern Web Applications with Next.js 14"
+date: "2024-03-15"
+readTime: "8 min"
+description: "A comprehensive guide to creating high-performance web applications using Next.js 14, React Server Components, and the App Router."
+tags: ["Next.js", "React", "Performance", "TypeScript"]
+---
+
+Next.js 14 ushers in a host of powerful features—most notably the App Router and React Server Components—that reshape how we architect and optimize modern React applications. In this guide, we'll walk through each core addition, illustrate best practices, and share code examples so you can harness Next.js 14 for blazingly fast, scalable web apps.
+
+## App Router and Server Components
+
+The new App Router replaces the traditional pages/ directory with a nested folder structure under app/. Every folder can now be a route segment, complete with layouts, templates, and even server-only components. Server Components let you fetch data and render UI on the server, slashing client-side bundle size.
+
+```tsx
+// app/layout.tsx
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  )
+}
+```
+
+```tsx
+// app/dashboard/page.tsx (Server Component by default)
+import { getRecentOrders } from '@/lib/db'
+
+export default async function DashboardPage() {
+  const orders = await getRecentOrders()
+  return (
+    <main>
+      <h1>Recent Orders</h1>
+      <ul>
+        {orders.map(o => (
+          <li key={o.id}>{o.item} — {o.status}</li>
+        ))}
+      </ul>
+    </main>
+  )
+}
+```
+
+Because DashboardPage runs on the server, users download only minimal JavaScript, improving TTFB and first-contentful paint.
+
+## Data Fetching Patterns
+
+Next.js 14 supports multiple data strategies out of the box:
+
+### Static Site Generation (SSG)
+Perfect for marketing pages that rarely change.
+
+```tsx
+export const revalidate = 3600  // re-generate every hour
+export default async function ProductsPage() {
+  const products = await fetch('https://api.example.com/products').then(r => r.json())
+  return <ProductList items={products} />
+}
+```
+
+### Server-Side Rendering (SSR)
+Ideal for user-specific dashboards.
+
+```tsx
+export default async function ProfilePage({ params }) {
+  const profile = await fetch(`https://api.example.com/users/${params.id}`).then(r => r.json())
+  return <UserProfile data={profile} />
+}
+```
+
+### Incremental Static Regeneration (ISR)
+Blend static builds with updates:
+
+```tsx
+export const revalidate = 10  // updates every 10s upon request
+```
+
+### Client-Side Fetching
+Use <Suspense> and React Query or SWR when interactivity demands it.
+
+## Route Handlers and API Routes
+
+The new Route Handlers live under app/api/…/route.ts, providing fine-grained control over REST logic:
+
+```ts
+// app/api/orders/route.ts
+import { NextResponse } from 'next/server'
+import { createOrder, listOrders } from '@/lib/db'
+
+export async function GET() {
+  const all = await listOrders()
+  return NextResponse.json(all)
+}
+
+export async function POST(request: Request) {
+  const data = await request.json()
+  const newOrder = await createOrder(data)
+  return NextResponse.json(newOrder, { status: 201 })
+}
+```
+
+You can also integrate middleware for authentication or rate limiting, keeping your API lean and performant.
+
+## Performance Optimization
+
+Next.js 14 delivers tools to squeeze every millisecond out of your app:
+
+### Image Optimization:
+```tsx
+<Image src="/hero.jpg" width={1200} height={600} priority />
+```
+
+### Font Optimization:
+In next.config.js:
+
+```js
+module.exports = {
+  experimental: { optimizeFonts: true }
+}
+```
+
+### Layout Shifts & Hydration:
+Use loading="lazy" on below-the-fold images and split large bundles with dynamic() imports.
+
+### Error & Loading States:
+Leverage the new loading.tsx and error.tsx files per segment to provide instant feedback.
+
+Pro Tip: Audit your site with Lighthouse after each major change to catch regressions early.
+
+Next.js 14's App Router, Server Components, and Route Handlers offer a seamless path to high-performance, maintainable applications. By adopting the patterns above, you'll deliver faster load times, simpler code, and happier users. 

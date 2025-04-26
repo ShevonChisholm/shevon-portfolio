@@ -1,0 +1,146 @@
+---
+title: "Full-Stack Development with Node.js and MongoDB"
+date: "2024-03-05"
+readTime: "12 min"
+description: "A deep dive into building scalable backend systems using Node.js, Express, and MongoDB, with real-world examples and best practices."
+tags: ["Node.js", "MongoDB", "Backend", "Database"]
+---
+
+Building a scalable backend starts with the right foundation. In this deep dive, we'll design RESTful APIs with Express, model data in MongoDB using Mongoose, secure endpoints with JWT, and optimize performance for production.
+
+## RESTful API Design
+
+Structure your endpoints around resources:
+
+```ts
+// src/routes/users.ts
+import { Router } from 'express'
+import { createUser, getUser } from '../controllers/userController'
+
+const router = Router()
+
+router.post('/', createUser)     // Create
+router.get('/:id', getUser)      // Read
+router.put('/:id', updateUser)   // Update
+router.delete('/:id', deleteUser) // Delete
+
+export default router
+```
+
+Mount in app.ts:
+
+```ts
+import express from 'express'
+import userRoutes from './routes/users'
+
+const app = express()
+app.use(express.json())
+app.use('/api/users', userRoutes)
+```
+
+## Database Modeling
+
+Use Mongoose schemas to enforce structure:
+
+```ts
+import mongoose, { Schema, Document } from 'mongoose'
+
+interface IUser extends Document {
+  name: string
+  email: string
+  passwordHash: string
+}
+
+const UserSchema: Schema = new Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  passwordHash: { type: String, required: true },
+}, { timestamps: true })
+
+export default mongoose.model<IUser>('User', UserSchema)
+```
+
+Normalize relationships via references or embed subdocuments for one-to-many data (e.g., orders).
+
+## Authentication & Authorization
+
+Secure routes with JWT:
+
+```ts
+// src/middleware/auth.ts
+import jwt from 'jsonwebtoken'
+import { Request, Response, NextFunction } from 'express'
+
+export function authenticate(req: Request, res: Response, next: NextFunction) {
+  const token = req.headers.authorization?.split(' ')[1]
+  if (!token) return res.status(401).json({ error: 'Unauthorized' })
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET!)
+    ;(req as any).user = payload
+    next()
+  } catch {
+    res.status(401).json({ error: 'Invalid token' })
+  }
+}
+```
+
+Use role checks (admin, user) in controllers for fine-grained access control.
+
+## Performance Optimization
+
+### Indexing
+Add MongoDB indexes on frequently-queried fields:
+
+```ts
+UserSchema.index({ email: 1 })
+UserSchema.index({ createdAt: -1 })
+```
+
+### Connection Pooling
+Configure Mongoose's connection pool size:
+
+```ts
+mongoose.connect(process.env.MONGODB_URI!, {
+  maxPoolSize: 10,
+  minPoolSize: 2,
+})
+```
+
+### Caching
+Implement Redis for hot data:
+
+```ts
+import Redis from 'ioredis'
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  maxRetriesPerRequest: 3,
+})
+
+// Cache user data
+await redis.setex(`user:${id}`, 3600, JSON.stringify(userData))
+```
+
+### Compression
+Enable response compression:
+
+```ts
+import compression from 'compression'
+app.use(compression())
+```
+
+### Error Handling
+Implement a global error handler:
+
+```ts
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack)
+  res.status(500).json({
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Internal Server Error'
+      : err.message
+  })
+})
+```
+
+Deploy your Node.js app on platforms like AWS Elastic Beanstalk or DigitalOcean App Platform, and spin up MongoDB Atlas for a managed database with built-in backups and monitoring. 

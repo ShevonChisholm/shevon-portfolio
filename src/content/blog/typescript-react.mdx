@@ -1,0 +1,154 @@
+---
+title: "Advanced TypeScript Patterns in React"
+date: "2024-02-28"
+readTime: "9 min"
+description: "Explore advanced TypeScript patterns and best practices for building type-safe React applications with real-world examples."
+tags: ["TypeScript", "React", "Development", "Best Practices"]
+---
+
+TypeScript unlocks a new level of safety and productivity in React development. This post dives into generics, type inference, custom guards, and crafting advanced hooks—empowering you to build type-safe components that are both flexible and robust.
+
+## Generic Components
+
+Create components that adapt to any data shape:
+
+```tsx
+type Props<T> = { 
+  items: T[]; 
+  render: (item: T) => React.ReactNode 
+}
+
+export function List<T>({ items, render }: Props<T>) {
+  return <ul>{items.map((item, i) => <li key={i}>{render(item)}</li>)}</ul>
+}
+
+// Usage:
+<List
+  items={[1, 2, 3]}
+  render={num => <strong>{num * 2}</strong>}
+/>
+```
+
+## Type Inference & Utility Types
+
+Leverage built-in helpers:
+
+```ts
+type User = { id: string; name: string }
+type PartialUser = Partial<User>     // { id?: string; name?: string }
+type ReadonlyUser = Readonly<User>   // all props readonly
+
+// Pick specific properties
+type UserName = Pick<User, 'name'>   // { name: string }
+
+// Exclude properties
+type UserWithoutId = Omit<User, 'id'> // { name: string }
+
+// Make all properties nullable
+type NullableUser = { [K in keyof User]: User[K] | null }
+```
+
+Infer props from function components:
+
+```tsx
+function Button(props: { title: string; onClick: () => void }) { /* ... */ }
+type ButtonProps = React.ComponentProps<typeof Button>
+
+// Extract prop types from components
+type Props<T> = T extends React.ComponentType<infer P> ? P : never
+```
+
+## Custom Type Guards
+
+Narrow union types at runtime:
+
+```ts
+interface Admin { role: 'admin'; permissions: string[] }
+interface Guest { role: 'guest' }
+type User = Admin | Guest
+
+function isAdmin(user: User): user is Admin {
+  return user.role === 'admin'
+}
+
+// Usage:
+if (isAdmin(currentUser)) {
+  // TypeScript knows `currentUser.permissions` exists
+  console.log(currentUser.permissions)
+}
+```
+
+## Advanced Hooks with TypeScript
+
+Build strongly-typed custom hooks:
+
+```tsx
+function useFetch<T>(url: string): {
+  data?: T
+  error?: Error
+  loading: boolean
+} {
+  const [state, setState] = useState<{
+    data?: T
+    error?: Error
+    loading: boolean
+  }>({
+    loading: true,
+  })
+
+  useEffect(() => {
+    fetch(url)
+      .then(res => res.json())
+      .then(data => setState({ data, loading: false }))
+      .catch(error => setState({ error, loading: false }))
+  }, [url])
+
+  return state
+}
+
+// Usage with type inference
+interface BlogPost {
+  id: string
+  title: string
+  content: string
+}
+
+const { data: posts, loading } = useFetch<BlogPost[]>('/api/posts')
+```
+
+### Conditional Types and Hooks
+
+Create hooks that adapt based on input types:
+
+```tsx
+type AsyncState<T> = {
+  data: T | null
+  loading: boolean
+  error: Error | null
+}
+
+function useAsync<T>(
+  asyncFn: () => Promise<T>,
+  deps: React.DependencyList = []
+): AsyncState<T> {
+  const [state, setState] = useState<AsyncState<T>>({
+    data: null,
+    loading: true,
+    error: null,
+  })
+
+  useEffect(() => {
+    asyncFn()
+      .then(data => setState({ data, loading: false, error: null }))
+      .catch(error => setState({ data: null, loading: false, error }))
+  }, deps)
+
+  return state
+}
+
+// Usage with different return types
+const { data: user } = useAsync(() => fetchUser(id), [id])
+const { data: posts } = useAsync(() => fetchPosts(), [])
+```
+
+Combining these patterns, you'll write React code that's not only safer but also clearer—leading to fewer runtime bugs and more confident refactoring. 

@@ -203,7 +203,17 @@ export default function ProjectDetails() {
         gutterBottom
         sx={{ 
           fontWeight: 700,
-          mb: 3
+          mb: 3,
+          fontSize: {
+            xs: '1.75rem',    // 28px
+            sm: '2.25rem',    // 36px
+            md: '2.75rem',    // 44px
+            lg: '3rem'        // 48px
+          },
+          lineHeight: {
+            xs: 1.3,
+            sm: 1.2
+          }
         }}
       >
         {project.title}
@@ -229,8 +239,12 @@ export default function ProjectDetails() {
         sx={{ 
           position: 'relative',
           width: '100%',
-          height: project.category === 'Mobile Apps' ? '600px' : '500px',
-          mb: 6,
+          height: {
+            xs: project.category === 'Mobile Apps' ? '560px' : '300px',
+            sm: project.category === 'Mobile Apps' ? '600px' : '400px',
+            md: project.category === 'Mobile Apps' ? '600px' : '500px'
+          },
+          mb: { xs: 4, sm: 6 },
           borderRadius: '20px',
           overflow: 'hidden',
           backgroundColor: project.category === 'Mobile Apps' ? 'rgba(0,0,0,0.05)' : 'transparent',
@@ -254,7 +268,19 @@ export default function ProjectDetails() {
       {/* Project Description */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 4 }}>
         <Box>
-          <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
+          <Typography 
+            variant="h4" 
+            component="h2" 
+            gutterBottom 
+            sx={{ 
+              fontWeight: 600,
+              fontSize: {
+                xs: '1.5rem',    // 24px
+                sm: '1.75rem',   // 28px
+                md: '2rem'       // 32px
+              }
+            }}
+          >
             Overview
           </Typography>
           <Typography variant="body1" paragraph>

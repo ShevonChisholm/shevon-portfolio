@@ -44,10 +44,10 @@ export const projects: Project[] = [
     description: 'A comprehensive mobile budgeting application that helps users track expenses, set financial goals, and build wealth through smart money management. Features interactive charts and real-time budget tracking.',
     image: '/projects/budget-book/main.png',
     images: [
-      '/projects/budget-book/dashboard.png',
-      '/projects/budget-book/profile.png',
-      '/projects/budget-book/saving.png',
-      '/projects/budget-book/subscription.png'
+      '/projects/budget-book/dashboard.PNG',
+      '/projects/budget-book/profile.PNG',
+      '/projects/budget-book/saving.PNG',
+      '/projects/budget-book/subscription.PNG'
     ],
     tags: ['React Native', 'Financial', 'Charts', 'Local Storage'],
     slug: 'budget-book',

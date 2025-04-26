@@ -16,7 +16,7 @@ export default function MobileAppScreens({ images, title }: MobileAppScreensProp
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 2,
+        gap: 1,
         p: 2
       }}
     >
@@ -43,7 +43,7 @@ export default function MobileAppScreens({ images, title }: MobileAppScreensProp
             fill
             style={{
               objectFit: 'contain',
-              padding: '8px'
+              padding: '4px'
             }}
           />
         </Box>

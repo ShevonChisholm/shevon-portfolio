@@ -9,7 +9,7 @@ import TestimonialCarousel from '../TestimonialCarousel/TestimonialCarousel';
 
 type ProjectCategory = 'All' | 'Web Apps' | 'Mobile Apps';
 
-interface Project {
+export interface Project {
   title: string;
   description: string;
   image: string;
@@ -17,18 +17,37 @@ interface Project {
   tags: string[];
   slug: string;
   category: Exclude<ProjectCategory, 'All'>;
+  siteUrl?: string;  // Optional URL to live site
 }
 
-const projects: Project[] = [
+export const projects: Project[] = [
+  {
+    title: 'Taking Flight Network Admin',
+    description: 'A powerful admin dashboard for content management of the Taking Flight streaming platform. Features AWS content uploads, Stripe subscription management, user analytics, and comprehensive content moderation tools.',
+    image: '/projects/taking-flight-admin.png',
+    tags: ['Next.js', 'AWS', 'Stripe', 'Content Management', 'Analytics'],
+    slug: 'taking-flight-admin',
+    category: 'Web Apps',
+    siteUrl: 'https://admin.takingflightnetwork.com'
+  },
+  {
+    title: 'Teaching Portfolio',
+    description: 'A modern teaching portfolio website built with Next.js, showcasing educational philosophy, blog posts, and teaching resources. Features a clean, professional design with smooth animations and responsive layout.',
+    image: '/projects/teaching-portfolio.png',
+    tags: ['Next.js', 'React', 'Education', 'Blog'],
+    slug: 'teaching-portfolio',
+    category: 'Web Apps',
+    siteUrl: 'https://teaching-portfolio-peach.vercel.app'
+  },
   {
     title: 'Wealth Building Budget Book',
     description: 'A comprehensive mobile budgeting application that helps users track expenses, set financial goals, and build wealth through smart money management. Features interactive charts and real-time budget tracking.',
     image: '/projects/budget-book/main.png',
     images: [
       '/projects/budget-book/dashboard.png',
-      '/projects/budget-book/budget-entry.png',
-      '/projects/budget-book/analytics.png',
-      '/projects/budget-book/goals.png'
+      '/projects/budget-book/profile.png',
+      '/projects/budget-book/saving.png',
+      '/projects/budget-book/subscription.png'
     ],
     tags: ['React Native', 'Financial', 'Charts', 'Local Storage'],
     slug: 'budget-book',
@@ -48,7 +67,8 @@ const projects: Project[] = [
     image: '/projects/travaguz.png',
     tags: ['Next.js', 'React', 'TypeScript', 'Material UI'],
     slug: 'travaguz',
-    category: 'Web Apps'
+    category: 'Web Apps',
+    siteUrl: 'https://travaguz.com'
   },
   {
     title: 'Caribbean World Explorer',
@@ -56,7 +76,8 @@ const projects: Project[] = [
     image: '/projects/caribbean-explorer.png',
     tags: ['React', 'JavaScript', 'CSS'],
     slug: 'caribbean-world-explorer',
-    category: 'Web Apps'
+    category: 'Web Apps',
+    siteUrl: 'https://caribbeanworldexplorer.com'
   },
 ];
 
@@ -116,7 +137,6 @@ export default function Projects() {
         container 
         spacing={4}
         sx={{
-          display: 'flex',
           alignItems: 'stretch'
         }}
       >
@@ -127,12 +147,9 @@ export default function Projects() {
               size={{xs: 12, sm: 6, md: 4}}
               sx={{
                 display: 'flex',
-                height: '100%'
               }}
             >
-              <Box sx={{ width: '100%' }}>
                 <ProjectCard {...project} />
-              </Box>
             </Grid>
           ))}
         </AnimatePresence>

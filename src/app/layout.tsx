@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   creator: 'Shevon Chisholm',
   publisher: 'Shevon Chisholm',
   robots: 'index, follow',
+  metadataBase: new URL('https://shevon-portfolio.vercel.app'),
   icons: {
     icon: [
       { url: '/favicon.ico' },
@@ -35,15 +36,29 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
   openGraph: {
     type: 'website',
+    url: 'https://shevon-portfolio.vercel.app',
     title: 'Shevon - Full Stack Developer',
     description: 'Full-stack developer specializing in React, Next.js, Node.js, and React Native. Creating innovative web and mobile solutions.',
-    images: [{ url: '/about-me.jpg' }],
+    siteName: 'Shevon Chisholm Portfolio',
+    images: [{
+      url: '/my-logo.png',
+      width: 80,
+      height: 80,
+      alt: 'Shevon Chisholm - Full Stack Developer'
+    }],
+    locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Shevon - Full Stack Developer',
     description: 'Full-stack developer specializing in React, Next.js, Node.js, and React Native. Creating innovative web and mobile solutions.',
-    images: ['/about-me.jpg'],
+    images: [{
+      url: '/my-logo.png',
+      width: 1200,
+      height: 630,
+      alt: 'Shevon Chisholm - Full Stack Developer'
+    }],
+    creator: '@shevonchisholm',
   },
   viewport: {
     width: 'device-width',

@@ -13,6 +13,7 @@ interface Project {
   title: string;
   description: string;
   image: string;
+  images?: string[];
   tags: string[];
   slug: string;
   category: Exclude<ProjectCategory, 'All'>;
@@ -20,44 +21,42 @@ interface Project {
 
 const projects: Project[] = [
   {
-    title: 'Keeper App',
-    description: 'This project was completed using the JavaScript framework, React. It uses functional components along with hooks for handling state.',
-    image: '/projects/keeper.jpg',
-    tags: ['React', 'JavaScript', 'Hooks'],
-    slug: 'keeper-app',
+    title: 'Wealth Building Budget Book',
+    description: 'A comprehensive mobile budgeting application that helps users track expenses, set financial goals, and build wealth through smart money management. Features interactive charts and real-time budget tracking.',
+    image: '/projects/budget-book/main.png',
+    images: [
+      '/projects/budget-book/dashboard.png',
+      '/projects/budget-book/budget-entry.png',
+      '/projects/budget-book/analytics.png',
+      '/projects/budget-book/goals.png'
+    ],
+    tags: ['React Native', 'Financial', 'Charts', 'Local Storage'],
+    slug: 'budget-book',
+    category: 'Mobile Apps'
+  },
+  {
+    title: 'Taking Flight Network',
+    description: 'A video streaming platform built with React, featuring live streaming capabilities, video-on-demand, and user authentication. Implements modern streaming technologies and responsive design.',
+    image: '/projects/taking-flight.png',
+    tags: ['React', 'Streaming', 'Video Player', 'Authentication'],
+    slug: 'taking-flight-network',
     category: 'Web Apps'
   },
   {
-    title: 'TinDog',
-    description: 'This website was created using HTML, CSS and Bootstrap. The implementation of this website mimics tinder but with a twist. Instead it was designed for dogs.',
-    image: '/projects/tindog.jpg',
-    tags: ['HTML', 'CSS', 'Bootstrap'],
-    slug: 'tindog',
+    title: 'Travaguz',
+    description: 'A modern travel agency website built with Next.js, featuring luxury Caribbean travel packages, tours, and wedding services. Implements responsive design and smooth animations.',
+    image: '/projects/travaguz.png',
+    tags: ['Next.js', 'React', 'TypeScript', 'Material UI'],
+    slug: 'travaguz',
     category: 'Web Apps'
   },
   {
-    title: 'Fitness Tracking App',
-    description: 'Mobile application for tracking workouts, nutrition, and personal fitness goals.',
-    image: '/projects/fitness.jpg',
-    tags: ['React Native', 'Firebase', 'Redux'],
-    slug: 'fitness-tracker',
-    category: 'Mobile Apps',
-  },
-  {
-    title: 'Task Management Dashboard',
-    description: 'Collaborative project management tool with real-time updates and analytics.',
-    image: '/projects/dashboard.jpg',
-    tags: ['React', 'TypeScript', 'Material UI', 'Socket.io'],
-    slug: 'task-dashboard',
-    category: 'Web Apps',
-  },
-  {
-    title: 'Social Media App',
-    description: 'Cross-platform social networking app with real-time messaging and content sharing.',
-    image: '/projects/social.jpg',
-    tags: ['React Native', 'GraphQL', 'AWS'],
-    slug: 'social-media-app',
-    category: 'Mobile Apps',
+    title: 'Caribbean World Explorer',
+    description: 'A React-based travel exploration platform showcasing Caribbean destinations and experiences. Features interactive maps and booking capabilities.',
+    image: '/projects/caribbean-explorer.png',
+    tags: ['React', 'JavaScript', 'CSS'],
+    slug: 'caribbean-world-explorer',
+    category: 'Web Apps'
   },
 ];
 
@@ -113,14 +112,27 @@ export default function Projects() {
         </ToggleButtonGroup>
       </Box>
 
-      <Grid container spacing={4}>
+      <Grid 
+        container 
+        spacing={4}
+        sx={{
+          display: 'flex',
+          alignItems: 'stretch'
+        }}
+      >
         <AnimatePresence mode="wait">
           {filteredProjects.map((project) => (
             <Grid 
               key={project.slug} 
               size={{xs: 12, sm: 6, md: 4}}
+              sx={{
+                display: 'flex',
+                height: '100%'
+              }}
             >
-              <ProjectCard {...project} />
+              <Box sx={{ width: '100%' }}>
+                <ProjectCard {...project} />
+              </Box>
             </Grid>
           ))}
         </AnimatePresence>

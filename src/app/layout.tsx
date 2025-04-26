@@ -27,10 +27,6 @@ export const metadata: Metadata = {
     ]
   },
   manifest: '/site.webmanifest',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

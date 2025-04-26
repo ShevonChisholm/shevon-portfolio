@@ -49,13 +49,13 @@ export const metadata: Metadata = {
     locale: 'en_US',
   },
   twitter: {
-    card: 'summary_large_image',
+    card: 'summary',
     title: 'Shevon - Full Stack Developer',
     description: 'Full-stack developer specializing in React, Next.js, Node.js, and React Native. Creating innovative web and mobile solutions.',
     images: [{
       url: '/my-logo.png',
-      width: 1200,
-      height: 630,
+      width: 80,
+      height: 80,
       alt: 'Shevon Chisholm - Full Stack Developer'
     }],
     creator: '@shevonchisholm',

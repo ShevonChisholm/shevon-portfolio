@@ -1,6 +1,6 @@
 'use client';
 
-import { Container, Typography } from '@mui/material';
+import { Container, Typography, useTheme, useMediaQuery } from '@mui/material';
 import Timeline from '@mui/lab/Timeline';
 import TimelineItem from '@mui/lab/TimelineItem';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
@@ -34,15 +34,46 @@ const experiences: ExperienceItem[] = [
 ];
 
 export default function Experience() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   return (
     <Container maxWidth="lg" sx={{ py: 8 }}>
       <Typography variant="h2" component="h2" align="center" gutterBottom>
         Experience
       </Typography>
-      <Timeline position="alternate">
+      <Timeline 
+        position={isMobile ? "right" : "alternate"}
+        sx={{
+          p: 0,
+          [`& .MuiTimelineItem-root`]: {
+            minHeight: 'auto',
+            '&:before': {
+              // This removes the padding on mobile that causes misalignment
+              [theme.breakpoints.down('sm')]: {
+                display: 'none',
+              },
+            },
+          },
+          [`& .MuiTimelineContent-root`]: {
+            px: { xs: 2, sm: 3 },
+            py: 1,
+          },
+          [`& .MuiTimelineOppositeContent-root`]: {
+            px: { xs: 1, sm: 3 },
+            py: 1,
+            flex: { xs: 0.2, sm: 0.4 },
+          },
+        }}
+      >
         {experiences.map((exp, index) => (
           <TimelineItem key={index}>
-            <TimelineOppositeContent color="text.secondary">
+            <TimelineOppositeContent 
+              color="text.secondary"
+              sx={{
+                typography: { xs: 'body2', sm: 'body1' },
+              }}
+            >
               {exp.period}
             </TimelineOppositeContent>
             <TimelineSeparator>
@@ -59,18 +90,40 @@ export default function Experience() {
             </TimelineSeparator>
             <TimelineContent>
               <motion.div
-                initial={{ opacity: 0, x: index % 2 === 0 ? 50 : -50 }}
+                initial={{ opacity: 0, x: isMobile ? 50 : (index % 2 === 0 ? 50 : -50) }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.2 }}
               >
-                <Typography variant="h6" component="h3">
+                <Typography 
+                  variant="h6" 
+                  component="h3"
+                  sx={{
+                    fontSize: { xs: '1rem', sm: '1.25rem' },
+                    lineHeight: { xs: 1.4, sm: 1.5 },
+                    mb: 0.5,
+                  }}
+                >
                   {exp.title}
                 </Typography>
-                <Typography color="primary" gutterBottom>
+                <Typography 
+                  color="primary" 
+                  gutterBottom
+                  sx={{
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    mb: 1,
+                  }}
+                >
                   {exp.company}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{
+                    fontSize: { xs: '0.813rem', sm: '0.875rem' },
+                    lineHeight: { xs: 1.5, sm: 1.6 },
+                  }}
+                >
                   {exp.description}
                 </Typography>
               </motion.div>

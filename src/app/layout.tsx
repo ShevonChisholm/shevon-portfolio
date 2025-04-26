@@ -15,23 +15,17 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://shevon-portfolio.vercel.app'),
   icons: {
     icon: [
-      { url: '/favicon.ico' },
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' }
     ],
     apple: [
-      { url: '/apple-touch-icon.png' }
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
     ],
     other: [
-      {
-        rel: 'android-chrome-192x192',
-        url: '/android-chrome-192x192.png',
-      },
-      {
-        rel: 'android-chrome-512x512',
-        url: '/android-chrome-512x512.png',
-      },
-    ],
+      { url: '/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' }
+    ]
   },
   manifest: '/site.webmanifest',
   openGraph: {
@@ -41,9 +35,9 @@ export const metadata: Metadata = {
     description: 'Full-stack developer specializing in React, Next.js, Node.js, and React Native. Creating innovative web and mobile solutions.',
     siteName: 'Shevon Chisholm Portfolio',
     images: [{
-      url: '/my-logo.png',
-      width: 80,
-      height: 80,
+      url: '/android-chrome-512x512.png',
+      width: 512,
+      height: 512,
       alt: 'Shevon Chisholm - Full Stack Developer'
     }],
     locale: 'en_US',
@@ -53,9 +47,9 @@ export const metadata: Metadata = {
     title: 'Shevon - Full Stack Developer',
     description: 'Full-stack developer specializing in React, Next.js, Node.js, and React Native. Creating innovative web and mobile solutions.',
     images: [{
-      url: '/my-logo.png',
-      width: 80,
-      height: 80,
+      url: '/android-chrome-512x512.png',
+      width: 512,
+      height: 512,
       alt: 'Shevon Chisholm - Full Stack Developer'
     }],
     creator: '@shevonchisholm',
@@ -64,6 +58,11 @@ export const metadata: Metadata = {
     width: 'device-width',
     initialScale: 1,
     maximumScale: 1,
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Shevon Chisholm'
   },
   themeColor: '#000000',
 };
@@ -75,6 +74,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
+        <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Shevon Chisholm" />
+      </head>
       <body>
         <ThemeRegistry>
           <MotionProvider>

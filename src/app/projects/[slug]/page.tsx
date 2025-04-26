@@ -33,6 +33,25 @@ export default function ProjectDetails() {
   const getFeatures = (category: string): FeatureItem[] => {
     if (category === 'Web Apps') {
       switch (project.slug) {
+        case 'festiv-media':
+          return [
+            {
+              title: 'Film Streaming Platform',
+              description: '24/7 virtual marketplace showcasing award-winning independent films, shorts, and episodic content'
+            },
+            {
+              title: 'Interactive Events',
+              description: 'Online panel discussions featuring filmmakers, screenwriters, and industry leaders from around the globe'
+            },
+            {
+              title: 'Community Features',
+              description: 'Platform for filmmakers and enthusiasts to connect, collaborate, and engage with independent cinema'
+            },
+            {
+              title: 'Annual Showcase',
+              description: 'Live cinematic event featuring the best films from the marketplace on the big screen'
+            }
+          ];
         case 'taking-flight-admin':
           return [
             {

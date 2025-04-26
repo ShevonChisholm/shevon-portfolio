@@ -22,6 +22,15 @@ export interface Project {
 
 export const projects: Project[] = [
   {
+    title: 'Festiv Media',
+    description: "A virtual marketplace for award-winning independent films, offering a 24/7 platform for filmmakers and enthusiasts. Features include film streaming, interactive panel discussions, and an annual cinematic showcase event.",
+    image: '/projects/festiv-media.png',
+    tags: ['React', 'AWS', 'Video Streaming', 'Film Distribution', 'Virtual Events'],
+    slug: 'festiv-media',
+    category: 'Web Apps',
+    siteUrl: 'https://www.festivmedia.com'
+  },
+  {
     title: 'Taking Flight Network Admin',
     description: 'A powerful admin dashboard for content management of the Taking Flight streaming platform. Features AWS content uploads, Stripe subscription management, user analytics, and comprehensive content moderation tools.',
     image: '/projects/taking-flight-admin.png',

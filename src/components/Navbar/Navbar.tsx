@@ -20,6 +20,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { usePathname, useRouter } from 'next/navigation';
 
 const navItems = [
   { label: 'Home', id: 'home' },
@@ -35,6 +36,11 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const [isScrolling, setIsScrolling] = useState(false);
+
 
   const trigger = useScrollTrigger({
     disableHysteresis: true,
@@ -42,30 +48,70 @@ export default function Navbar() {
   });
 
   useEffect(() => {
-    const handleScroll = () => {
-      const sections = navItems.map(item => ({
-        id: item.id,
-        offset: document.getElementById(item.id)?.offsetTop || 0,
-      }));
+    if (pathname === '/') {
+      const hash = window.location.hash.replace('#', '');
+      
+      if (hash && navItems.some(item => item.id === hash)) {
+        const element = document.getElementById(hash);
+        if (element) {
+          requestAnimationFrame(() => {
+            element.scrollIntoView({ behavior: 'smooth' });
+            setActiveSection(hash);
+          });
+        }
+      }
 
-      const scrollPosition = window.scrollY + 100;
+      const handleScroll = () => {
+        if (isScrolling) return;
 
-      const currentSection = sections.reduce((acc, section) => {
-        return scrollPosition >= section.offset ? section.id : acc;
-      }, 'home');
+        const sections = navItems.map(item => ({
+          id: item.id,
+          offset: document.getElementById(item.id)?.offsetTop || 0,
+        }));
 
-      setActiveSection(currentSection);
-    };
+        const scrollPosition = window.scrollY + 100;
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+        const currentSection = sections.reduce((acc, section) => {
+          return scrollPosition >= section.offset ? section.id : acc;
+        }, 'home');
+
+        setActiveSection(currentSection);
+        
+        const newHash = `#${currentSection}`;
+        if (window.location.hash !== newHash) {
+          window.history.replaceState(null, '', newHash);
+        }
+      };
+
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
+  }, [isScrolling, pathname]);
+
 
   const handleNavClick = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    setIsScrolling(true);
+
+    if (pathname !== '/') {
+      router.push(`/#${id}`);
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+          setActiveSection(id);
+        }
+        setTimeout(() => setIsScrolling(false), 1000);
+      }, 100);
+    } else {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        setActiveSection(id);
+        window.history.pushState(null, '', `#${id}`);
+        setTimeout(() => setIsScrolling(false), 1000);
+      }
     }
+    
     if (mobileOpen) setMobileOpen(false);
   };
 

@@ -1,18 +1,82 @@
 'use client';
 
-import { Container, Typography, Box, Chip } from '@mui/material';
+import { Container, Typography, Box, Chip, useTheme } from '@mui/material';
 import { m as motion } from 'framer-motion';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ImageIcon from '@mui/icons-material/Image';
 import type { BlogPost } from '@/data/blogPosts';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 interface BlogPostContentProps {
   post: BlogPost;
   children: React.ReactNode;
 }
 
+const ImageFallback = () => {
+  const theme = useTheme();
+  
+  return (
+    <Box
+      sx={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: theme.palette.mode === 'dark' 
+          ? 'rgba(255, 255, 255, 0.05)' 
+          : 'rgba(0, 0, 0, 0.05)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 2,
+        zIndex: 1,
+      }}
+    >
+      <ImageIcon 
+        sx={{ 
+          fontSize: 64,
+          color: theme.palette.mode === 'dark' 
+            ? 'rgba(255, 255, 255, 0.2)' 
+            : 'rgba(0, 0, 0, 0.2)',
+        }} 
+      />
+      <Typography
+        variant="body1"
+        sx={{
+          color: theme.palette.text.secondary,
+          fontStyle: 'italic',
+        }}
+      >
+        Blog image coming soon
+      </Typography>
+    </Box>
+  );
+};
+
 export default function BlogPostContent({ post, children }: BlogPostContentProps) {
+  const theme = useTheme();
+  const router = useRouter();
+  const [imageError, setImageError] = useState(false);
+
+  const handleBackClick = () => {
+    // Navigate to home page with the blog hash
+    router.push('/#blog');
+    
+    // After navigation, ensure smooth scrolling to blog section
+    setTimeout(() => {
+      const element = document.getElementById('blog');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   if (!post) {
     return (
       <Container maxWidth="lg" sx={{ py: 8 }}>
@@ -29,6 +93,28 @@ export default function BlogPostContent({ post, children }: BlogPostContentProps
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Back Button */}
+      <Container maxWidth="lg" sx={{ pt: 4 }}>
+        <Box 
+          onClick={handleBackClick}
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1,
+            color: theme.palette.text.secondary,
+            cursor: 'pointer',
+            mb: 2,
+            width: 'fit-content',
+            '&:hover': {
+              color: theme.palette.primary.main
+            }
+          }}
+        >
+          <ArrowBackIcon />
+          <Typography>Back to Blog</Typography>
+        </Box>
+      </Container>
+
       <Box
         sx={{
           position: 'relative',
@@ -42,18 +128,23 @@ export default function BlogPostContent({ post, children }: BlogPostContentProps
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: !imageError ? 'rgba(0,0,0,0.5)' : 'transparent',
             zIndex: 1,
           }
         }}
       >
-        <Image
-          src={post.imageUrl}
-          alt={post.title}
-          fill
-          style={{ objectFit: 'cover' }}
-          priority
-        />
+        {!imageError ? (
+          <Image
+            src={post.imageUrl}
+            alt={post.title}
+            fill
+            style={{ objectFit: 'cover' }}
+            priority
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <ImageFallback />
+        )}
         <Box
           sx={{
             position: 'absolute',

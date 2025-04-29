@@ -1,12 +1,11 @@
 'use client';
 
-import { Box, Container, Typography, Chip, useTheme, Button } from '@mui/material';
+import { Box, Container, Typography, Chip, useTheme, Button, Grid } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { projects, type Project } from '@/components/Projects/Projects';
 import MobileAppScreens from '@/components/MobileAppScreens/MobileAppScreens';
-import Link from 'next/link';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -19,6 +18,7 @@ interface FeatureItem {
 export default function ProjectDetails() {
   const theme = useTheme();
   const { slug } = useParams();
+  const router = useRouter();
   
   const project = projects.find((p: Project) => p.slug === slug);
   
@@ -30,9 +30,41 @@ export default function ProjectDetails() {
     );
   }
 
+  const handleBackClick = () => {
+    // First navigate to home page with the projects hash
+    router.push('/#projects');
+    
+    // After navigation, ensure smooth scrolling to projects section
+    setTimeout(() => {
+      const element = document.getElementById('projects');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   const getFeatures = (category: string): FeatureItem[] => {
     if (category === 'Web Apps') {
       switch (project.slug) {
+        case 'draxhall-health':
+          return [
+            {
+              title: 'Healthcare Services',
+              description: 'Comprehensive display of medical services and specialties offered by the health group'
+            },
+            {
+              title: 'Doctor Profiles',
+              description: 'Detailed profiles of medical professionals with their expertise and qualifications'
+            },
+            {
+              title: 'Patient Resources',
+              description: 'Accessible patient information, forms, and healthcare resources'
+            },
+            {
+              title: 'Medical Accessibility',
+              description: 'WCAG compliant design ensuring accessibility for all users'
+            }
+          ];
         case 'festiv-media':
           return [
             {
@@ -180,22 +212,22 @@ export default function ProjectDetails() {
         alignItems: 'center',
         mb: 4 
       }}>
-        <Link href="/#projects" style={{ textDecoration: 'none' }}>
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              color: theme.palette.text.secondary,
-              '&:hover': {
-                color: theme.palette.primary.main
-              }
-            }}
-          >
-            <ArrowBackIcon />
-            <Typography>Back to Projects</Typography>
-          </Box>
-        </Link>
+        <Box 
+          onClick={handleBackClick}
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1,
+            color: theme.palette.text.secondary,
+            cursor: 'pointer',
+            '&:hover': {
+              color: theme.palette.primary.main
+            }
+          }}
+        >
+          <ArrowBackIcon />
+          <Typography>Back to Projects</Typography>
+        </Box>
         {project.siteUrl && (
           <Button
             variant="contained"
@@ -306,8 +338,89 @@ export default function ProjectDetails() {
             {project.description}
           </Typography>
           
+          {/* Showcase Section */}
+          {project.showcase && project.showcase.length > 0 && (
+            <Box sx={{ mt: 6, mb: 6 }}>
+              <Typography 
+                variant="h4" 
+                component="h2" 
+                gutterBottom 
+                sx={{ 
+                  fontWeight: 600,
+                  fontSize: {
+                    xs: '1.5rem',    // 24px
+                    sm: '1.75rem',   // 28px
+                    md: '2rem'       // 32px
+                  },
+                  mb: 4
+                }}
+              >
+                Key Features
+              </Typography>
+              <Grid container spacing={4}>
+                {project.showcase.map((feature, index) => (
+                  <Grid 
+                    key={index} 
+                    size={{ xs: 12, md: 6 }}
+                    sx={{ 
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        width: '100%',
+                        paddingTop: '56.25%', // 16:9 aspect ratio
+                        mb: 2,
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        boxShadow: theme.shadows[2],
+                      }}
+                    >
+                      <Image
+                        src={feature.image}
+                        alt={feature.title}
+                        fill
+                        style={{ 
+                          objectFit: 'cover',
+                        }}
+                      />
+                    </Box>
+                    <Typography 
+                      variant="h6" 
+                      component="h3"
+                      sx={{ 
+                        fontWeight: 600,
+                        mb: 1,
+                        fontSize: {
+                          xs: '1.1rem',
+                          sm: '1.25rem'
+                        }
+                      }}
+                    >
+                      {feature.title}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{
+                        fontSize: {
+                          xs: '0.875rem',
+                          sm: '1rem'
+                        }
+                      }}
+                    >
+                      {feature.description}
+                    </Typography>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          )}
+
           <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 600, mt: 6, mb: 4 }}>
-            Key Features
+            Technical Details
           </Typography>
           <Box sx={{ 
             display: 'grid', 

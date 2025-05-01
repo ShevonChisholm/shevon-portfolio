@@ -201,6 +201,7 @@ export default function Contact() {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
       >
         <Alert 

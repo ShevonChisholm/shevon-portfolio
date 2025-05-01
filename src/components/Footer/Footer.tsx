@@ -1,25 +1,21 @@
 'use client';
 
 import { Box, Container, IconButton, Typography, Link } from '@mui/material';
-import { GitHub as GitHubIcon, LinkedIn as LinkedInIcon, Twitter as TwitterIcon } from '@mui/icons-material';
+import { LinkedIn as LinkedInIcon, Instagram as InstagramIcon } from '@mui/icons-material';
 import { m as motion } from 'framer-motion';
 
 const socialLinks = [
   {
-    icon: <GitHubIcon />,
-    url: 'https://github.com/yourusername',
-    label: 'GitHub'
-  },
-  {
     icon: <LinkedInIcon />,
-    url: 'https://linkedin.com/in/yourusername',
+    url: 'https://linkedin.com/in/shevon-chisholm-6ba802230',
     label: 'LinkedIn'
   },
   {
-    icon: <TwitterIcon />,
-    url: 'https://twitter.com/yourusername',
-    label: 'Twitter'
+    icon: <InstagramIcon />,
+    url: 'https://instagram.com/sccodealchemist',
+    label: 'Instagram'
   }
+ 
 ];
 
 const quickLinks = [
@@ -84,7 +80,7 @@ export default function Footer() {
             color="text.secondary" 
             align="center"
           >
-            © {new Date().getFullYear()} Your Name. All rights reserved.
+            © {new Date().getFullYear()} SC | Code Alchemist. All rights reserved.
           </Typography>
         </motion.div>
       </Container>

@@ -54,7 +54,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Festiv Media',
-    description: "A virtual marketplace for award-winning independent films, offering a 24/7 platform for filmmakers and enthusiasts. Features include film streaming, interactive panel discussions, and an annual cinematic showcase event.",
+    description: "A virtual marketplace for award-winning independent films, offering a 24/7 platform for filmmakers and enthusiasts. Features include film screening, direct filmmaker contact, and exclusive access to festival films.",
     image: '/projects/festiv-media.png',
     tags: ['React', 'AWS', 'Video Streaming', 'Film Distribution', 'Virtual Events'],
     slug: 'festiv-media',
@@ -62,19 +62,19 @@ export const projects: Project[] = [
     siteUrl: 'https://www.festivmedia.com',
     showcase: [
       {
-        title: 'Film Marketplace',
-        description: 'Curated selection of award-winning independent films with seamless streaming experience.',
+        title: 'Film Buyers Marketplace',
+        description: 'Exclusive platform to screen films you missed at festivals, with direct access to award-winning content.',
         image: '/projects/festiv-media/marketplace.png'
       },
       {
-        title: 'Panel Discussions',
-        description: 'Interactive online panels featuring filmmakers and industry leaders from around the globe.',
-        image: '/projects/festiv-media/panels.png'
+        title: 'Exclusive Access Window',
+        description: 'Special screening windows to view and acquire award-winning films before public release.',
+        image: '/projects/festiv-media/access-window.png'
       },
       {
-        title: 'Community Hub',
-        description: 'Engaging platform for filmmakers and enthusiasts to connect and collaborate.',
-        image: '/projects/festiv-media/community.png'
+        title: 'Direct Filmmaker Contact',
+        description: 'Connect and negotiate directly with filmmakers to acquire rights for their films.',
+        image: '/projects/festiv-media/filmmaker-contact.png'
       }
     ]
   },
@@ -85,7 +85,6 @@ export const projects: Project[] = [
     tags: ['Next.js', 'AWS', 'Stripe', 'Content Management', 'Analytics'],
     slug: 'taking-flight-admin',
     category: 'Web Apps',
-    siteUrl: 'https://admin.takingflightnetwork.com',
     showcase: [
       {
         title: 'Content Management',
@@ -93,13 +92,13 @@ export const projects: Project[] = [
         image: '/projects/taking-flight-admin/content.png'
       },
       {
-        title: 'Subscription Dashboard',
-        description: 'Stripe-powered subscription management with detailed analytics and reporting.',
-        image: '/projects/taking-flight-admin/subscriptions.png'
+        title: 'Sponsor Management',
+        description: 'Sponsor management with detailed analytics and reporting.',
+        image: '/projects/taking-flight-admin/sponsor.png'
       },
       {
-        title: 'User Analytics',
-        description: 'Detailed insights into user engagement and content performance metrics.',
+        title: 'Content Moderation',
+        description: 'Comprehensive system for managing content moderation with detailed analytics and reporting.',
         image: '/projects/taking-flight-admin/analytics.png'
       }
     ]
@@ -227,19 +226,19 @@ export const projects: Project[] = [
     siteUrl: 'https://caribbeanworldexplorer.com',
     showcase: [
       {
-        title: 'Interactive Maps',
-        description: 'Dynamic mapping system for exploring Caribbean destinations.',
-        image: '/projects/caribbean-explorer/maps.png'
+        title: 'Caribbean Cruises',
+        description: 'Explore luxury cruise packages with detailed itineraries and onboard experiences.',
+        image: '/projects/caribbean-explorer/cruises.png'
       },
       {
-        title: 'Travel Guides',
-        description: 'Comprehensive guides and information for each location.',
-        image: '/projects/caribbean-explorer/guides.png'
+        title: 'Island Vacations',
+        description: 'Curated vacation packages featuring the best resorts and island experiences.',
+        image: '/projects/caribbean-explorer/vacations.png'
       },
       {
-        title: 'Booking System',
-        description: 'Seamless booking interface for travel packages and experiences.',
-        image: '/projects/caribbean-explorer/booking.png'
+        title: 'Guided Tours',
+        description: 'Expert-led tours showcasing the culture, history, and natural beauty of the Caribbean.',
+        image: '/projects/caribbean-explorer/tours.png'
       }
     ]
   }

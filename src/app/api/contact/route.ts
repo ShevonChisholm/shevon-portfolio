@@ -6,10 +6,12 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: "chisholmshevon@gmail.com",
-    pass: "iwreqizhemydxtxz",
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
+
+const CONTACT_EMAIL = process.env.EMAIL_USER || "chisholmshevon@gmail.com";
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +20,7 @@ export async function POST(request: Request) {
     // Email to contactee (you)
     await transporter.sendMail({
       from: email,
-      to: "chisholmshevon@gmail.com",
+      to: CONTACT_EMAIL,
       subject: `New Portfolio Message from ${name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
 
     // Confirmation email to sender
     await transporter.sendMail({
-      from: "chisholmshevon@gmail.com",
+      from: CONTACT_EMAIL,
       to: email,
       subject: `Message Received - Thanks for reaching out!`,
       html: `
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
             <p style="white-space: pre-wrap;">${message}</p>
           </div>
           
-          <p>If you need to contact me urgently, please feel free to email me directly at chisholmshevon@gmail.com.</p>
+          <p>If you need to contact me urgently, please feel free to email me directly at ${CONTACT_EMAIL}.</p>
           <p>Best regards,</p>
           <p>Shevon Chisholm</p>
           <p style="font-size: 12px; color: #999; margin-top: 30px;">

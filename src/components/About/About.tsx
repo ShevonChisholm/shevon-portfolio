@@ -12,7 +12,7 @@ export default function About() {
     <SectionContainer
       id="about"
       title="About Me"
-      subtitle="Passionate about creating innovative solutions through code"
+      subtitle="Building practical software solutions for real business needs"
     >
       <Grid container spacing={6} alignItems="center">
         <Grid size={{ xs: 12, md: 6 }}>
@@ -61,11 +61,11 @@ export default function About() {
                 color: theme.palette.text.primary,
               }}
             >
-              I’m a passionate Full-Stack Developer with six years of coding
-              experience—three years in school and three years on the job. I’ve
-              mastered JavaScript, TypeScript, React, and backend technologies,
-              building everything from SPAs to RESTful APIs with a focus on
-              clean, maintainable architecture.
+              I&apos;m a Full-Stack Engineer with 5+ years of professional experience
+              building production web and mobile applications. I specialize in React,
+              Next.js, React Native, NestJS, TypeScript, and API-driven architectures,
+              with experience taking ideas from requirements through development,
+              integration, and deployment.
             </Typography>
 
             <Typography
@@ -75,11 +75,12 @@ export default function About() {
                 color: theme.palette.text.primary,
               }}
             >
-              In my professional career, I’ve delivered polished web and mobile
-              apps using Next.js, React Native, and Node.js, integrating
-              services like Stripe and AWS. I collaborate closely with designers
-              and product owners to craft seamless user experiences and am known
-              for my attention to detail and elegant solutions.
+              My work spans healthcare, media, business operations, budgeting, and
+              client-focused platforms. I&apos;ve built user interfaces, REST APIs,
+              authentication flows, subscription/payment features, admin portals, and
+              cloud-connected systems. My background in HR, entrepreneurship, and
+              hands-on client work helps me understand real operational problems and
+              translate them into clean, maintainable software.
             </Typography>
           </m.div>
         </Grid>

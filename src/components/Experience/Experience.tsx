@@ -20,17 +20,26 @@ interface ExperienceItem {
 
 const experiences: ExperienceItem[] = [
   {
-    title: "React Native & Web Developer",
-    company: "Cenedex Software Solutions",
-    period: "09/2022 - Present",
-    description: "Developed and maintained multiple web and mobile applications using React, React Native, and modern web technologies. Specialized in creating responsive and user-friendly interfaces while ensuring high-quality code standards."
+    title: 'Full Stack Engineer',
+    company: 'Wealth Building Investments',
+    period: '01/2025 - Present',
+    description:
+      'Architected and developed a full-stack fintech platform supporting 100+ users, including a customer-facing application, admin portal, and backend API layer. Built secure financial workflows covering balances, transaction tracking, loan repayments, savings contributions, payouts, payment history, Stripe payment synchronization, JWT authentication, and role-based access control.',
   },
   {
-    title: "Freelance Web Developer",
-    company: "Self-Employed",
-    period: "01/2022 - Present",
-    description: "Design and develop custom websites and web applications for various clients. Implement responsive designs, integrate APIs, and provide ongoing maintenance and support. Work closely with clients to understand requirements and deliver solutions that meet their needs."
-  }
+    title: 'Full Stack Developer',
+    company: '1Dev.ai Software Solutions (formerly Cenedex Software Solutions)',
+    period: '09/2022 - Present',
+    description:
+      'Built full-stack web applications across multiple client and internal projects using React, Next.js, Node.js, NestJS, REST APIs, and database-backed services. Created responsive frontend interfaces, implemented authentication and business logic, designed database schemas, debugged production issues, and collaborated with designers, developers, and stakeholders to deliver production-ready features.',
+  },
+  {
+    title: 'Freelance Web Developer',
+    company: 'Self-Employed',
+    period: '01/2022 - Present',
+    description:
+      'Designed and developed custom websites and web applications for clients, translating business requirements into clean, responsive, and maintainable digital solutions. Delivered client-facing websites, API integrations, ongoing maintenance, and usability-focused improvements across healthcare, business, and service-based projects.',
+  },
 ];
 
 export default function Experience() {

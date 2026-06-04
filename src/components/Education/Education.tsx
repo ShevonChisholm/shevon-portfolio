@@ -20,35 +20,40 @@ interface EducationItem {
 
 const educationItems: EducationItem[] = [
   {
-    degree: "Bachelor of Science (Incomplete)",
-    institution: "University of the West Indies",
-    period: "2017 - 2022",
-    description: "Completed three years of Computer Science education, focusing on Object-Oriented Programming, Software Engineering, Database Management, and Computer Systems. Transitioned to professional certifications due to financial constraints."
+    degree: 'Bachelor of Science — Materials Science',
+    institution: 'University of the West Indies, Mona',
+    period: '2017 - 2021',
+    description:
+      'Completed undergraduate studies in Materials Science with a Computer Science minor, gaining a strong foundation in problem-solving, programming fundamentals, database concepts, and software development principles.',
   },
   {
-    degree: "The Complete 2022 Web Development Bootcamp",
-    institution: "Udemy",
-    period: "Jul 2022",
-    description: "Comprehensive full-stack web development bootcamp covering modern web technologies and best practices. Pursued this certification as part of my transition into professional web development."
+    degree: 'Computer Science Minor',
+    institution: 'University of the West Indies, Mona',
+    period: '2017 - 2021',
+    description:
+      'Completed coursework related to programming, software engineering, computer systems, object-oriented programming, and database management.',
   },
   {
-    degree: "React + Redux & JavaScript Certifications",
-    institution: "Sololearn",
-    period: "Sep 2022",
-    description: "Advanced training in React, Redux.js, and JavaScript fundamentals, with hands-on project experience and practical application development."
+    degree: 'The Complete 2022 Web Development Bootcamp',
+    institution: 'Udemy',
+    period: 'Jul 2022',
+    description:
+      'Completed practical full-stack web development training covering modern web technologies, frontend development, backend fundamentals, APIs, and hands-on project development.',
   },
   {
-    degree: "Full Stack and Frontend Development",
-    institution: "LinkedIn Learning",
-    period: "Aug 2022",
-    description: "Series of certifications including HTML Essential Training, JavaScript Essential Training, React.js Essential Training, and Web Programming Foundations."
+    degree: 'React, Redux & JavaScript Training',
+    institution: 'Sololearn',
+    period: 'Sep 2022',
+    description:
+      'Completed focused training in JavaScript fundamentals, React, Redux, and practical frontend application development.',
   },
   {
-    degree: "UX Design and Accessibility",
-    institution: "LinkedIn Learning",
-    period: "Aug 2022",
-    description: "Comprehensive UX training including UX Design Overview, UX Foundations: Accessibility, User Experience for Web Design, and Planning a Career in User Experience."
-  }
+    degree: 'Frontend, Full-Stack, UX & Accessibility Training',
+    institution: 'LinkedIn Learning',
+    period: 'Aug 2022',
+    description:
+      'Completed professional development courses covering HTML, JavaScript, React, web programming foundations, UX design, and accessibility principles.',
+  },
 ];
 
 export default function Education() {

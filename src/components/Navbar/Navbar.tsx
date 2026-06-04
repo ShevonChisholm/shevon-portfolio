@@ -18,8 +18,6 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import ThemeToggle from '../ThemeToggle/ThemeToggle';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { usePathname, useRouter } from 'next/navigation';
 
 const navItems = [
@@ -39,6 +37,8 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
 
+  const shouldShowResume = pathname !== '/resume';
+
   const [isScrolling, setIsScrolling] = useState(false);
 
 
@@ -50,7 +50,7 @@ export default function Navbar() {
   useEffect(() => {
     if (pathname === '/') {
       const hash = window.location.hash.replace('#', '');
-      
+
       if (hash && navItems.some(item => item.id === hash)) {
         const element = document.getElementById(hash);
         if (element) {
@@ -76,7 +76,7 @@ export default function Navbar() {
         }, 'home');
 
         setActiveSection(currentSection);
-        
+
         const newHash = `#${currentSection}`;
         if (window.location.hash !== newHash) {
           window.history.replaceState(null, '', newHash);
@@ -111,7 +111,7 @@ export default function Navbar() {
         setTimeout(() => setIsScrolling(false), 1000);
       }
     }
-    
+
     if (mobileOpen) setMobileOpen(false);
   };
 
@@ -165,15 +165,49 @@ export default function Navbar() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <Box
-                  component="img"
-                  src="/logo.svg"
-                  alt="Logo"
-                  sx={{ height: 40, width: 'auto', cursor: 'pointer' }}
-                  onClick={() => handleNavClick('home')}
-                />
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Box
+                    onClick={() => handleNavClick("home")}
+                    sx={{
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{
+                        color: theme.palette.text.primary,
+                        fontWeight: 800,
+                        fontSize: { xs: "1rem", sm: "1.1rem" },
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      Shevon Chisholm
+                    </Box>
+
+                    <Box
+                      component="span"
+                      sx={{
+                        color: theme.palette.primary.main,
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Full-Stack Engineer
+                    </Box>
+                  </Box>
+                </motion.div>
+
               </motion.div>
-              
+
               {!isMobile && (
                 <Box sx={{ ml: 4 }}>
                   <NavLinks />
@@ -192,20 +226,19 @@ export default function Navbar() {
               </IconButton>
             ) : (
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <ThemeToggle />
-                <Button
+                {shouldShowResume && (
+                  <Button
                   variant="contained"
                   color="primary"
-                  startIcon={<FileDownloadIcon />}
-                  href="/resume.pdf"
-                  target="_blank"
+                  href="/resume"
                   sx={{
                     borderRadius: '8px',
                     textTransform: 'none',
                   }}
                 >
-                  Resume
+                  View Resume
                 </Button>
+                )}
               </Box>
             )}
           </Toolbar>
@@ -238,24 +271,19 @@ export default function Navbar() {
                   <ListItemText primary={item.label} />
                 </ListItem>
               ))}
+              {shouldShowResume && (
               <ListItem>
                 <Button
                   fullWidth
                   variant="contained"
                   color="primary"
-                  startIcon={<FileDownloadIcon />}
-                  href="/resume.pdf"
-                  target="_blank"
+                  href="/resume"
                   sx={{ mt: 2, borderRadius: '8px', textTransform: 'none' }}
                 >
-                  Resume
-                </Button>
-              </ListItem>
-              <ListItem>
-                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mt: 2 }}>
-                  <ThemeToggle />
-                </Box>
-              </ListItem>
+                    View Resume
+                  </Button>
+                </ListItem>
+              )}
             </List>
           </Drawer>
         )}

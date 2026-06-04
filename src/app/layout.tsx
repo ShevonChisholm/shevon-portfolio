@@ -5,33 +5,20 @@ import MotionProvider from '@/components/MotionProvider';
 import ScrollToTop from '@/components/ScrollToTop/ScrollToTop';
 
 export const metadata: Metadata = {
-  title: 'Shevon - Full Stack Developer',
-  description: 'Full-stack developer specializing in React, Next.js, Node.js, and React Native. Creating innovative web and mobile solutions.',
-  publisher: 'Shevon Chisholm',
-  authors: [{ name: 'Shevon Chisholm' }],
-  creator: 'Shevon Chisholm',
-  robots: 'index, follow',
-  metadataBase: new URL('https://shevon-portfolio.vercel.app'),
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' }
-    ],
-    apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
-    ],
-    other: [
-      { url: '/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' }
-    ]
-  },
-  manifest: '/site.webmanifest',
+  title: "Shevon Chisholm | Full-Stack Engineer",
+  description:
+    "Full-stack engineer based in Jamaica specializing in React, Next.js, React Native, NestJS, TypeScript, APIs, authentication, payments, and production web and mobile applications.",
+  publisher: "Shevon Chisholm",
+  authors: [{ name: "Shevon Chisholm" }],
+  creator: "Shevon Chisholm",
+  robots: "index, follow",
+  metadataBase: new URL("https://shevon-portfolio.vercel.app"),
+  manifest: "/site.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
-    title: 'Shevon Chisholm'
-  }
+    statusBarStyle: "default",
+    title: "Shevon Chisholm",
+  },
 };
 
 export default function RootLayout({

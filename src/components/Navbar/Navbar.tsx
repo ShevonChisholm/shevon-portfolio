@@ -165,15 +165,28 @@ export default function Navbar() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5 }}
+                <Box
+                  onClick={() => handleNavClick("home")}
+                  sx={{
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                  }}
                 >
                   <Box
-                    onClick={() => handleNavClick("home")}
+                    component="img"
+                    src="/sc-logo.svg"
+                    alt="Shevon Chisholm logo"
                     sx={{
-                      cursor: "pointer",
+                      width: 40,
+                      height: 40,
+                      flexShrink: 0,
+                    }}
+                  />
+
+                  <Box
+                    sx={{
                       display: "flex",
                       flexDirection: "column",
                       lineHeight: 1.1,
@@ -184,8 +197,7 @@ export default function Navbar() {
                       sx={{
                         color: theme.palette.text.primary,
                         fontWeight: 800,
-                        fontSize: { xs: "1rem", sm: "1.1rem" },
-                        letterSpacing: "-0.02em",
+                        fontSize: { xs: "0.95rem", sm: "1.05rem" },
                       }}
                     >
                       Shevon Chisholm
@@ -196,7 +208,7 @@ export default function Navbar() {
                       sx={{
                         color: theme.palette.primary.main,
                         fontWeight: 600,
-                        fontSize: "0.75rem",
+                        fontSize: "0.7rem",
                         letterSpacing: "0.08em",
                         textTransform: "uppercase",
                       }}
@@ -204,7 +216,7 @@ export default function Navbar() {
                       Full-Stack Engineer
                     </Box>
                   </Box>
-                </motion.div>
+                </Box>
 
               </motion.div>
 
@@ -228,16 +240,16 @@ export default function Navbar() {
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                 {shouldShowResume && (
                   <Button
-                  variant="contained"
-                  color="primary"
-                  href="/resume"
-                  sx={{
-                    borderRadius: '8px',
-                    textTransform: 'none',
-                  }}
-                >
-                  View Resume
-                </Button>
+                    variant="contained"
+                    color="primary"
+                    href="/resume"
+                    sx={{
+                      borderRadius: '8px',
+                      textTransform: 'none',
+                    }}
+                  >
+                    View Resume
+                  </Button>
                 )}
               </Box>
             )}
@@ -272,14 +284,14 @@ export default function Navbar() {
                 </ListItem>
               ))}
               {shouldShowResume && (
-              <ListItem>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="primary"
-                  href="/resume"
-                  sx={{ mt: 2, borderRadius: '8px', textTransform: 'none' }}
-                >
+                <ListItem>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    href="/resume"
+                    sx={{ mt: 2, borderRadius: '8px', textTransform: 'none' }}
+                  >
                     View Resume
                   </Button>
                 </ListItem>

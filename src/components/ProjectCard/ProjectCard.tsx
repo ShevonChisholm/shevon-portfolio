@@ -4,7 +4,6 @@ import {
   Box,
   Card,
   CardContent,
-  CardMedia,
   Chip,
   Typography,
   useTheme,
@@ -14,25 +13,38 @@ import { alpha } from "@mui/material/styles";
 import { m as motion } from "framer-motion";
 import Link from "next/link";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import type { PublicProject } from "@/lib/cms/public-projects";
 import MobileAppScreens from "../MobileAppScreens/MobileAppScreens";
 
-interface ProjectCardProps {
-  title: string;
-  description: string;
-  image: string;
-  images?: string[];
-  tags: string[];
-  slug: string;
-  category: "Web Apps" | "Mobile Apps";
-  siteUrl?: string;
-  role?: string;
-  status?: string;
-  impact?: string;
+type ProjectCardProps = Pick<
+  PublicProject,
+  | "title"
+  | "description"
+  | "shortDescription"
+  | "image"
+  | "images"
+  | "tags"
+  | "slug"
+  | "category"
+  | "siteUrl"
+  | "role"
+  | "status"
+  | "impact"
+>;
+
+function initialsFor(title: string) {
+  return title
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join("");
 }
 
 export default function ProjectCard({
   title,
   description,
+  shortDescription,
   image,
   images,
   tags,
@@ -44,6 +56,8 @@ export default function ProjectCard({
   impact,
 }: ProjectCardProps) {
   const theme = useTheme();
+  const hasMobileScreens = category === "Mobile Apps" && images.length > 0;
+  const cardDescription = shortDescription ?? description;
 
   const handleVisitSite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -105,7 +119,7 @@ export default function ProjectCard({
                 category === "Mobile Apps" ? "rgba(0,0,0,0.05)" : "transparent",
             }}
           >
-            {category === "Mobile Apps" && images ? (
+            {hasMobileScreens ? (
               <Box
                 sx={{
                   position: "absolute",
@@ -117,10 +131,10 @@ export default function ProjectCard({
               >
                 <MobileAppScreens images={images} title={title} />
               </Box>
-            ) : (
-              <CardMedia
+            ) : image ? (
+              <Box
                 component="img"
-                image={image}
+                src={image}
                 alt={title}
                 className="project-image"
                 sx={{
@@ -133,6 +147,54 @@ export default function ProjectCard({
                   objectFit: "cover",
                 }}
               />
+            ) : (
+              <Box
+                className="project-image"
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  p: 3,
+                  transition: "transform 0.3s ease-in-out",
+                  background: `linear-gradient(135deg, ${alpha(
+                    theme.palette.primary.main,
+                    0.26
+                  )}, ${alpha(theme.palette.common.black, 0.64)})`,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: "24px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: `1px solid ${alpha(
+                      theme.palette.primary.main,
+                      0.38
+                    )}`,
+                    backgroundColor: alpha(theme.palette.common.black, 0.28),
+                    boxShadow: `0 20px 45px ${alpha(
+                      theme.palette.common.black,
+                      0.28
+                    )}`,
+                  }}
+                >
+                  <Typography
+                    variant="h3"
+                    sx={{
+                      color: theme.palette.primary.main,
+                      fontWeight: 900,
+                      letterSpacing: 0,
+                    }}
+                  >
+                    {initialsFor(title)}
+                  </Typography>
+                </Box>
+              </Box>
             )}
           </Box>
 
@@ -233,7 +295,7 @@ export default function ProjectCard({
                 flex: 1,
               }}
             >
-              {description}
+              {cardDescription}
             </Typography>
 
             {impact && (

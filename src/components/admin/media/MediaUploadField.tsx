@@ -1,0 +1,260 @@
+"use client";
+
+import { ChangeEvent, useEffect, useRef, useState, useTransition } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Link,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
+import { createClient } from "@/lib/supabase/client";
+import type { CmsUploadKind } from "@/lib/cms/storage";
+import {
+  acceptForUploadKind,
+  uploadCmsMedia,
+  validateCmsUploadFile,
+} from "@/lib/cms/storage";
+import MediaPreview from "./MediaPreview";
+
+type MediaUploadFieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  uploadKind: CmsUploadKind;
+  mode?: "create" | "edit";
+  uploadOnSelect?: boolean;
+  onFileQueued?: (file: File | null) => void;
+  queuedFile?: File | null;
+  projectSlug?: string;
+  postSlug?: string;
+  accept?: string;
+  helperText?: string;
+  required?: boolean;
+  multiline?: boolean;
+  minRows?: number;
+  previewLabel?: string;
+  uploadButtonLabel?: string;
+  persistOnUpload?: boolean;
+  table?: string;
+  field?: string;
+  entityId?: string;
+};
+
+export default function MediaUploadField({
+  label,
+  value,
+  onChange,
+  uploadKind,
+  mode = "edit",
+  uploadOnSelect,
+  onFileQueued,
+  queuedFile,
+  projectSlug,
+  postSlug,
+  accept,
+  helperText,
+  required,
+  multiline,
+  minRows,
+  previewLabel,
+  uploadButtonLabel = "Upload file",
+  persistOnUpload = false,
+  table,
+  field,
+  entityId,
+}: MediaUploadFieldProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isPending, startTransition] = useTransition();
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error" | "info";
+    text: string;
+  } | null>(null);
+  const shouldUploadOnSelect = uploadOnSelect ?? mode === "edit";
+
+  useEffect(() => {
+    if (!queuedFile) {
+      setLocalPreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(queuedFile);
+    setLocalPreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [queuedFile]);
+
+  const persistUploadedUrl = async (publicUrl: string) => {
+    if (!persistOnUpload || !table || !field || !entityId) return;
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from(table)
+      .update({ [field]: publicUrl })
+      .eq("id", entityId);
+
+    if (error) throw new Error(error.message);
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    setMessage(null);
+
+    if (!shouldUploadOnSelect) {
+      try {
+        validateCmsUploadFile(file, uploadKind);
+        onFileQueued?.(file);
+        setMessage({
+          type: "info",
+          text: "Queued for upload after project is created.",
+        });
+      } catch (error) {
+        setMessage({
+          type: "error",
+          text:
+            error instanceof Error
+              ? error.message
+              : "Unable to queue this file.",
+        });
+      }
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const result = await uploadCmsMedia({
+          file,
+          kind: uploadKind,
+          projectSlug,
+          postSlug,
+        });
+        onChange(result.publicUrl);
+        onFileQueued?.(null);
+        await persistUploadedUrl(result.publicUrl);
+        setMessage({ type: "success", text: "Upload complete." });
+      } catch (error) {
+        setMessage({
+          type: "error",
+          text: error instanceof Error ? error.message : "Unable to upload file.",
+        });
+      }
+    });
+  };
+
+  const handleUrlChange = (nextValue: string) => {
+    onChange(nextValue);
+    if (nextValue.trim()) {
+      onFileQueued?.(null);
+      setMessage(null);
+    }
+  };
+
+  return (
+    <Stack spacing={1.25}>
+      <TextField
+        fullWidth
+        required={required}
+        label={label}
+        value={value}
+        helperText={helperText}
+        multiline={multiline}
+        minRows={minRows}
+        onChange={(event) => handleUrlChange(event.target.value)}
+      />
+
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={1}
+        sx={{ alignItems: { xs: "stretch", sm: "center" } }}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept ?? acceptForUploadKind(uploadKind)}
+          hidden
+          onChange={handleFileChange}
+        />
+        <Button
+          variant="outlined"
+          startIcon={
+            isPending ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              <CloudUploadOutlinedIcon />
+            )
+          }
+          disabled={isPending}
+          onClick={() => inputRef.current?.click()}
+        >
+          {isPending ? "Uploading..." : uploadButtonLabel}
+        </Button>
+        <Box sx={{ flex: 1 }} />
+      </Stack>
+
+      {message && <Alert severity={message.type}>{message.text}</Alert>}
+      {queuedFile && localPreviewUrl && (
+        <Box>
+          <Alert severity="info" sx={{ mb: 1.25 }}>
+            {queuedFile.name} is queued for upload after project is created.
+          </Alert>
+          {queuedFile.type.startsWith("image/") && (
+            <Box
+              component="img"
+              src={localPreviewUrl}
+              alt={previewLabel ?? label}
+              sx={{
+                display: "block",
+                width: "100%",
+                maxHeight: 220,
+                objectFit: "cover",
+                borderRadius: 1.5,
+              }}
+            />
+          )}
+          {queuedFile.type.startsWith("video/") && (
+            <Box
+              component="video"
+              src={localPreviewUrl}
+              controls
+              sx={{
+                display: "block",
+                width: "100%",
+                maxHeight: 260,
+                borderRadius: 1.5,
+              }}
+            />
+          )}
+          {queuedFile.type === "application/pdf" && (
+            <Typography variant="body2">
+              PDF queued.{" "}
+              <Link href={localPreviewUrl} target="_blank" rel="noreferrer">
+                Open local preview
+              </Link>
+            </Typography>
+          )}
+          <Button
+            size="small"
+            variant="text"
+            sx={{ mt: 1 }}
+            onClick={() => {
+              onFileQueued?.(null);
+              setMessage(null);
+            }}
+          >
+            Remove queued file
+          </Button>
+        </Box>
+      )}
+      <MediaPreview url={value} label={previewLabel ?? label} />
+    </Stack>
+  );
+}

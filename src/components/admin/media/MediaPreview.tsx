@@ -4,6 +4,7 @@ import { Box, Link, Stack, Typography, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
+import { publicMediaUrl } from "@/lib/cms/media-url";
 
 type MediaPreviewProps = {
   url: string;
@@ -26,6 +27,7 @@ export default function MediaPreview({ url, label = "Media preview" }: MediaPrev
   if (!url.trim()) return null;
 
   const type = mediaType(url);
+  const previewUrl = publicMediaUrl(url);
 
   return (
     <Box
@@ -39,7 +41,7 @@ export default function MediaPreview({ url, label = "Media preview" }: MediaPrev
       {type === "image" && (
         <Box
           component="img"
-          src={url}
+          src={previewUrl}
           alt={label}
           sx={{
             display: "block",
@@ -54,7 +56,7 @@ export default function MediaPreview({ url, label = "Media preview" }: MediaPrev
       {type === "video" && (
         <Box
           component="video"
-          src={url}
+          src={previewUrl}
           controls
           sx={{
             display: "block",
@@ -77,7 +79,7 @@ export default function MediaPreview({ url, label = "Media preview" }: MediaPrev
               {label}
             </Typography>
             <Link
-              href={url}
+              href={previewUrl}
               target="_blank"
               rel="noreferrer"
               underline="hover"

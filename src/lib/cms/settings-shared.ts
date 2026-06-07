@@ -3,6 +3,7 @@ import type {
   ResumeSettingValue,
   SiteSetting,
 } from "@/types/cms";
+import { publicMediaUrl } from "@/lib/cms/media-url";
 
 export const fallbackPortfolioContactSettings: PortfolioContactSettings = {
   resume: null,
@@ -24,7 +25,7 @@ function valueAsResume(value: unknown): ResumeSettingValue | null {
   const url = valueAsString(record.url);
   const label = valueAsString(record.label) || "Shevon Chisholm Resume";
 
-  return url ? { url, label } : null;
+  return url ? { url: publicMediaUrl(url), label } : null;
 }
 
 export function settingsToPortfolioContactSettings(

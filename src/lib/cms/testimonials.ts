@@ -1,7 +1,5 @@
-import { createClient as createBrowserClient } from "@/lib/supabase/client";
+import { adminDataRequest, type AdminFilter } from "@/lib/cms/admin-api";
 import type { Testimonial } from "@/types/cms";
-
-const supabase = createBrowserClient();
 
 export type TestimonialFilter =
   | "all"
@@ -10,33 +8,39 @@ export type TestimonialFilter =
   | "featured";
 
 export async function listTestimonials(filter: TestimonialFilter = "all") {
-  let query = supabase
-    .from("testimonials")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const filters: AdminFilter[] =
+    filter === "unpublished"
+      ? [{ column: "is_published", value: false }]
+      : filter === "published"
+        ? [{ column: "is_published", value: true }]
+        : filter === "featured"
+          ? [{ column: "is_featured", value: true }]
+          : [];
 
-  if (filter === "unpublished") query = query.eq("is_published", false);
-  if (filter === "published") query = query.eq("is_published", true);
-  if (filter === "featured") query = query.eq("is_featured", true);
-
-  const { data, error } = await query;
-
-  if (error) throw new Error(error.message);
-
-  return (data ?? []) as Testimonial[];
+  return adminDataRequest<Testimonial[]>({
+    table: "testimonials",
+    action: "select",
+    filters,
+    orders: [{ column: "created_at", ascending: false }],
+  });
 }
 
 export async function updateTestimonialFlags(
   id: string,
   flags: Partial<Pick<Testimonial, "is_published" | "is_featured">>
 ) {
-  const { error } = await supabase.from("testimonials").update(flags).eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "testimonials",
+    action: "update",
+    values: flags,
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function deleteTestimonial(id: string) {
-  const { error } = await supabase.from("testimonials").delete().eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "testimonials",
+    action: "delete",
+    filters: [{ column: "id", value: id }],
+  });
 }

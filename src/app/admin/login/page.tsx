@@ -16,13 +16,9 @@ import {
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-
-const supabase = createClient();
 
 export default function AdminLoginPage() {
   const theme = useTheme();
@@ -62,40 +58,34 @@ export default function AdminLoginPage() {
     setPasswordLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       });
+      const result = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
 
-      if (error) {
-        setMessage({
-          type: "error",
-          text: error.message || "Unable to sign in. Please check your details.",
-        });
-        return;
-      }
-
-      const { data: adminProfile, error: adminProfileError } = await supabase
-        .from("admin_profiles")
-        .select("id")
-        .eq("user_id", data.user.id)
-        .maybeSingle();
-
-      if (adminProfileError || !adminProfile) {
-        await supabase.auth.signOut();
-        setMessage({
-          type: "error",
-          text: "This account does not have admin access.",
-        });
-        return;
+      if (!response.ok) {
+        throw new Error(
+          result?.error || "Unable to sign in. Please check your details."
+        );
       }
 
       router.push("/admin/dashboard");
       router.refresh();
-    } catch {
+    } catch (error) {
       setMessage({
         type: "error",
-        text: "Admin services are temporarily unavailable. Please try again.",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Admin services are temporarily unavailable. Please try again.",
       });
     } finally {
       setPasswordLoading(false);
@@ -107,29 +97,34 @@ export default function AdminLoginPage() {
     setMagicLinkLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin/dashboard`,
+      const response = await fetch("/api/admin/magic-link", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ email }),
       });
+      const result = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
 
-      if (error) {
-        setMessage({
-          type: "error",
-          text: error.message || "Unable to send magic link.",
-        });
-        return;
+      if (!response.ok) {
+        throw new Error(result?.error || "Unable to send magic link.");
       }
 
       setMessage({
         type: "success",
         text: "Magic link sent. Check your email to continue.",
       });
-    } catch {
+    } catch (error) {
       setMessage({
         type: "error",
-        text: "Admin services are temporarily unavailable. Please try again.",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Admin services are temporarily unavailable. Please try again.",
       });
     } finally {
       setMagicLinkLoading(false);
@@ -170,7 +165,12 @@ export default function AdminLoginPage() {
             backgroundColor: alpha(theme.palette.primary.main, 0.12),
           }}
         >
-          <LockOutlinedIcon />
+          <Box
+            component="img"
+            src="/sc-logo.svg"
+            alt="Shevon Chisholm logo"
+            sx={{ width: 44, height: 44 }}
+          />
         </Box>
 
         <Typography variant="h4" component="h1" sx={{ fontWeight: 800, mb: 1 }}>

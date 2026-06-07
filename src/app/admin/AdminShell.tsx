@@ -33,9 +33,6 @@ import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import WorkOutlineOutlinedIcon from "@mui/icons-material/WorkOutlineOutlined";
-import { createClient } from "@/lib/supabase/client";
-
-const supabase = createClient();
 
 const expandedDrawerWidth = 280;
 const collapsedDrawerWidth = 84;
@@ -107,7 +104,11 @@ export default function AdminShell({ children }: AdminShellProps) {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
     } catch {
       // Continue to the login page even if the remote sign-out request fails.
     } finally {
@@ -136,33 +137,55 @@ export default function AdminShell({ children }: AdminShellProps) {
     >
       <Toolbar
         sx={{
-          minHeight: 76,
-          px: collapsed ? 1.5 : 2.5,
+          minHeight: collapsed ? 88 : 76,
+          px: collapsed ? 1 : 2.5,
+          py: collapsed ? 0.75 : 0,
+          flexDirection: collapsed ? "column" : "row",
           justifyContent: collapsed ? "center" : "space-between",
-          gap: 1,
+          gap: collapsed ? 0.25 : 1,
         }}
       >
-        {!collapsed && (
-          <Box sx={{ minWidth: 0 }}>
-            <Typography
-              variant="h6"
-              sx={{
-                color: theme.palette.primary.main,
-                fontWeight: 800,
-                lineHeight: 1.1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              SC Admin
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: theme.palette.text.secondary, whiteSpace: "nowrap" }}
-            >
-              Portfolio CMS
-            </Typography>
-          </Box>
-        )}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1.25,
+            minWidth: 0,
+          }}
+        >
+          <Box
+            component="img"
+            src="/sc-logo.svg"
+            alt="Shevon Chisholm logo"
+            sx={{
+              width: collapsed ? 32 : 38,
+              height: collapsed ? 32 : 38,
+              flexShrink: 0,
+            }}
+          />
+          {!collapsed && (
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: theme.palette.primary.main,
+                  fontWeight: 800,
+                  lineHeight: 1.1,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                SC Admin
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: theme.palette.text.secondary, whiteSpace: "nowrap" }}
+              >
+                Portfolio CMS
+              </Typography>
+            </Box>
+          )}
+        </Box>
 
         {isDesktop && (
           <Tooltip title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
@@ -321,6 +344,11 @@ export default function AdminShell({ children }: AdminShellProps) {
       sx={{
         display: "flex",
         minHeight: "100vh",
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
+        position: "relative",
+        overflowX: "clip",
         backgroundColor: theme.palette.background.default,
       }}
     >
@@ -328,8 +356,12 @@ export default function AdminShell({ children }: AdminShellProps) {
         position="fixed"
         elevation={0}
         sx={{
-          width: { md: `calc(100% - ${desktopDrawerWidth}px)` },
-          ml: { md: `${desktopDrawerWidth}px` },
+          width: {
+            xs: "100%",
+            md: `calc(100% - ${desktopDrawerWidth}px)`,
+          },
+          ml: { xs: 0, md: `${desktopDrawerWidth}px` },
+          boxSizing: "border-box",
           backgroundColor: alpha(theme.palette.background.default, 0.82),
           color: theme.palette.text.primary,
           borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
@@ -339,7 +371,7 @@ export default function AdminShell({ children }: AdminShellProps) {
           }),
         }}
       >
-        <Toolbar sx={{ minHeight: 72, gap: 2 }}>
+        <Toolbar sx={{ minHeight: 72, gap: { xs: 1.25, sm: 2 } }}>
           {!isDesktop && (
             <Tooltip title="Open navigation">
               <IconButton
@@ -352,11 +384,25 @@ export default function AdminShell({ children }: AdminShellProps) {
               </IconButton>
             </Tooltip>
           )}
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+          <Box
+            component="img"
+            src="/sc-logo.svg"
+            alt="Shevon Chisholm logo"
+            sx={{
+              width: { xs: 34, sm: 38 },
+              height: { xs: 34, sm: 38 },
+              flexShrink: 0,
+            }}
+          />
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h6" noWrap sx={{ fontWeight: 800 }}>
               Admin CMS
             </Typography>
-            <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+            <Typography
+              variant="body2"
+              noWrap
+              sx={{ color: theme.palette.text.secondary }}
+            >
               Content operations for the portfolio
             </Typography>
           </Box>
@@ -366,8 +412,13 @@ export default function AdminShell({ children }: AdminShellProps) {
       <Box
         component="nav"
         sx={{
-          width: { md: desktopDrawerWidth },
-          flexShrink: { md: 0 },
+          position: { xs: "absolute", md: "relative" },
+          width: { xs: 0, md: desktopDrawerWidth },
+          minWidth: { xs: 0, md: desktopDrawerWidth },
+          maxWidth: { xs: 0, md: desktopDrawerWidth },
+          flexBasis: { xs: 0, md: desktopDrawerWidth },
+          flexShrink: 0,
+          overflow: { xs: "visible", md: "hidden" },
           transition: theme.transitions.create("width", {
             duration: theme.transitions.duration.shorter,
           }),
@@ -382,6 +433,7 @@ export default function AdminShell({ children }: AdminShellProps) {
             display: { xs: "block", md: "none" },
             "& .MuiDrawer-paper": {
               width: expandedDrawerWidth,
+              maxWidth: "calc(100vw - 24px)",
               borderRight: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
             },
           }}
@@ -412,8 +464,19 @@ export default function AdminShell({ children }: AdminShellProps) {
         component="main"
         sx={{
           flexGrow: 1,
-          width: { md: `calc(100% - ${desktopDrawerWidth}px)` },
+          flexBasis: {
+            xs: "100%",
+            md: `calc(100% - ${desktopDrawerWidth}px)`,
+          },
+          width: {
+            xs: "100%",
+            md: `calc(100% - ${desktopDrawerWidth}px)`,
+          },
+          maxWidth: "100%",
           minWidth: 0,
+          ml: 0,
+          boxSizing: "border-box",
+          overflowX: "hidden",
           pt: { xs: 11, md: 12 },
           px: { xs: 2, sm: 3, lg: 5 },
           pb: 5,

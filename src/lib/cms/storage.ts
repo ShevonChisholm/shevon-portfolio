@@ -1,5 +1,3 @@
-import { createClient } from "@/lib/supabase/client";
-
 export type CmsStorageBucket = "portfolio-media" | "portfolio-documents";
 
 export type CmsUploadKind =
@@ -8,6 +6,7 @@ export type CmsUploadKind =
   | "project-video"
   | "blog-cover"
   | "document"
+  | "resume-document"
   | "case-study-document";
 
 export type CmsUploadResult = {
@@ -26,6 +25,7 @@ const allowedExtensionsByKind: Record<CmsUploadKind, readonly string[]> = {
   "project-video": videoExtensions,
   "blog-cover": imageExtensions,
   document: documentExtensions,
+  "resume-document": documentExtensions,
   "case-study-document": documentExtensions,
 };
 
@@ -60,7 +60,7 @@ export function validateCmsUploadFile(file: File, kind: CmsUploadKind) {
   }
 }
 
-function pathForUpload({
+export function pathForUpload({
   file,
   kind,
   projectSlug,
@@ -92,11 +92,15 @@ function pathForUpload({
         : `documents/${timestamp}-${filename}`;
     case "document":
       return `documents/${timestamp}-${filename}`;
+    case "resume-document":
+      return `documents/resume/shevon-chisholm-resume-${timestamp}.${extension}`;
   }
 }
 
 export function bucketForUploadKind(kind: CmsUploadKind): CmsStorageBucket {
-  return kind === "document" || kind === "case-study-document"
+  return kind === "document" ||
+    kind === "resume-document" ||
+    kind === "case-study-document"
     ? "portfolio-documents"
     : "portfolio-media";
 }
@@ -117,46 +121,25 @@ export async function uploadCmsMedia({
   postSlug?: string;
 }): Promise<CmsUploadResult> {
   validateCmsUploadFile(file, kind);
+  const formData = new FormData();
+  formData.set("file", file);
+  formData.set("kind", kind);
+  if (projectSlug) formData.set("projectSlug", projectSlug);
+  if (postSlug) formData.set("postSlug", postSlug);
 
-  const supabase = createClient();
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-
-  if (authError || !authData.user) {
-    throw new Error(
-      "Your admin session is not available. Sign in again before uploading media."
-    );
-  }
-
-  const bucket = bucketForUploadKind(kind);
-  const path = pathForUpload({ file, kind, projectSlug, postSlug });
-  const { error } = await supabase.storage.from(bucket).upload(path, file, {
-    cacheControl: "31536000",
-    contentType: file.type || undefined,
-    upsert: false,
+  const response = await fetch("/api/admin/upload", {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+    body: formData,
   });
+  const result = (await response.json().catch(() => null)) as
+    | (CmsUploadResult & { error?: string })
+    | null;
 
-  if (error) {
-    if (
-      error.message.toLowerCase().includes("row-level security") ||
-      error.message.toLowerCase().includes("unauthorized")
-    ) {
-      throw new Error(
-        `Supabase Storage denied this upload. Apply the CMS Storage policies for the ${bucket} bucket and verify the ${path} path is allowed.`
-      );
-    }
-
-    throw new Error(error.message);
+  if (!response.ok || !result?.publicUrl) {
+    throw new Error(result?.error || "Unable to upload media.");
   }
 
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-
-  if (!data.publicUrl) {
-    throw new Error("Upload succeeded, but no public URL was returned.");
-  }
-
-  return {
-    bucket,
-    path,
-    publicUrl: data.publicUrl,
-  };
+  return result;
 }

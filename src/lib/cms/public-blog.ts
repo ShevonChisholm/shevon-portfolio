@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { BlogPost } from "@/types/cms";
+import { publicMediaUrl } from "@/lib/cms/media-url";
 
 export type PublicBlogPost = {
   id: string;
@@ -30,7 +31,9 @@ function mapToPublicBlogPost(post: BlogPost): PublicBlogPost {
     slug: post.slug,
     excerpt: post.excerpt ?? "",
     content: post.content,
-    coverImageUrl: post.cover_image_url,
+    coverImageUrl: post.cover_image_url
+      ? publicMediaUrl(post.cover_image_url)
+      : null,
     tags: post.tags ?? [],
     authorName: post.author_name ?? "Shevon Chisholm",
     readingTime: post.reading_time ?? calculateReadingTime(post.content),

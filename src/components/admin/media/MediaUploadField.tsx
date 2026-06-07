@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
-import { createClient } from "@/lib/supabase/client";
+import { adminDataRequest } from "@/lib/cms/admin-api";
 import type { CmsUploadKind } from "@/lib/cms/storage";
 import {
   acceptForUploadKind,
@@ -92,13 +92,12 @@ export default function MediaUploadField({
   const persistUploadedUrl = async (publicUrl: string) => {
     if (!persistOnUpload || !table || !field || !entityId) return;
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from(table)
-      .update({ [field]: publicUrl })
-      .eq("id", entityId);
-
-    if (error) throw new Error(error.message);
+    await adminDataRequest({
+      table,
+      action: "update",
+      values: { [field]: publicUrl },
+      filters: [{ column: "id", value: entityId }],
+    });
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {

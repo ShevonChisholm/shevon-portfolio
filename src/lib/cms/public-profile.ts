@@ -6,6 +6,7 @@ import type {
   SkillCategory,
   SkillCategoryWithSkills,
 } from "@/types/cms";
+import { publicMediaUrl } from "@/lib/cms/media-url";
 
 const sortBySortOrder = <T extends { sort_order: number }>(items: T[]) =>
   [...items].sort((a, b) => a.sort_order - b.sort_order);
@@ -47,7 +48,12 @@ export async function getPublishedEducationItems() {
 
   if (error) throw new Error(error.message);
 
-  return (data ?? []) as EducationItem[];
+  return ((data ?? []) as EducationItem[]).map((item) => ({
+    ...item,
+    credential_url: item.credential_url
+      ? publicMediaUrl(item.credential_url)
+      : null,
+  }));
 }
 
 export async function getPublishedSkillCategoriesWithSkills() {

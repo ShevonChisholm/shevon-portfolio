@@ -102,7 +102,10 @@ export default function ProjectDetailsClient({
         }
       />
 
-      <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 5 }, pb: 8 }}>
+      <Container
+        maxWidth="lg"
+        sx={{ pt: { xs: 3.5, md: 5 }, pb: { xs: 6, md: 8 } }}
+      >
         <Typography
           variant="h2"
           component="h1"
@@ -111,21 +114,22 @@ export default function ProjectDetailsClient({
             fontWeight: 800,
             mb: 2,
             fontSize: {
-              xs: "1.9rem",
+              xs: "1.75rem",
               sm: "2.4rem",
               md: "3rem",
             },
-            lineHeight: 1.2,
+            lineHeight: { xs: 1.16, sm: 1.2 },
           }}
         >
           {project.title}
         </Typography>
 
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 4 }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: { xs: 3, sm: 4 } }}>
         {project.role && (
           <Chip
             label={project.role}
             sx={{
+              height: { xs: 34, sm: 40 },
               backgroundColor: alpha(theme.palette.primary.main, 0.14),
               color: theme.palette.primary.main,
               fontWeight: 700,
@@ -138,6 +142,7 @@ export default function ProjectDetailsClient({
             label={project.status}
             variant="outlined"
             sx={{
+              height: { xs: 34, sm: 40 },
               borderColor: alpha(theme.palette.primary.main, 0.35),
               color: theme.palette.text.secondary,
               fontWeight: 600,
@@ -150,6 +155,7 @@ export default function ProjectDetailsClient({
             key={tag}
             label={tag}
             sx={{
+              height: { xs: 32, sm: 40 },
               backgroundColor: alpha(theme.palette.primary.main, 0.1),
               color: theme.palette.primary.main,
               fontWeight: 500,
@@ -163,12 +169,12 @@ export default function ProjectDetailsClient({
           position: "relative",
           width: "100%",
           height: {
-            xs: hasMobileScreens ? "560px" : "300px",
+            xs: hasMobileScreens ? "420px" : "220px",
             sm: hasMobileScreens ? "600px" : "400px",
             md: hasMobileScreens ? "600px" : "500px",
           },
           mb: { xs: 4, sm: 6 },
-          borderRadius: "20px",
+          borderRadius: { xs: "14px", sm: "20px" },
           overflow: "hidden",
           backgroundColor: alpha(theme.palette.common.black, 0.22),
           border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
@@ -202,7 +208,7 @@ export default function ProjectDetailsClient({
               sx={{
                 width: { xs: 112, sm: 144 },
                 height: { xs: 112, sm: 144 },
-                borderRadius: "28px",
+                borderRadius: { xs: "22px", sm: "28px" },
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -216,6 +222,8 @@ export default function ProjectDetailsClient({
                   color: theme.palette.primary.main,
                   fontWeight: 900,
                   letterSpacing: 0,
+                  whiteSpace: "nowrap",
+                  lineHeight: 1,
                 }}
               >
                 {initialsFor(project.title)}
@@ -229,7 +237,7 @@ export default function ProjectDetailsClient({
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" },
-          gap: 4,
+          gap: { xs: 3, md: 4 },
         }}
       >
         <Box>
@@ -247,7 +255,7 @@ export default function ProjectDetailsClient({
           </Typography>
 
           {project.role && (
-            <Box sx={{ mt: 5 }}>
+            <Box sx={{ mt: { xs: 4, sm: 5 } }}>
               <SectionTitle title="My Role" />
               <Typography
                 variant="body1"
@@ -262,7 +270,7 @@ export default function ProjectDetailsClient({
           )}
 
           {project.impact && (
-            <Box sx={{ mt: 5 }}>
+            <Box sx={{ mt: { xs: 4, sm: 5 } }}>
               <SectionTitle title="Impact / Outcome" />
               <Typography
                 variant="body1"
@@ -277,9 +285,9 @@ export default function ProjectDetailsClient({
           )}
 
           {project.showcase.length > 0 && (
-            <Box sx={{ mt: 6 }}>
+            <Box sx={{ mt: { xs: 4.5, sm: 6 } }}>
               <SectionTitle title="Project Showcase" />
-              <Grid container spacing={4}>
+              <Grid container spacing={{ xs: 3, md: 4 }}>
                 {project.showcase.map((feature) => (
                   <Grid
                     key={`${feature.image}-${feature.title}`}
@@ -293,11 +301,11 @@ export default function ProjectDetailsClient({
                       sx={{
                         position: "relative",
                         width: "100%",
-                        minHeight: { xs: 280, sm: 360 },
+                        minHeight: { xs: 320, sm: 360 },
                         maxHeight: { xs: 640, md: 760 },
-                        aspectRatio: "16 / 10",
-                        mb: 2,
-                        borderRadius: "12px",
+                        aspectRatio: { xs: "4 / 5", sm: "16 / 10" },
+                        mb: 1.5,
+                        borderRadius: { xs: "10px", sm: "12px" },
                         overflow: "hidden",
                         display: "flex",
                         alignItems: "center",
@@ -366,13 +374,13 @@ export default function ProjectDetailsClient({
             </Box>
           )}
 
-          <Box sx={{ mt: 6 }}>
+          <Box sx={{ mt: { xs: 4.5, sm: 6 } }}>
             <SectionTitle title="Key Features" />
             <Box
               sx={{
                 display: "grid",
                 gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                gap: 3,
+                gap: { xs: 2, sm: 3 },
               }}
             >
               {highlightFeatures.map((feature) => (
@@ -513,8 +521,16 @@ function StackedActions({
       sx={{
         display: "flex",
         flexWrap: "wrap",
-        justifyContent: { xs: "flex-start", sm: "flex-end" },
+        width: { xs: "100%", sm: "auto" },
+        justifyContent: { xs: "stretch", sm: "flex-end" },
         gap: 1,
+        "& .MuiButton-root": {
+          flex: { xs: "1 1 calc(50% - 4px)", sm: "0 0 auto" },
+          minWidth: 0,
+          minHeight: { xs: 42, sm: 40 },
+          px: { xs: 1.5, sm: 2.25 },
+          whiteSpace: "nowrap",
+        },
       }}
     >
       {siteUrl && (
@@ -528,7 +544,7 @@ function StackedActions({
           sx={{
             borderRadius: "50px",
             textTransform: "none",
-            px: 3,
+            px: { xs: 1.5, sm: 3 },
             fontWeight: 600,
           }}
         >
@@ -589,7 +605,7 @@ function SectionTitle({ title }: { title: string }) {
           sm: "1.75rem",
           md: "2rem",
         },
-        mb: 2,
+        mb: { xs: 1.5, sm: 2 },
       }}
     >
       {title}
@@ -610,8 +626,8 @@ function FeatureCard({
     <Box
       sx={{
         backgroundColor: alpha(theme.palette.background.paper, 0.5),
-        borderRadius: "20px",
-        p: 3,
+        borderRadius: { xs: "14px", sm: "20px" },
+        p: { xs: 2, sm: 3 },
         border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
         transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
         "&:hover": {
@@ -624,12 +640,19 @@ function FeatureCard({
         <CheckCircleOutlineIcon
           sx={{
             color: theme.palette.primary.main,
-            fontSize: 24,
+            fontSize: { xs: 22, sm: 24 },
             flexShrink: 0,
             mt: 0.2,
           }}
         />
-        <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.3 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            lineHeight: 1.3,
+            fontSize: { xs: "1.12rem", sm: "1.25rem" },
+          }}
+        >
           {title}
         </Typography>
       </Box>

@@ -25,6 +25,7 @@ import {
   uploadResumePdf,
   upsertSiteSetting,
 } from "@/lib/cms/settings";
+import { publicMediaUrl } from "@/lib/cms/media-url";
 import {
   fallbackPortfolioContactSettings,
   settingsToPortfolioContactSettings,
@@ -214,7 +215,7 @@ export default function AdminSettingsPage() {
                       </Button>
                       {values.resume?.url && (
                         <Link
-                          href={values.resume.url}
+                          href={publicMediaUrl(values.resume.url)}
                           target="_blank"
                           rel="noreferrer"
                           underline="hover"

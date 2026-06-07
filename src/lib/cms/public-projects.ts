@@ -8,6 +8,7 @@ import type {
   ProjectTechnicalFocus,
   ProjectWithRelations,
 } from "@/types/cms";
+import { publicMediaUrl } from "@/lib/cms/media-url";
 
 export type PublicProjectShowcaseItem = {
   title: string;
@@ -67,16 +68,18 @@ function mapToPublicProject(project: ProjectWithRelations): PublicProject {
     title: project.title,
     description: project.description,
     shortDescription: project.short_description,
-    image: project.image_url,
-    images: images.map((image) => image.image_url).filter(Boolean),
+    image: project.image_url ? publicMediaUrl(project.image_url) : null,
+    images: images.map((image) => publicMediaUrl(image.image_url)).filter(Boolean),
     tags: sortBySortOrder(project.tags).map((tag) => tag.name),
     slug: project.slug,
     category: project.category,
     siteUrl: project.site_url,
     githubUrl: project.github_url,
     demoUrl: project.demo_url,
-    videoUrl: project.video_url,
-    caseStudyUrl: project.case_study_url,
+    videoUrl: project.video_url ? publicMediaUrl(project.video_url) : null,
+    caseStudyUrl: project.case_study_url
+      ? publicMediaUrl(project.case_study_url)
+      : null,
     role: project.role,
     status: project.status,
     impact: project.impact,
@@ -89,7 +92,7 @@ function mapToPublicProject(project: ProjectWithRelations): PublicProject {
     showcase: images.map((image) => ({
       title: image.title ?? "Project image",
       description: image.description ?? "",
-      image: image.image_url,
+      image: publicMediaUrl(image.image_url),
       altText: image.alt_text ?? image.title ?? project.title,
     })),
     seoTitle: project.seo_title,

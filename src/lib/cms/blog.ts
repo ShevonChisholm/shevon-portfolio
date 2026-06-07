@@ -1,9 +1,7 @@
-import { createClient } from "@/lib/supabase/client";
+import { adminDataRequest, type AdminFilter } from "@/lib/cms/admin-api";
 import { uploadCmsMedia } from "@/lib/cms/storage";
 import type { BlogPost, BlogPostFormValues } from "@/types/cms";
 import { emptyBlogPostFormValues } from "@/types/cms";
-
-const supabase = createClient();
 
 export type BlogPostFilter = "all" | "published" | "drafts";
 
@@ -83,31 +81,27 @@ function blogPostPayload(values: BlogPostFormValues) {
 }
 
 export async function listBlogPosts(filter: BlogPostFilter = "all") {
-  let query = supabase
-    .from("blog_posts")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (filter === "published") query = query.eq("is_published", true);
-  if (filter === "drafts") query = query.eq("is_published", false);
-
-  const { data, error } = await query;
-
-  if (error) throw new Error(error.message);
-
-  return (data ?? []) as BlogPost[];
+  const filters: AdminFilter[] =
+    filter === "published"
+      ? [{ column: "is_published", value: true }]
+      : filter === "drafts"
+        ? [{ column: "is_published", value: false }]
+        : [];
+  return adminDataRequest<BlogPost[]>({
+    table: "blog_posts",
+    action: "select",
+    filters,
+    orders: [{ column: "created_at", ascending: false }],
+  });
 }
 
 export async function getBlogPost(id: string) {
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-
-  return (data ?? null) as BlogPost | null;
+  return adminDataRequest<BlogPost | null>({
+    table: "blog_posts",
+    action: "select",
+    filters: [{ column: "id", value: id }],
+    single: "maybeSingle",
+  });
 }
 
 export async function createBlogPost(
@@ -118,13 +112,13 @@ export async function createBlogPost(
     ...values,
     cover_image_url: queuedMedia.coverImage ? "" : values.cover_image_url,
   };
-  const { data, error } = await supabase
-    .from("blog_posts")
-    .insert(blogPostPayload(insertValues))
-    .select("id, slug")
-    .single();
-
-  if (error) throw new Error(error.message);
+  const data = await adminDataRequest<{ id: string; slug: string | null }>({
+    table: "blog_posts",
+    action: "insert",
+    values: blogPostPayload(insertValues),
+    select: "id, slug",
+    single: "single",
+  });
   if (!data?.id) throw new Error("Blog post was created without an id.");
 
   const postId = data.id as string;
@@ -138,12 +132,12 @@ export async function createBlogPost(
         kind: "blog-cover",
         postSlug,
       });
-      const { error: updateError } = await supabase
-        .from("blog_posts")
-        .update({ cover_image_url: result.publicUrl })
-        .eq("id", postId);
-
-      if (updateError) throw new Error(updateError.message);
+      await adminDataRequest({
+        table: "blog_posts",
+        action: "update",
+        values: { cover_image_url: result.publicUrl },
+        filters: [{ column: "id", value: postId }],
+      });
     } catch (error) {
       warnings.push(
         error instanceof Error
@@ -160,34 +154,36 @@ export async function createBlogPost(
 }
 
 export async function updateBlogPost(id: string, values: BlogPostFormValues) {
-  const { error } = await supabase
-    .from("blog_posts")
-    .update(blogPostPayload(values))
-    .eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "blog_posts",
+    action: "update",
+    values: blogPostPayload(values),
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function deleteBlogPost(id: string) {
-  const { error } = await supabase.from("blog_posts").delete().eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "blog_posts",
+    action: "delete",
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function updateBlogPostPublished(
   post: Pick<BlogPost, "id" | "is_published" | "published_at">,
   isPublished: boolean
 ) {
-  const { error } = await supabase
-    .from("blog_posts")
-    .update({
+  await adminDataRequest({
+    table: "blog_posts",
+    action: "update",
+    values: {
       is_published: isPublished,
       published_at:
         isPublished && !post.published_at ? new Date().toISOString() : post.published_at,
-    })
-    .eq("id", post.id);
-
-  if (error) throw new Error(error.message);
+    },
+    filters: [{ column: "id", value: post.id }],
+  });
 }
 
 export function blogPostToFormValues(

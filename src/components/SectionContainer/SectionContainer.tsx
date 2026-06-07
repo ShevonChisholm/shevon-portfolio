@@ -21,12 +21,16 @@ export default function SectionContainer({ id, title, subtitle, children }: Sect
       sx={{
         py: { xs: 8, md: 12 },
         minHeight: '100vh',
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
+        overflowX: 'clip',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{ width: '100%', minWidth: 0 }}>
         <m.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -69,6 +73,7 @@ export default function SectionContainer({ id, title, subtitle, children }: Sect
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-100px' }}
             transition={{ duration: 0.6, delay: 0.2 }}
+            style={{ width: '100%', minWidth: 0 }}
           >
             {children}
           </m.div>

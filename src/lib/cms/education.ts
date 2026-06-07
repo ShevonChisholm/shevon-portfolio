@@ -1,8 +1,6 @@
-import { createClient as createBrowserClient } from "@/lib/supabase/client";
+import { adminDataRequest } from "@/lib/cms/admin-api";
 import type { EducationFormValues, EducationItem } from "@/types/cms";
 import { emptyEducationFormValues } from "@/types/cms";
-
-const supabase = createBrowserClient();
 
 const nullableString = (value: string) => {
   const trimmed = value.trim();
@@ -27,64 +25,61 @@ function educationPayload(values: EducationFormValues) {
 }
 
 export async function listEducationItems() {
-  const { data, error } = await supabase
-    .from("education_items")
-    .select("*")
-    .order("sort_order", { ascending: true })
-    .order("start_date", { ascending: false });
-
-  if (error) throw new Error(error.message);
-
-  return (data ?? []) as EducationItem[];
+  return adminDataRequest<EducationItem[]>({
+    table: "education_items",
+    action: "select",
+    orders: [
+      { column: "sort_order" },
+      { column: "start_date", ascending: false },
+    ],
+  });
 }
 
 export async function getEducationItem(id: string) {
-  const { data, error } = await supabase
-    .from("education_items")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-
-  return (data ?? null) as EducationItem | null;
+  return adminDataRequest<EducationItem | null>({
+    table: "education_items",
+    action: "select",
+    filters: [{ column: "id", value: id }],
+    single: "maybeSingle",
+  });
 }
 
 export async function createEducationItem(values: EducationFormValues) {
-  const { data, error } = await supabase
-    .from("education_items")
-    .insert(educationPayload(values))
-    .select("id")
-    .single();
-
-  if (error) throw new Error(error.message);
+  const data = await adminDataRequest<{ id: string }>({
+    table: "education_items",
+    action: "insert",
+    values: educationPayload(values),
+    select: "id",
+    single: "single",
+  });
   if (!data?.id) throw new Error("Education item was created without an id.");
-
-  return data.id as string;
+  return data.id;
 }
 
 export async function updateEducationItem(id: string, values: EducationFormValues) {
-  const { error } = await supabase
-    .from("education_items")
-    .update(educationPayload(values))
-    .eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "education_items",
+    action: "update",
+    values: educationPayload(values),
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function deleteEducationItem(id: string) {
-  const { error } = await supabase.from("education_items").delete().eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "education_items",
+    action: "delete",
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function updateEducationPublished(id: string, isPublished: boolean) {
-  const { error } = await supabase
-    .from("education_items")
-    .update({ is_published: isPublished })
-    .eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "education_items",
+    action: "update",
+    values: { is_published: isPublished },
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export function educationToFormValues(

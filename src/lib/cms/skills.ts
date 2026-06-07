@@ -1,4 +1,4 @@
-import { createClient as createBrowserClient } from "@/lib/supabase/client";
+import { adminDataRequest } from "@/lib/cms/admin-api";
 import type {
   Skill,
   SkillCategory,
@@ -6,8 +6,6 @@ import type {
   SkillCategoryWithSkills,
   SkillFormValues,
 } from "@/types/cms";
-
-const supabase = createBrowserClient();
 
 const nullableString = (value: string) => {
   const trimmed = value.trim();
@@ -52,100 +50,98 @@ function mergeCategoriesWithSkills(
 
 export async function listSkillCategoriesWithSkills() {
   const [categories, skills] = await Promise.all([
-    supabase
-      .from("skill_categories")
-      .select("*")
-      .order("sort_order", { ascending: true })
-      .order("title", { ascending: true }),
-    supabase
-      .from("skills")
-      .select("*")
-      .order("sort_order", { ascending: true })
-      .order("name", { ascending: true }),
+    adminDataRequest<SkillCategory[]>({
+      table: "skill_categories",
+      action: "select",
+      orders: [{ column: "sort_order" }, { column: "title" }],
+    }),
+    adminDataRequest<Skill[]>({
+      table: "skills",
+      action: "select",
+      orders: [{ column: "sort_order" }, { column: "name" }],
+    }),
   ]);
 
-  const error = categories.error ?? skills.error;
-  if (error) throw new Error(error.message);
-
-  return mergeCategoriesWithSkills(
-    (categories.data ?? []) as SkillCategory[],
-    (skills.data ?? []) as Skill[]
-  );
+  return mergeCategoriesWithSkills(categories, skills);
 }
 
 export async function createSkillCategory(values: SkillCategoryFormValues) {
-  const { error } = await supabase
-    .from("skill_categories")
-    .insert(categoryPayload(values));
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "skill_categories",
+    action: "insert",
+    values: categoryPayload(values),
+  });
 }
 
 export async function updateSkillCategory(
   id: string,
   values: SkillCategoryFormValues
 ) {
-  const { error } = await supabase
-    .from("skill_categories")
-    .update(categoryPayload(values))
-    .eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "skill_categories",
+    action: "update",
+    values: categoryPayload(values),
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function deleteSkillCategory(id: string) {
-  const { error: skillsError } = await supabase
-    .from("skills")
-    .delete()
-    .eq("category_id", id);
-
-  if (skillsError) throw new Error(skillsError.message);
-
-  const { error } = await supabase.from("skill_categories").delete().eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "skills",
+    action: "delete",
+    filters: [{ column: "category_id", value: id }],
+  });
+  await adminDataRequest({
+    table: "skill_categories",
+    action: "delete",
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function updateSkillCategoryPublished(
   id: string,
   isPublished: boolean
 ) {
-  const { error } = await supabase
-    .from("skill_categories")
-    .update({ is_published: isPublished })
-    .eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "skill_categories",
+    action: "update",
+    values: { is_published: isPublished },
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function createSkill(values: SkillFormValues) {
-  const { error } = await supabase.from("skills").insert(skillPayload(values));
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "skills",
+    action: "insert",
+    values: skillPayload(values),
+  });
 }
 
 export async function updateSkill(id: string, values: SkillFormValues) {
-  const { error } = await supabase
-    .from("skills")
-    .update(skillPayload(values))
-    .eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "skills",
+    action: "update",
+    values: skillPayload(values),
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function deleteSkill(id: string) {
-  const { error } = await supabase.from("skills").delete().eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "skills",
+    action: "delete",
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function updateSkillPublished(id: string, isPublished: boolean) {
-  const { error } = await supabase
-    .from("skills")
-    .update({ is_published: isPublished })
-    .eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "skills",
+    action: "update",
+    values: { is_published: isPublished },
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export function categoryToFormValues(

@@ -268,6 +268,7 @@ export default function ProjectVideoDialog({
                 py: { xs: 1, sm: 1.5 },
                 display: "flex",
                 alignItems: "center",
+                minWidth: 0,
                 gap: { xs: 1, sm: 1.5 },
                 background: `linear-gradient(transparent, ${alpha(
                   theme.palette.common.black,
@@ -287,7 +288,11 @@ export default function ProjectVideoDialog({
 
               <Typography
                 variant="caption"
-                sx={{ minWidth: { xs: 72, sm: 88 }, color: "common.white" }}
+                sx={{
+                  minWidth: { sm: 88 },
+                  color: "common.white",
+                  display: { xs: "none", sm: "block" },
+                }}
               >
                 {formatTime(currentTime)} / {formatTime(duration)}
               </Typography>
@@ -299,7 +304,7 @@ export default function ProjectVideoDialog({
                 onChange={handleSeek}
                 aria-label="Video progress"
                 size="small"
-                sx={{ flex: 1 }}
+                sx={{ flex: 1, minWidth: 0 }}
               />
 
               <Tooltip title={isMuted ? "Unmute" : "Mute"}>

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/client";
+import { adminDataRequest } from "@/lib/cms/admin-api";
 import { uploadCmsMedia } from "@/lib/cms/storage";
 import type {
   Project,
@@ -10,8 +10,6 @@ import type {
   ProjectWithRelations,
 } from "@/types/cms";
 import { emptyProjectFormValues } from "@/types/cms";
-
-const supabase = createClient();
 
 export type QueuedProjectMedia = {
   coverImage?: File | null;
@@ -72,15 +70,20 @@ function projectPayload(values: ProjectFormValues): ProjectInsertPayload {
 }
 
 async function replaceProjectRelations(projectId: string, values: ProjectFormValues) {
-  const deleteOperations = await Promise.all([
-    supabase.from("project_tags").delete().eq("project_id", projectId),
-    supabase.from("project_images").delete().eq("project_id", projectId),
-    supabase.from("project_highlights").delete().eq("project_id", projectId),
-    supabase.from("project_technical_focus").delete().eq("project_id", projectId),
-  ]);
-  const deleteError = deleteOperations.find((operation) => operation.error)?.error;
-
-  if (deleteError) throw new Error(deleteError.message);
+  await Promise.all(
+    [
+      "project_tags",
+      "project_images",
+      "project_highlights",
+      "project_technical_focus",
+    ].map((table) =>
+      adminDataRequest({
+        table,
+        action: "delete",
+        filters: [{ column: "project_id", value: projectId }],
+      })
+    )
+  );
 
   const tags = sortBySortOrder(values.tags)
     .filter((tag) => tag.name.trim())
@@ -119,79 +122,80 @@ async function replaceProjectRelations(projectId: string, values: ProjectFormVal
       sort_order: focus.sort_order,
     }));
 
-  const insertOperations = await Promise.all([
-    tags.length ? supabase.from("project_tags").insert(tags) : Promise.resolve({ error: null }),
+  await Promise.all([
+    tags.length
+      ? adminDataRequest({ table: "project_tags", action: "insert", values: tags })
+      : Promise.resolve(),
     images.length
-      ? supabase.from("project_images").insert(images)
-      : Promise.resolve({ error: null }),
+      ? adminDataRequest({ table: "project_images", action: "insert", values: images })
+      : Promise.resolve(),
     highlights.length
-      ? supabase.from("project_highlights").insert(highlights)
-      : Promise.resolve({ error: null }),
+      ? adminDataRequest({
+          table: "project_highlights",
+          action: "insert",
+          values: highlights,
+        })
+      : Promise.resolve(),
     technicalFocus.length
-      ? supabase.from("project_technical_focus").insert(technicalFocus)
-      : Promise.resolve({ error: null }),
+      ? adminDataRequest({
+          table: "project_technical_focus",
+          action: "insert",
+          values: technicalFocus,
+        })
+      : Promise.resolve(),
   ]);
-  const insertError = insertOperations.find((operation) => operation.error)?.error;
-
-  if (insertError) throw new Error(insertError.message);
 }
 
 export async function listProjects() {
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .order("sort_order", { ascending: true })
-    .order("title", { ascending: true });
-
-  if (error) throw new Error(error.message);
-
-  return (data ?? []) as Project[];
+  return adminDataRequest<Project[]>({
+    table: "projects",
+    action: "select",
+    orders: [{ column: "sort_order" }, { column: "title" }],
+  });
 }
 
 export async function getProjectWithRelations(projectId: string) {
-  const { data: project, error: projectError } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", projectId)
-    .maybeSingle();
-
-  if (projectError) throw new Error(projectError.message);
+  const project = await adminDataRequest<Project | null>({
+    table: "projects",
+    action: "select",
+    filters: [{ column: "id", value: projectId }],
+    single: "maybeSingle",
+  });
   if (!project) return null;
 
   const [tags, images, highlights, technicalFocus] = await Promise.all([
-    supabase
-      .from("project_tags")
-      .select("*")
-      .eq("project_id", projectId)
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("project_images")
-      .select("*")
-      .eq("project_id", projectId)
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("project_highlights")
-      .select("*")
-      .eq("project_id", projectId)
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("project_technical_focus")
-      .select("*")
-      .eq("project_id", projectId)
-      .order("sort_order", { ascending: true }),
+    adminDataRequest<ProjectTag[]>({
+      table: "project_tags",
+      action: "select",
+      filters: [{ column: "project_id", value: projectId }],
+      orders: [{ column: "sort_order" }],
+    }),
+    adminDataRequest<ProjectImage[]>({
+      table: "project_images",
+      action: "select",
+      filters: [{ column: "project_id", value: projectId }],
+      orders: [{ column: "sort_order" }],
+    }),
+    adminDataRequest<ProjectHighlight[]>({
+      table: "project_highlights",
+      action: "select",
+      filters: [{ column: "project_id", value: projectId }],
+      orders: [{ column: "sort_order" }],
+    }),
+    adminDataRequest<ProjectTechnicalFocus[]>({
+      table: "project_technical_focus",
+      action: "select",
+      filters: [{ column: "project_id", value: projectId }],
+      orders: [{ column: "sort_order" }],
+    }),
   ]);
 
-  const relationError =
-    tags.error ?? images.error ?? highlights.error ?? technicalFocus.error;
-
-  if (relationError) throw new Error(relationError.message);
-
   return {
-    ...(project as Project),
-    tags: (tags.data ?? []) as ProjectTag[],
-    images: (images.data ?? []) as ProjectImage[],
-    highlights: (highlights.data ?? []) as ProjectHighlight[],
-    technical_focus: (technicalFocus.data ?? []) as ProjectTechnicalFocus[],
+    ...project,
+    tags,
+    images,
+    highlights,
+    technical_focus: technicalFocus,
   } satisfies ProjectWithRelations;
 }
 
@@ -212,13 +216,13 @@ export async function createProject(
     ),
   };
 
-  const { data, error } = await supabase
-    .from("projects")
-    .insert(projectPayload(insertValues))
-    .select("id, slug")
-    .single();
-
-  if (error) throw new Error(error.message);
+  const data = await adminDataRequest<{ id: string; slug: string | null }>({
+    table: "projects",
+    action: "insert",
+    values: projectPayload(insertValues),
+    select: "id, slug",
+    single: "single",
+  });
   if (!data?.id) throw new Error("Project was created without an id.");
 
   const projectId = data.id as string;
@@ -291,14 +295,18 @@ export async function createProject(
   }
 
   if (Object.keys(projectUpdates).length) {
-    const { error: updateError } = await supabase
-      .from("projects")
-      .update(projectUpdates)
-      .eq("id", projectId);
-
-    if (updateError) {
+    try {
+      await adminDataRequest({
+        table: "projects",
+        action: "update",
+        values: projectUpdates,
+        filters: [{ column: "id", value: projectId }],
+      });
+    } catch (error) {
       warnings.push(
-        `Media uploaded, but project media fields failed to update: ${updateError.message}`
+        `Media uploaded, but project media fields failed to update: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
       );
     }
   }
@@ -347,13 +355,17 @@ export async function createProject(
   }
 
   if (uploadedGalleryRows.length) {
-    const { error: imageInsertError } = await supabase
-      .from("project_images")
-      .insert(uploadedGalleryRows);
-
-    if (imageInsertError) {
+    try {
+      await adminDataRequest({
+        table: "project_images",
+        action: "insert",
+        values: uploadedGalleryRows,
+      });
+    } catch (error) {
       warnings.push(
-        `Uploaded showcase images failed to save: ${imageInsertError.message}`
+        `Uploaded showcase images failed to save: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
       );
     }
   }
@@ -365,42 +377,48 @@ export async function createProject(
 }
 
 export async function updateProject(projectId: string, values: ProjectFormValues) {
-  const { error } = await supabase
-    .from("projects")
-    .update(projectPayload(values))
-    .eq("id", projectId);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "projects",
+    action: "update",
+    values: projectPayload(values),
+    filters: [{ column: "id", value: projectId }],
+  });
 
   await replaceProjectRelations(projectId, values);
 }
 
 export async function deleteProject(projectId: string) {
-  const deleteRelations = await Promise.all([
-    supabase.from("project_tags").delete().eq("project_id", projectId),
-    supabase.from("project_images").delete().eq("project_id", projectId),
-    supabase.from("project_highlights").delete().eq("project_id", projectId),
-    supabase.from("project_technical_focus").delete().eq("project_id", projectId),
-  ]);
-  const relationError = deleteRelations.find((operation) => operation.error)?.error;
-
-  if (relationError) throw new Error(relationError.message);
-
-  const { error } = await supabase.from("projects").delete().eq("id", projectId);
-
-  if (error) throw new Error(error.message);
+  await Promise.all(
+    [
+      "project_tags",
+      "project_images",
+      "project_highlights",
+      "project_technical_focus",
+    ].map((table) =>
+      adminDataRequest({
+        table,
+        action: "delete",
+        filters: [{ column: "project_id", value: projectId }],
+      })
+    )
+  );
+  await adminDataRequest({
+    table: "projects",
+    action: "delete",
+    filters: [{ column: "id", value: projectId }],
+  });
 }
 
 export async function updateProjectFlags(
   projectId: string,
   flags: Pick<Project, "is_featured" | "is_published">
 ) {
-  const { error } = await supabase
-    .from("projects")
-    .update(flags)
-    .eq("id", projectId);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "projects",
+    action: "update",
+    values: flags,
+    filters: [{ column: "id", value: projectId }],
+  });
 }
 
 export function projectToFormValues(

@@ -1,8 +1,6 @@
-import { createClient as createBrowserClient } from "@/lib/supabase/client";
+import { adminDataRequest } from "@/lib/cms/admin-api";
 import type { ExperienceFormValues, ExperienceItem } from "@/types/cms";
 import { emptyExperienceFormValues } from "@/types/cms";
-
-const supabase = createBrowserClient();
 
 const nullableString = (value: string) => {
   const trimmed = value.trim();
@@ -28,70 +26,67 @@ function experiencePayload(values: ExperienceFormValues) {
 }
 
 export async function listExperienceItems() {
-  const { data, error } = await supabase
-    .from("experience_items")
-    .select("*")
-    .order("sort_order", { ascending: true })
-    .order("start_date", { ascending: false });
-
-  if (error) throw new Error(error.message);
-
-  return (data ?? []) as ExperienceItem[];
+  return adminDataRequest<ExperienceItem[]>({
+    table: "experience_items",
+    action: "select",
+    orders: [
+      { column: "sort_order" },
+      { column: "start_date", ascending: false },
+    ],
+  });
 }
 
 export async function getExperienceItem(id: string) {
-  const { data, error } = await supabase
-    .from("experience_items")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-
-  return (data ?? null) as ExperienceItem | null;
+  return adminDataRequest<ExperienceItem | null>({
+    table: "experience_items",
+    action: "select",
+    filters: [{ column: "id", value: id }],
+    single: "maybeSingle",
+  });
 }
 
 export async function createExperienceItem(values: ExperienceFormValues) {
-  const { data, error } = await supabase
-    .from("experience_items")
-    .insert(experiencePayload(values))
-    .select("id")
-    .single();
-
-  if (error) throw new Error(error.message);
+  const data = await adminDataRequest<{ id: string }>({
+    table: "experience_items",
+    action: "insert",
+    values: experiencePayload(values),
+    select: "id",
+    single: "single",
+  });
   if (!data?.id) throw new Error("Experience item was created without an id.");
-
-  return data.id as string;
+  return data.id;
 }
 
 export async function updateExperienceItem(
   id: string,
   values: ExperienceFormValues
 ) {
-  const { error } = await supabase
-    .from("experience_items")
-    .update(experiencePayload(values))
-    .eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "experience_items",
+    action: "update",
+    values: experiencePayload(values),
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function deleteExperienceItem(id: string) {
-  const { error } = await supabase.from("experience_items").delete().eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "experience_items",
+    action: "delete",
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export async function updateExperiencePublished(
   id: string,
   isPublished: boolean
 ) {
-  const { error } = await supabase
-    .from("experience_items")
-    .update({ is_published: isPublished })
-    .eq("id", id);
-
-  if (error) throw new Error(error.message);
+  await adminDataRequest({
+    table: "experience_items",
+    action: "update",
+    values: { is_published: isPublished },
+    filters: [{ column: "id", value: id }],
+  });
 }
 
 export function experienceToFormValues(

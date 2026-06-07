@@ -16,6 +16,7 @@ import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { m } from "framer-motion";
 import { format } from "date-fns";
+import Image from "next/image";
 import Link from "next/link";
 import type { PublicBlogPost } from "@/lib/cms/public-blog";
 import SectionContainer from "../SectionContainer/SectionContainer";
@@ -104,17 +105,12 @@ export default function BlogClient({ posts }: BlogClientProps) {
                       }}
                     >
                       {post.coverImageUrl ? (
-                        <Box
-                          component="img"
+                        <Image
                           src={post.coverImageUrl}
                           alt={post.title}
-                          sx={{
-                            position: "absolute",
-                            inset: 0,
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
+                          fill
+                          sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
+                          style={{ objectFit: "cover" }}
                         />
                       ) : (
                         <Box

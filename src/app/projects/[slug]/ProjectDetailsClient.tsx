@@ -11,6 +11,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import GitHubIcon from "@mui/icons-material/GitHub";
@@ -176,16 +177,13 @@ export default function ProjectDetailsClient({
         {hasMobileScreens ? (
           <MobileAppScreens images={project.images} title={project.title} />
         ) : project.image ? (
-          <Box
-            component="img"
+          <Image
             src={project.image}
             alt={project.title}
-            sx={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-            }}
+            fill
+            priority
+            sizes="(max-width: 1200px) 100vw, 1200px"
+            style={{ objectFit: "cover" }}
           />
         ) : (
           <Box
@@ -293,7 +291,11 @@ export default function ProjectDetailsClient({
                   >
                     <Box
                       sx={{
+                        position: "relative",
                         width: "100%",
+                        minHeight: { xs: 280, sm: 360 },
+                        maxHeight: { xs: 640, md: 760 },
+                        aspectRatio: "16 / 10",
                         mb: 2,
                         borderRadius: "12px",
                         overflow: "hidden",
@@ -316,15 +318,12 @@ export default function ProjectDetailsClient({
                         },
                       }}
                     >
-                      <Box
-                        component="img"
+                      <Image
                         src={feature.image}
                         alt={feature.altText}
-                        sx={{
-                          display: "block",
-                          width: "100%",
-                          height: "auto",
-                          maxHeight: { xs: 640, md: 760 },
+                        fill
+                        sizes="(max-width: 900px) 100vw, 50vw"
+                        style={{
                           objectFit: "contain",
                           objectPosition: "center",
                         }}

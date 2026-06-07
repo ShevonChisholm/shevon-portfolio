@@ -13,6 +13,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import { m as motion } from "framer-motion";
 import { format } from "date-fns";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { PublicBlogPost } from "@/lib/cms/public-blog";
 import DetailPageToolbar from "@/components/DetailPageToolbar/DetailPageToolbar";
@@ -119,7 +120,11 @@ function BlogCover({
     <Container maxWidth="lg" sx={{ mb: { xs: 4, md: 5 } }}>
       <Box
         sx={{
+          position: "relative",
           width: "100%",
+          minHeight: { xs: 280, sm: 420, md: 560 },
+          maxHeight: { xs: 560, md: 760 },
+          aspectRatio: "16 / 9",
           overflow: "hidden",
           borderRadius: { xs: 1.5, md: 2 },
           border: `1px solid ${alpha(theme.palette.primary.main, 0.22)}`,
@@ -128,16 +133,14 @@ function BlogCover({
         }}
       >
         {hasImage ? (
-          <Box
-            component="img"
+          <Image
             src={post.coverImageUrl ?? ""}
             alt={post.title}
             onError={onImageError}
-            sx={{
-              display: "block",
-              width: "100%",
-              height: "auto",
-              maxHeight: { xs: 560, md: 760 },
+            fill
+            priority
+            sizes="(max-width: 1200px) 100vw, 1200px"
+            style={{
               objectFit: "contain",
               objectPosition: "center",
             }}

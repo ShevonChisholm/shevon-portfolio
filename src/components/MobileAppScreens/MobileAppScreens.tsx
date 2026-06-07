@@ -1,4 +1,5 @@
 import { Box, useMediaQuery, useTheme } from "@mui/material";
+import Image from "next/image";
 
 interface MobileAppScreensProps {
   images: string[];
@@ -54,15 +55,14 @@ export default function MobileAppScreens({ images, title }: MobileAppScreensProp
             }
           }}
         >
-          <Box
-            component="img"
+          <Image
             src={image}
             alt={`${title} screen ${index + 1}`}
-            sx={{
-              width: "100%",
-              height: "100%",
+            fill
+            sizes="(max-width: 600px) 50vw, 25vw"
+            style={{
               objectFit: "contain",
-              p: "4px",
+              padding: "4px",
             }}
           />
         </Box>

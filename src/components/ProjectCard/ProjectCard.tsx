@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { m as motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import type { PublicProject } from "@/lib/cms/public-projects";
@@ -132,17 +133,13 @@ export default function ProjectCard({
                 <MobileAppScreens images={images} title={title} />
               </Box>
             ) : image ? (
-              <Box
-                component="img"
+              <Image
                 src={image}
                 alt={title}
+                fill
+                sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
                 className="project-image"
-                sx={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
+                style={{
                   transition: "transform 0.3s ease-in-out",
                   objectFit: "cover",
                 }}

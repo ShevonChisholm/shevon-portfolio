@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import {
   Box,
   Button,
@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
@@ -20,6 +19,8 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import type { PublicProject } from "@/lib/cms/public-projects";
 import MobileAppScreens from "@/components/MobileAppScreens/MobileAppScreens";
+import ProjectVideoDialog from "@/components/Projects/ProjectVideoDialog";
+import DetailPageToolbar from "@/components/DetailPageToolbar/DetailPageToolbar";
 
 interface FeatureItem {
   title: string;
@@ -44,6 +45,7 @@ export default function ProjectDetailsClient({
 }: ProjectDetailsClientProps) {
   const theme = useTheme();
   const router = useRouter();
+  const [videoOpen, setVideoOpen] = useState(false);
   const hasMobileScreens =
     project.category === "Mobile Apps" && project.images.length > 0;
   const fallbackFeatures = getFallbackFeatures(project);
@@ -63,11 +65,6 @@ export default function ProjectDetailsClient({
       label: "Demo",
       href: project.demoUrl,
       icon: <OpenInNewIcon />,
-    },
-    {
-      label: "Video",
-      href: project.videoUrl,
-      icon: <PlayCircleOutlineIcon />,
     },
     {
       label: "Case Study",
@@ -90,58 +87,38 @@ export default function ProjectDetailsClient({
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 8 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
-          gap: 2,
-          mb: 4,
-          flexDirection: { xs: "column", sm: "row" },
-        }}
-      >
-        <Box
-          onClick={handleBackClick}
+    <Box>
+      <DetailPageToolbar
+        backLabel="Back to Projects"
+        onBack={handleBackClick}
+        actions={
+          <StackedActions
+            siteUrl={project.siteUrl}
+            secondaryLinks={secondaryLinks}
+            videoUrl={project.videoUrl}
+            onVideoClick={() => setVideoOpen(true)}
+          />
+        }
+      />
+
+      <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 5 }, pb: 8 }}>
+        <Typography
+          variant="h2"
+          component="h1"
+          gutterBottom
           sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            color: theme.palette.text.secondary,
-            cursor: "pointer",
-            transition: "color 0.2s ease",
-            "&:hover": {
-              color: theme.palette.primary.main,
+            fontWeight: 800,
+            mb: 2,
+            fontSize: {
+              xs: "1.9rem",
+              sm: "2.4rem",
+              md: "3rem",
             },
+            lineHeight: 1.2,
           }}
         >
-          <ArrowBackIcon />
-          <Typography>Back to Projects</Typography>
-        </Box>
-
-        <StackedActions
-          siteUrl={project.siteUrl}
-          secondaryLinks={secondaryLinks}
-        />
-      </Box>
-
-      <Typography
-        variant="h2"
-        component="h1"
-        gutterBottom
-        sx={{
-          fontWeight: 800,
-          mb: 2,
-          fontSize: {
-            xs: "1.9rem",
-            sm: "2.4rem",
-            md: "3rem",
-          },
-          lineHeight: 1.2,
-        }}
-      >
-        {project.title}
-      </Typography>
+          {project.title}
+        </Typography>
 
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 4 }}>
         {project.role && (
@@ -316,12 +293,18 @@ export default function ProjectDetailsClient({
                   >
                     <Box
                       sx={{
-                        position: "relative",
                         width: "100%",
-                        paddingTop: "56.25%",
                         mb: 2,
                         borderRadius: "12px",
                         overflow: "hidden",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: alpha(theme.palette.common.white, 0.03),
+                        border: `1px solid ${alpha(
+                          theme.palette.primary.main,
+                          0.22
+                        )}`,
                         boxShadow: theme.shadows[2],
                         transition:
                           "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
@@ -338,11 +321,12 @@ export default function ProjectDetailsClient({
                         src={feature.image}
                         alt={feature.altText}
                         sx={{
-                          position: "absolute",
-                          inset: 0,
+                          display: "block",
                           width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
+                          height: "auto",
+                          maxHeight: { xs: 640, md: 760 },
+                          objectFit: "contain",
+                          objectPosition: "center",
                         }}
                       />
                     </Box>
@@ -499,16 +483,31 @@ export default function ProjectDetailsClient({
           </Box>
         </Box>
       </Box>
-    </Container>
+
+      </Container>
+
+      {project.videoUrl && (
+        <ProjectVideoDialog
+          open={videoOpen}
+          onClose={() => setVideoOpen(false)}
+          title={project.title}
+          videoUrl={project.videoUrl}
+        />
+      )}
+    </Box>
   );
 }
 
 function StackedActions({
   siteUrl,
   secondaryLinks,
+  videoUrl,
+  onVideoClick,
 }: {
   siteUrl: string | null;
   secondaryLinks: { label: string; href: string; icon: ReactElement }[];
+  videoUrl: string | null;
+  onVideoClick: () => void;
 }) {
   return (
     <Box
@@ -557,6 +556,23 @@ function StackedActions({
           {link.label}
         </Button>
       ))}
+
+      {videoUrl && (
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<PlayCircleOutlineIcon />}
+          onClick={onVideoClick}
+          sx={{
+            borderRadius: "50px",
+            textTransform: "none",
+            px: 2.25,
+            fontWeight: 600,
+          }}
+        >
+          Video
+        </Button>
+      )}
     </Box>
   );
 }

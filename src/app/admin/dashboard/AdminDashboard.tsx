@@ -15,6 +15,7 @@ import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import PsychologyOutlinedIcon from "@mui/icons-material/PsychologyOutlined";
+import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import WorkOutlineOutlinedIcon from "@mui/icons-material/WorkOutlineOutlined";
@@ -26,6 +27,7 @@ const cardIcons = {
   education: SchoolOutlinedIcon,
   skills: PsychologyOutlinedIcon,
   messages: EmailOutlinedIcon,
+  testimonials: RateReviewOutlinedIcon,
   settings: SettingsOutlinedIcon,
 };
 
@@ -70,6 +72,12 @@ const dashboardCards: Array<{
     title: "Messages",
     description: "Review contact form submissions and follow-up status.",
     iconKey: "messages",
+  },
+  {
+    id: "testimonials",
+    title: "Testimonials",
+    description: "Review, publish, and feature client feedback.",
+    iconKey: "testimonials",
   },
   {
     id: "settings",

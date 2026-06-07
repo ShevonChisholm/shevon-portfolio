@@ -313,3 +313,125 @@ export const emptySkillFormValues: SkillFormValues = {
   sort_order: 0,
   is_published: true,
 };
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string | null;
+  message: string;
+  source: string | null;
+  is_read: boolean;
+  archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SiteSetting {
+  id: string;
+  setting_key: string;
+  setting_value: unknown;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ResumeSettingValue {
+  url: string;
+  label: string;
+}
+
+export interface PortfolioContactSettings {
+  resume: ResumeSettingValue | null;
+  github_url: string;
+  linkedin_url: string;
+  contact_email: string;
+  contact_phone: string;
+  location: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  cover_image_url: string | null;
+  tags: string[] | null;
+  author_name: string | null;
+  reading_time: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  published_at: string | null;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogPostFormValues {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  cover_image_url: string;
+  tags: string;
+  author_name: string;
+  reading_time: string;
+  seo_title: string;
+  seo_description: string;
+  published_at: string;
+  is_published: boolean;
+}
+
+export const emptyBlogPostFormValues: BlogPostFormValues = {
+  title: "",
+  slug: "",
+  excerpt: "",
+  content: "",
+  cover_image_url: "",
+  tags: "",
+  author_name: "Shevon Chisholm",
+  reading_time: "",
+  seo_title: "",
+  seo_description: "",
+  published_at: "",
+  is_published: false,
+};
+
+export interface Testimonial {
+  id: string;
+  name: string;
+  email: string | null;
+  company: string | null;
+  role: string | null;
+  project_name: string | null;
+  rating: number | null;
+  feedback: string;
+  consent_to_publish: boolean;
+  is_published: boolean;
+  is_featured: boolean;
+  source: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TestimonialFormValues {
+  name: string;
+  email: string;
+  company: string;
+  role: string;
+  project_name: string;
+  rating: number | null;
+  feedback: string;
+  consent_to_publish: boolean;
+}
+
+export const emptyTestimonialFormValues: TestimonialFormValues = {
+  name: "",
+  email: "",
+  company: "",
+  role: "",
+  project_name: "",
+  rating: null,
+  feedback: "",
+  consent_to_publish: false,
+};

@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabasePublishableKey =
@@ -18,10 +19,20 @@ function getSupabaseConfig() {
   };
 }
 
+let browserClient: SupabaseClient | undefined;
+
 export function createClient() {
   const config = getSupabaseConfig();
 
-  return createBrowserClient(config.supabaseUrl, config.supabasePublishableKey);
-}
+  if (typeof window === "undefined") {
+    return createBrowserClient(config.supabaseUrl, config.supabasePublishableKey);
+  }
 
-export const supabase = createClient();
+  browserClient ??= createBrowserClient(
+    config.supabaseUrl,
+    config.supabasePublishableKey,
+    { isSingleton: true }
+  );
+
+  return browserClient;
+}

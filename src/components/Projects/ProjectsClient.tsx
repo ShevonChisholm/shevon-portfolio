@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { AnimatePresence } from "framer-motion";
 import type { PublicProject } from "@/lib/cms/public-projects";
+import type { PublicTestimonial } from "@/lib/cms/public-testimonials";
 import ProjectCard from "../ProjectCard/ProjectCard";
 import SectionContainer from "../SectionContainer/SectionContainer";
 import TestimonialCarousel from "../TestimonialCarousel/TestimonialCarousel";
@@ -20,12 +21,16 @@ type ProjectCategory = "All" | "Web Apps" | "Mobile Apps";
 
 type ProjectsClientProps = {
   projects: PublicProject[];
+  testimonials: PublicTestimonial[];
 };
 
 const initialVisibleProjects = 6;
 const visibleProjectsIncrement = 3;
 
-export default function ProjectsClient({ projects }: ProjectsClientProps) {
+export default function ProjectsClient({
+  projects,
+  testimonials,
+}: ProjectsClientProps) {
   const theme = useTheme();
   const [category, setCategory] = useState<ProjectCategory>("All");
   const [visibleCount, setVisibleCount] = useState(initialVisibleProjects);
@@ -148,7 +153,7 @@ export default function ProjectsClient({ projects }: ProjectsClientProps) {
             color: theme.palette.text.primary,
           }}
         >
-          Why Work With Me
+          {testimonials.length > 0 ? "Client Feedback" : "Why Work With Me"}
         </Typography>
 
         <Typography
@@ -159,7 +164,9 @@ export default function ProjectsClient({ projects }: ProjectsClientProps) {
             color: theme.palette.text.secondary,
           }}
         >
-          How I approach building reliable web and mobile products
+          {testimonials.length > 0
+            ? "What clients and collaborators say about working together"
+            : "How I approach building reliable web and mobile products"}
         </Typography>
 
         <Box
@@ -172,7 +179,7 @@ export default function ProjectsClient({ projects }: ProjectsClientProps) {
             p: { xs: 2, sm: 4 },
           }}
         >
-          <TestimonialCarousel />
+          <TestimonialCarousel testimonials={testimonials} />
         </Box>
       </Box>
     </SectionContainer>

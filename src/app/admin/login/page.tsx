@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
   Button,
   Container,
   Divider,
+  IconButton,
+  InputAdornment,
   Link,
   Paper,
   TextField,
@@ -15,8 +17,12 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 
 export default function AdminLoginPage() {
   const theme = useTheme();
@@ -24,6 +30,7 @@ export default function AdminLoginPage() {
 
   const [email, setEmail] = useState("chisholmshevon@gmail.com");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [magicLinkLoading, setMagicLinkLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [message, setMessage] = useState<{
@@ -31,71 +38,102 @@ export default function AdminLoginPage() {
     text: string;
   } | null>(null);
 
+  useEffect(() => {
+    const error = new URLSearchParams(window.location.search).get("error");
+
+    if (error === "supabase_unavailable") {
+      setMessage({
+        type: "error",
+        text: "Admin services are temporarily unavailable. Check your network connection and try again.",
+      });
+    }
+
+    if (error === "auth_callback_failed") {
+      setMessage({
+        type: "error",
+        text: "The authentication link could not be completed. Please request a new link.",
+      });
+    }
+  }, []);
+
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
     setPasswordLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+      if (error) {
+        setMessage({
+          type: "error",
+          text: error.message || "Unable to sign in. Please check your details.",
+        });
+        return;
+      }
+
+      const { data: adminProfile, error: adminProfileError } = await supabase
+        .from("admin_profiles")
+        .select("id")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+
+      if (adminProfileError || !adminProfile) {
+        await supabase.auth.signOut();
+        setMessage({
+          type: "error",
+          text: "This account does not have admin access.",
+        });
+        return;
+      }
+
+      router.push("/admin/dashboard");
+      router.refresh();
+    } catch {
+      setMessage({
+        type: "error",
+        text: "Admin services are temporarily unavailable. Please try again.",
+      });
+    } finally {
       setPasswordLoading(false);
-      setMessage({
-        type: "error",
-        text: error.message || "Unable to sign in. Please check your details.",
-      });
-      return;
     }
-
-    const { data: adminProfile, error: adminProfileError } = await supabase
-      .from("admin_profiles")
-      .select("id")
-      .eq("user_id", data.user.id)
-      .maybeSingle();
-
-    setPasswordLoading(false);
-
-    if (adminProfileError || !adminProfile) {
-      await supabase.auth.signOut();
-      setMessage({
-        type: "error",
-        text: "This account does not have admin access.",
-      });
-      return;
-    }
-
-    router.push("/admin/dashboard");
-    router.refresh();
   };
 
   const handleMagicLink = async () => {
     setMessage(null);
     setMagicLinkLoading(true);
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin/dashboard`,
-      },
-    });
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin/dashboard`,
+        },
+      });
 
-    setMagicLinkLoading(false);
+      if (error) {
+        setMessage({
+          type: "error",
+          text: error.message || "Unable to send magic link.",
+        });
+        return;
+      }
 
-    if (error) {
+      setMessage({
+        type: "success",
+        text: "Magic link sent. Check your email to continue.",
+      });
+    } catch {
       setMessage({
         type: "error",
-        text: error.message || "Unable to send magic link.",
+        text: "Admin services are temporarily unavailable. Please try again.",
       });
-      return;
+    } finally {
+      setMagicLinkLoading(false);
     }
-
-    setMessage({
-      type: "success",
-      text: "Magic link sent. Check your email to continue.",
-    });
   };
 
   return (
@@ -168,11 +206,33 @@ export default function AdminLoginPage() {
           <TextField
             fullWidth
             label="Password"
-            type="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={passwordLoading || magicLinkLoading}
             required
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      edge="end"
+                      onClick={() => setShowPassword((visible) => !visible)}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onMouseUp={(event) => event.preventDefault()}
+                    >
+                      {showPassword ? (
+                        <VisibilityOffOutlinedIcon />
+                      ) : (
+                        <VisibilityOutlinedIcon />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
             sx={{ mb: 3 }}
           />
 

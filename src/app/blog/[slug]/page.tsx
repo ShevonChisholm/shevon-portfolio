@@ -1,34 +1,51 @@
-import { blogPosts } from "@/data/blogPosts";
+import type { Metadata } from "next";
+import { Box } from "@mui/material";
 import { notFound } from "next/navigation";
-import NextJsGuide from "@/components/blog-posts/NextJsGuide";
-import ReactNativeExpo from "@/components/blog-posts/ReactNativeExpo";
-import BackendDevelopment from "@/components/blog-posts/BackendDevelopment";
-import TypeScriptPatterns from "@/components/blog-posts/TypeScriptPatterns";
+import Footer from "@/components/Footer/Footer";
+import { getPublishedBlogPostBySlug } from "@/lib/cms/public-blog";
 import BlogPostContent from "./BlogPostContent";
 
-const components = {
-  "nextjs-guide": NextJsGuide,
-  "react-native-expo": ReactNativeExpo,
-  "backend-development": BackendDevelopment,
-  "typescript-react": TypeScriptPatterns,
+type BlogPostPageProps = {
+  params: {
+    slug: string;
+  };
 };
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = blogPosts.find((p) => p.slug === params.slug);
+export async function generateMetadata({
+  params,
+}: BlogPostPageProps): Promise<Metadata> {
+  const post = await getPublishedBlogPostBySlug(params.slug);
 
   if (!post) {
-    return notFound();
+    return {
+      title: "Blog Post Not Found",
+    };
   }
 
-  const BlogComponent = components[params.slug as keyof typeof components];
+  const description = post.seoDescription ?? post.excerpt;
 
-  if (!BlogComponent) {
-    return notFound();
+  return {
+    title: post.seoTitle ?? post.title,
+    description,
+    openGraph: {
+      title: post.seoTitle ?? post.title,
+      description,
+      images: post.coverImageUrl ? [post.coverImageUrl] : undefined,
+    },
+  };
+}
+
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const post = await getPublishedBlogPostBySlug(params.slug);
+
+  if (!post) {
+    notFound();
   }
 
   return (
-    <BlogPostContent post={post}>
-      <BlogComponent />
-    </BlogPostContent>
+    <Box>
+      <BlogPostContent post={post} />
+      <Footer />
+    </Box>
   );
 }

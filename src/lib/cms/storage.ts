@@ -119,6 +119,14 @@ export async function uploadCmsMedia({
   validateCmsUploadFile(file, kind);
 
   const supabase = createClient();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !authData.user) {
+    throw new Error(
+      "Your admin session is not available. Sign in again before uploading media."
+    );
+  }
+
   const bucket = bucketForUploadKind(kind);
   const path = pathForUpload({ file, kind, projectSlug, postSlug });
   const { error } = await supabase.storage.from(bucket).upload(path, file, {
@@ -128,6 +136,15 @@ export async function uploadCmsMedia({
   });
 
   if (error) {
+    if (
+      error.message.toLowerCase().includes("row-level security") ||
+      error.message.toLowerCase().includes("unauthorized")
+    ) {
+      throw new Error(
+        `Supabase Storage denied this upload. Apply the CMS Storage policies for the ${bucket} bucket and verify the ${path} path is allowed.`
+      );
+    }
+
     throw new Error(error.message);
   }
 

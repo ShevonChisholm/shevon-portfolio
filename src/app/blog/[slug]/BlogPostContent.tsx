@@ -1,234 +1,369 @@
-'use client';
+"use client";
 
-import { Container, Typography, Box, Chip, useTheme } from '@mui/material';
-import { m as motion } from 'framer-motion';
-import Image from 'next/image';
-import { format } from 'date-fns';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ImageIcon from '@mui/icons-material/Image';
-import type { BlogPost } from '@/data/blogPosts';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from "react";
+import {
+  Box,
+  Chip,
+  Container,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import { m as motion } from "framer-motion";
+import { format } from "date-fns";
+import { useRouter } from "next/navigation";
+import type { PublicBlogPost } from "@/lib/cms/public-blog";
+import DetailPageToolbar from "@/components/DetailPageToolbar/DetailPageToolbar";
 
-interface BlogPostContentProps {
-  post: BlogPost;
-  children: React.ReactNode;
-}
-
-const ImageFallback = () => {
-  const theme = useTheme();
-  
-  return (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: theme.palette.mode === 'dark' 
-          ? 'rgba(255, 255, 255, 0.05)' 
-          : 'rgba(0, 0, 0, 0.05)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 2,
-        zIndex: 1,
-      }}
-    >
-      <ImageIcon 
-        sx={{ 
-          fontSize: 64,
-          color: theme.palette.mode === 'dark' 
-            ? 'rgba(255, 255, 255, 0.2)' 
-            : 'rgba(0, 0, 0, 0.2)',
-        }} 
-      />
-      <Typography
-        variant="body1"
-        sx={{
-          color: theme.palette.text.secondary,
-          fontStyle: 'italic',
-        }}
-      >
-        Blog image coming soon
-      </Typography>
-    </Box>
-  );
+type BlogPostContentProps = {
+  post: PublicBlogPost;
 };
 
-export default function BlogPostContent({ post, children }: BlogPostContentProps) {
+type ContentBlock =
+  | { type: "heading"; level: 1 | 2 | 3; text: string }
+  | { type: "paragraph"; text: string }
+  | { type: "quote"; text: string }
+  | { type: "list"; items: string[] };
+
+function displayDate(post: PublicBlogPost) {
+  return format(new Date(post.publishedAt ?? post.createdAt), "MMMM d, yyyy");
+}
+
+function parseMarkdownLite(content: string): ContentBlock[] {
+  const blocks: ContentBlock[] = [];
+  const lines = content.replace(/\r\n/g, "\n").split("\n");
+  let paragraph: string[] = [];
+  let listItems: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraph.length > 0) {
+      blocks.push({ type: "paragraph", text: paragraph.join(" ").trim() });
+      paragraph = [];
+    }
+  };
+
+  const flushList = () => {
+    if (listItems.length > 0) {
+      blocks.push({ type: "list", items: listItems });
+      listItems = [];
+    }
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    if (line.startsWith("- ")) {
+      flushParagraph();
+      listItems.push(line.slice(2).trim());
+      continue;
+    }
+
+    flushList();
+
+    if (line.startsWith("### ")) {
+      flushParagraph();
+      blocks.push({ type: "heading", level: 3, text: line.slice(4).trim() });
+      continue;
+    }
+
+    if (line.startsWith("## ")) {
+      flushParagraph();
+      blocks.push({ type: "heading", level: 2, text: line.slice(3).trim() });
+      continue;
+    }
+
+    if (line.startsWith("# ")) {
+      flushParagraph();
+      blocks.push({ type: "heading", level: 1, text: line.slice(2).trim() });
+      continue;
+    }
+
+    if (line.startsWith("> ")) {
+      flushParagraph();
+      blocks.push({ type: "quote", text: line.slice(2).trim() });
+      continue;
+    }
+
+    paragraph.push(line);
+  }
+
+  flushParagraph();
+  flushList();
+
+  return blocks;
+}
+
+
+
+function BlogCover({
+  post,
+  imageError,
+  onImageError,
+}: {
+  post: PublicBlogPost;
+  imageError: boolean;
+  onImageError: () => void;
+}) {
+  const theme = useTheme();
+  const hasImage = Boolean(post.coverImageUrl) && !imageError;
+
+  return (
+    <Container maxWidth="lg" sx={{ mb: { xs: 4, md: 5 } }}>
+      <Box
+        sx={{
+          width: "100%",
+          overflow: "hidden",
+          borderRadius: { xs: 1.5, md: 2 },
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.22)}`,
+          backgroundColor: alpha(theme.palette.common.black, 0.5),
+          boxShadow: `0 24px 64px ${alpha(theme.palette.common.black, 0.32)}`,
+        }}
+      >
+        {hasImage ? (
+          <Box
+            component="img"
+            src={post.coverImageUrl ?? ""}
+            alt={post.title}
+            onError={onImageError}
+            sx={{
+              display: "block",
+              width: "100%",
+              height: "auto",
+              maxHeight: { xs: 560, md: 760 },
+              objectFit: "contain",
+              objectPosition: "center",
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              minHeight: { xs: 300, md: 460 },
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: `radial-gradient(circle at 50% 35%, ${alpha(
+                theme.palette.primary.main,
+                0.26
+              )}, transparent 34%), linear-gradient(135deg, ${alpha(
+                theme.palette.primary.main,
+                0.16
+              )}, ${alpha(theme.palette.common.black, 0.82)})`,
+            }}
+          >
+            <ArticleOutlinedIcon
+              sx={{
+                fontSize: { xs: 92, md: 132 },
+                color: alpha(theme.palette.primary.main, 0.56),
+              }}
+            />
+          </Box>
+        )}
+      </Box>
+    </Container>
+  );
+}
+
+export default function BlogPostContent({ post }: BlogPostContentProps) {
   const theme = useTheme();
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
-
+  const blocks = useMemo(() => parseMarkdownLite(post.content), [post.content]);
   const handleBackClick = () => {
-    // Navigate to home page with the blog hash
-    router.push('/#blog');
-    
-    // After navigation, ensure smooth scrolling to blog section
+    router.push("/#blog");
+
     setTimeout(() => {
-      const element = document.getElementById('blog');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
+      document.getElementById("blog")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
 
-  if (!post) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Typography variant="h2" align="center">
-          Post not found
-        </Typography>
-      </Container>
-    );
-  }
-
   return (
-    <motion.div
+    <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Back Button */}
-      <Container maxWidth="lg" sx={{ pt: 4 }}>
-        <Box 
-          onClick={handleBackClick}
-          sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1,
-            color: theme.palette.text.secondary,
-            cursor: 'pointer',
-            mb: 2,
-            width: 'fit-content',
-            '&:hover': {
-              color: theme.palette.primary.main
-            }
-          }}
-        >
-          <ArrowBackIcon />
-          <Typography>Back to Blog</Typography>
-        </Box>
-      </Container>
+      <DetailPageToolbar
+        backLabel="Back to Blog"
+        onBack={handleBackClick}
+      />
 
-      <Box
-        sx={{
-          position: 'relative',
-          height: '400px',
-          width: '100%',
-          mb: 6,
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: !imageError ? 'rgba(0,0,0,0.5)' : 'transparent',
-            zIndex: 1,
-          }
-        }}
-      >
-        {!imageError ? (
-          <Image
-            src={post.imageUrl}
-            alt={post.title}
-            fill
-            style={{ objectFit: 'cover' }}
-            priority
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <ImageFallback />
-        )}
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
-            p: 4,
-            color: 'white',
-            zIndex: 2,
-          }}
-        >
-          <Container maxWidth="lg">
-            <Typography variant="h1" sx={{ fontSize: { xs: '2rem', md: '3rem' }, mb: 2 }}>
-              {post.title}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-              <Typography variant="body1">
-                {format(new Date(post.date), 'MMMM d, yyyy')}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AccessTimeIcon sx={{ fontSize: 20 }} />
-                {post.readTime}
-              </Box>
-            </Box>
-          </Container>
-        </Box>
-      </Box>
-
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', gap: 1, mb: 4, flexWrap: 'wrap' }}>
-          {post.tags.map((tag: string) => (
-            <Chip
-              key={tag}
-              label={tag}
-              sx={{
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                color: 'text.primary',
-              }}
-            />
-          ))}
-        </Box>
-
-        <Box
-          sx={{
-            '& h1': {
-              fontSize: { xs: '2rem', md: '2.5rem' },
-              mb: 4,
-              color: 'text.primary',
-            },
-            '& h2': {
-              fontSize: { xs: '1.5rem', md: '2rem' },
-              mb: 3,
-              mt: 4,
-              color: 'text.primary',
-            },
-            '& p': {
-              fontSize: { xs: '1rem', md: '1.1rem' },
+      <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 5 } }}>
+        <Box sx={{ maxWidth: 980, mb: { xs: 4, md: 5 } }}>
+          <Typography
+            variant="h1"
+            sx={{
+              fontSize: { xs: "2.35rem", sm: "3rem", md: "4.25rem" },
+              lineHeight: { xs: 1.12, md: 1.08 },
               mb: 2,
-              color: 'text.secondary',
-              lineHeight: 1.7,
-            },
-            '& ul, & ol': {
-              pl: 4,
-              mb: 3,
-            },
-            '& li': {
-              mb: 1,
-              color: 'text.secondary',
-            },
-            '& pre': {
-              p: 2,
-              borderRadius: 1,
-              overflow: 'auto',
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            },
-            '& code': {
-              fontFamily: 'monospace',
-            },
-          }}
-        >
-          {children}
+              fontWeight: 900,
+              letterSpacing: 0,
+              color: "text.primary",
+              textWrap: "balance",
+            }}
+          >
+            {post.title}
+          </Typography>
+
+          {post.excerpt && (
+            <Typography
+              sx={{
+                maxWidth: 780,
+                mb: 2.5,
+                color: "text.secondary",
+                fontSize: { xs: "1rem", md: "1.2rem" },
+                lineHeight: 1.7,
+              }}
+            >
+              {post.excerpt}
+            </Typography>
+          )}
+
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: { xs: 1.25, sm: 2 },
+              flexWrap: "wrap",
+              color: "text.secondary",
+            }}
+          >
+            <Typography sx={{ color: "text.primary", fontWeight: 700 }}>
+              {post.authorName}
+            </Typography>
+            <Typography>{displayDate(post)}</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              <AccessTimeIcon sx={{ fontSize: 19, color: "primary.main" }} />
+              <Typography>{post.readingTime}</Typography>
+            </Box>
+          </Box>
         </Box>
       </Container>
-    </motion.div>
+
+      <BlogCover
+        post={post}
+        imageError={imageError}
+        onImageError={() => setImageError(true)}
+      />
+
+      <Container maxWidth="md" sx={{ pb: { xs: 8, md: 12 } }}>
+        {post.tags.length > 0 && (
+          <Box sx={{ display: "flex", gap: 1, mb: 4, flexWrap: "wrap" }}>
+            {post.tags.map((tag) => (
+              <Chip
+                key={tag}
+                label={tag}
+                sx={{
+                  backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                  color: "text.primary",
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+                }}
+              />
+            ))}
+          </Box>
+        )}
+
+        {blocks.length === 0 ? (
+          <Typography color="text.secondary">
+            This article is being prepared.
+          </Typography>
+        ) : (
+          <Box>
+            {blocks.map((block, index) => {
+              if (block.type === "heading") {
+                const variant =
+                  block.level === 1 ? "h3" : block.level === 2 ? "h4" : "h5";
+
+                return (
+                  <Typography
+                    key={`${block.type}-${index}`}
+                    variant={variant}
+                    component={`h${block.level}`}
+                    sx={{
+                      mt: index === 0 ? 0 : 5,
+                      mb: 2,
+                      fontWeight: 800,
+                      letterSpacing: 0,
+                      color: "text.primary",
+                    }}
+                  >
+                    {block.text}
+                  </Typography>
+                );
+              }
+
+              if (block.type === "quote") {
+                return (
+                  <Box
+                    key={`${block.type}-${index}`}
+                    sx={{
+                      my: 4,
+                      pl: 3,
+                      borderLeft: `4px solid ${theme.palette.primary.main}`,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: { xs: "1.05rem", md: "1.18rem" },
+                        lineHeight: 1.8,
+                        fontStyle: "italic",
+                      }}
+                    >
+                      {block.text}
+                    </Typography>
+                  </Box>
+                );
+              }
+
+              if (block.type === "list") {
+                return (
+                  <Box
+                    component="ul"
+                    key={`${block.type}-${index}`}
+                    sx={{ pl: 3, mb: 3, color: "text.secondary" }}
+                  >
+                    {block.items.map((item) => (
+                      <Typography
+                        component="li"
+                        key={item}
+                        sx={{
+                          mb: 1,
+                          fontSize: { xs: "1rem", md: "1.08rem" },
+                          lineHeight: 1.75,
+                        }}
+                      >
+                        {item}
+                      </Typography>
+                    ))}
+                  </Box>
+                );
+              }
+
+              return (
+                <Typography
+                  key={`${block.type}-${index}`}
+                  sx={{
+                    mb: 2.5,
+                    color: "text.secondary",
+                    fontSize: { xs: "1rem", md: "1.1rem" },
+                    lineHeight: 1.85,
+                  }}
+                >
+                  {block.text}
+                </Typography>
+              );
+            })}
+          </Box>
+        )}
+      </Container>
+    </motion.main>
   );
-} 
+}

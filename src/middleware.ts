@@ -6,34 +6,41 @@ const supabasePublishableKey =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-function redirectToLogin(request: NextRequest) {
+function copyResponseCookies(source: NextResponse, target: NextResponse) {
+  source.cookies.getAll().forEach((cookie) => target.cookies.set(cookie));
+  return target;
+}
+
+function redirectToLogin(
+  request: NextRequest,
+  response: NextResponse,
+  error?: string
+) {
   const redirectUrl = request.nextUrl.clone();
   redirectUrl.pathname = "/admin/login";
   redirectUrl.searchParams.set("redirectedFrom", request.nextUrl.pathname);
-  return NextResponse.redirect(redirectUrl);
+  if (error) redirectUrl.searchParams.set("error", error);
+  return copyResponseCookies(response, NextResponse.redirect(redirectUrl));
 }
 
-function redirectAwayFromAdmin(request: NextRequest) {
+function redirectAwayFromAdmin(request: NextRequest, response: NextResponse) {
   const redirectUrl = request.nextUrl.clone();
   redirectUrl.pathname = "/";
   redirectUrl.search = "";
-  return NextResponse.redirect(redirectUrl);
+  return copyResponseCookies(response, NextResponse.redirect(redirectUrl));
 }
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (pathname === "/admin/login") {
-    return NextResponse.next();
-  }
+async function updateSession(request: NextRequest) {
+  let response = NextResponse.next({ request });
 
   if (!supabaseUrl || !supabasePublishableKey) {
-    return redirectToLogin(request);
+    return {
+      response,
+      supabase: null,
+      user: null,
+      unavailable: true,
+    };
   }
-
-  let response = NextResponse.next({
-    request,
-  });
 
   const supabase = createServerClient(supabaseUrl, supabasePublishableKey, {
     cookies: {
@@ -56,28 +63,67 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  try {
+    const authResult = await supabase.auth.getUser();
+    return {
+      response,
+      supabase,
+      user: authResult.error ? null : authResult.data.user,
+      unavailable: false,
+    };
+  } catch {
+    return {
+      response,
+      supabase,
+      user: null,
+      unavailable: true,
+    };
+  }
+}
 
-  if (userError || !user) {
-    return redirectToLogin(request);
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const session = await updateSession(request);
+
+  if (!pathname.startsWith("/admin") || pathname === "/admin/login") {
+    return session.response;
   }
 
-  const { data: adminProfile, error: adminProfileError } = await supabase
-    .from("admin_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (adminProfileError || !adminProfile) {
-    return redirectAwayFromAdmin(request);
+  if (session.unavailable || !session.supabase) {
+    return redirectToLogin(request, session.response, "supabase_unavailable");
   }
 
-  return response;
+  if (!session.user) {
+    return redirectToLogin(request, session.response);
+  }
+
+  let adminProfile;
+
+  try {
+    const adminResult = await session.supabase
+      .from("admin_profiles")
+      .select("id")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    if (adminResult.error) {
+      return redirectToLogin(request, session.response, "supabase_unavailable");
+    }
+
+    adminProfile = adminResult.data;
+  } catch {
+    return redirectToLogin(request, session.response, "supabase_unavailable");
+  }
+
+  if (!adminProfile) {
+    return redirectAwayFromAdmin(request, session.response);
+  }
+
+  return session.response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };

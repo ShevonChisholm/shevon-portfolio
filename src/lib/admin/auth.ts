@@ -3,22 +3,39 @@ import { redirect } from "next/navigation";
 
 export async function requireAdmin() {
   const supabase = createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  let authResult;
 
-  if (userError || !user) {
+  try {
+    authResult = await supabase.auth.getUser();
+  } catch {
+    redirect("/admin/login?error=supabase_unavailable");
+  }
+
+  const user = authResult.data.user;
+
+  if (authResult.error || !user) {
     redirect("/admin/login");
   }
 
-  const { data: adminProfile, error: adminProfileError } = await supabase
-    .from("admin_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  let adminResult;
 
-  if (adminProfileError || !adminProfile) {
+  try {
+    adminResult = await supabase
+      .from("admin_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+  } catch {
+    redirect("/admin/login?error=supabase_unavailable");
+  }
+
+  if (adminResult.error) {
+    redirect("/admin/login?error=supabase_unavailable");
+  }
+
+  const adminProfile = adminResult.data;
+
+  if (!adminProfile) {
     redirect("/");
   }
 

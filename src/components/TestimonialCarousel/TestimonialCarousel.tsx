@@ -1,11 +1,13 @@
 "use client";
 
-import { Box, Grid, Typography, useTheme } from "@mui/material";
+import { Box, Grid, Rating, Typography, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { m as motion } from "framer-motion";
 import CodeIcon from "@mui/icons-material/Code";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import FormatQuoteOutlinedIcon from "@mui/icons-material/FormatQuoteOutlined";
+import type { PublicTestimonial } from "@/lib/cms/public-testimonials";
 
 const strengths = [
   {
@@ -28,8 +30,109 @@ const strengths = [
   },
 ];
 
-export default function TestimonialCarousel() {
+type TestimonialCarouselProps = {
+  testimonials?: PublicTestimonial[];
+};
+
+function roleCompany(testimonial: PublicTestimonial) {
+  return [testimonial.role, testimonial.company].filter(Boolean).join(" at ");
+}
+
+export default function TestimonialCarousel({
+  testimonials = [],
+}: TestimonialCarouselProps) {
   const theme = useTheme();
+
+  if (testimonials.length > 0) {
+    return (
+      <Box sx={{ width: "100%" }}>
+        <Grid container spacing={3} sx={{ alignItems: "stretch" }}>
+          {testimonials.map((testimonial, index) => (
+            <Grid
+              key={testimonial.id}
+              size={{ xs: 12, md: 4 }}
+              sx={{ display: "flex" }}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.08 }}
+                style={{ height: "100%", width: "100%" }}
+              >
+                <Box
+                  sx={{
+                    height: "100%",
+                    minHeight: 310,
+                    p: 3,
+                    display: "flex",
+                    flexDirection: "column",
+                    borderRadius: "20px",
+                    backgroundColor: alpha(theme.palette.background.paper, 0.6),
+                    border: `1px solid ${alpha(
+                      theme.palette.primary.main,
+                      testimonial.is_featured ? 0.4 : 0.12
+                    )}`,
+                    transition:
+                      "transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
+                    "&:hover": {
+                      transform: "translateY(-6px)",
+                      borderColor: alpha(theme.palette.primary.main, 0.42),
+                      boxShadow: `0 16px 32px ${alpha(
+                        theme.palette.common.black,
+                        0.18
+                      )}`,
+                    },
+                  }}
+                >
+                  <FormatQuoteOutlinedIcon
+                    sx={{ color: "primary.main", fontSize: 38, mb: 1.5 }}
+                  />
+
+                  {testimonial.rating && (
+                    <Rating
+                      value={testimonial.rating}
+                      readOnly
+                      size="small"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+
+                  <Typography
+                    sx={{
+                      color: "text.secondary",
+                      lineHeight: 1.8,
+                      mb: 3,
+                      flex: 1,
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    &ldquo;{testimonial.feedback}&rdquo;
+                  </Typography>
+
+                  <Typography sx={{ fontWeight: 800, color: "text.primary" }}>
+                    {testimonial.name}
+                  </Typography>
+
+                  {roleCompany(testimonial) && (
+                    <Typography variant="body2" sx={{ color: "primary.main", mt: 0.5 }}>
+                      {roleCompany(testimonial)}
+                    </Typography>
+                  )}
+
+                  {testimonial.project_name && (
+                    <Typography variant="caption" sx={{ color: "text.secondary", mt: 1 }}>
+                      Project: {testimonial.project_name}
+                    </Typography>
+                  )}
+                </Box>
+              </motion.div>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: "100%" }}>

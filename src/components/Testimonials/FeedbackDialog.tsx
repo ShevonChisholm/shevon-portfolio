@@ -24,7 +24,6 @@ import {
   emptyTestimonialFormValues,
   type TestimonialFormValues,
 } from "@/types/cms";
-import { submitTestimonial } from "@/lib/cms/testimonials";
 
 type FeedbackDialogProps = {
   open: boolean;
@@ -96,7 +95,23 @@ export default function FeedbackDialog({ open, onClose }: FeedbackDialogProps) {
     setIsSubmitting(true);
 
     try {
-      await submitTestimonial(values);
+      const response = await fetch("/api/testimonials", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ?? "Unable to submit feedback right now."
+        );
+      }
+
       setValues(emptyTestimonialFormValues);
       setMessage({
         type: "success",

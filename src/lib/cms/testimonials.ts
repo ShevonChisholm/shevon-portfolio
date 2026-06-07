@@ -1,5 +1,5 @@
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
-import type { Testimonial, TestimonialFormValues } from "@/types/cms";
+import type { Testimonial } from "@/types/cms";
 
 const supabase = createBrowserClient();
 
@@ -8,26 +8,6 @@ export type TestimonialFilter =
   | "unpublished"
   | "published"
   | "featured";
-
-const optionalText = (value: string) => value.trim() || null;
-
-export async function submitTestimonial(values: TestimonialFormValues) {
-  const { error } = await supabase.from("testimonials").insert({
-    name: values.name.trim(),
-    email: optionalText(values.email),
-    company: optionalText(values.company),
-    role: optionalText(values.role),
-    project_name: optionalText(values.project_name),
-    rating: values.rating,
-    feedback: values.feedback.trim(),
-    consent_to_publish: values.consent_to_publish,
-    is_published: false,
-    is_featured: false,
-    source: "portfolio-feedback-modal",
-  });
-
-  if (error) throw new Error(error.message);
-}
 
 export async function listTestimonials(filter: TestimonialFilter = "all") {
   let query = supabase

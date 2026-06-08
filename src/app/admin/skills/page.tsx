@@ -28,6 +28,10 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import {
+  AdminNotificationBridge,
+  useAdminNotifications,
+} from "@/components/admin/notifications/AdminNotifications";
 import type {
   Skill,
   SkillCategoryFormValues,
@@ -59,6 +63,7 @@ type Message = {
 
 export default function AdminSkillsPage() {
   const theme = useTheme();
+  const { enqueueNotification } = useAdminNotifications();
   const [categories, setCategories] = useState<SkillCategoryWithSkills[]>([]);
   const [categoryDraft, setCategoryDraft] =
     useState<SkillCategoryFormValues>(emptySkillCategoryFormValues);
@@ -113,6 +118,7 @@ export default function AdminSkillsPage() {
     startTransition(async () => {
       try {
         const text = await action();
+        enqueueNotification(text, { variant: "success" });
         setMessage({ type: "success", text });
         await loadCategories();
       } catch (error) {
@@ -219,6 +225,7 @@ export default function AdminSkillsPage() {
         </Typography>
       </Box>
 
+      <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
       <Card elevation={0} sx={cardSx}>

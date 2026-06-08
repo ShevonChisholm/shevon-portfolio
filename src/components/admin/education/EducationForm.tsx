@@ -19,6 +19,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
+import { AdminNotificationBridge } from "@/components/admin/notifications/AdminNotifications";
 import type { EducationFormValues } from "@/types/cms";
 
 type EducationFormProps = {
@@ -65,10 +66,9 @@ export default function EducationForm({
     startTransition(async () => {
       try {
         await onSubmit(values);
-        setMessage({
-          type: "success",
-          text: mode === "create" ? "Education created." : "Education saved.",
-        });
+        if (mode === "edit") {
+          setMessage({ type: "success", text: "Education saved." });
+        }
       } catch (error) {
         setMessage({
           type: "error",
@@ -97,6 +97,7 @@ export default function EducationForm({
         </Typography>
       </Box>
 
+      <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
       <Box component="form" onSubmit={handleSubmit}>

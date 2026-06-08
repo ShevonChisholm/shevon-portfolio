@@ -29,6 +29,10 @@ import DraftsOutlinedIcon from "@mui/icons-material/DraftsOutlined";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import {
+  AdminNotificationBridge,
+  useAdminNotifications,
+} from "@/components/admin/notifications/AdminNotifications";
 import type { ContactMessage } from "@/types/cms";
 import {
   deleteContactMessage,
@@ -51,6 +55,7 @@ function formatDate(value: string) {
 
 export default function AdminMessagesPage() {
   const theme = useTheme();
+  const { enqueueNotification } = useAdminNotifications();
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [filter, setFilter] = useState<ContactMessageFilter>("all");
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
@@ -83,6 +88,7 @@ export default function AdminMessagesPage() {
     startTransition(async () => {
       try {
         const text = await action();
+        enqueueNotification(text, { variant: "success" });
         setMessage({ type: "success", text });
         await loadMessages();
       } catch (error) {
@@ -145,6 +151,7 @@ export default function AdminMessagesPage() {
         </ToggleButtonGroup>
       </Stack>
 
+      <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
       {isLoading ? (

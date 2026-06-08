@@ -26,6 +26,10 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import {
+  AdminNotificationBridge,
+  useAdminNotifications,
+} from "@/components/admin/notifications/AdminNotifications";
 import type { BlogPost } from "@/types/cms";
 import {
   deleteBlogPost,
@@ -50,6 +54,7 @@ function formatDate(value: string | null) {
 
 export default function AdminBlogPage() {
   const theme = useTheme();
+  const { enqueueNotification } = useAdminNotifications();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [filter, setFilter] = useState<BlogPostFilter>("all");
   const [message, setMessage] = useState<Message>(null);
@@ -82,6 +87,7 @@ export default function AdminBlogPage() {
     startTransition(async () => {
       try {
         const text = await action();
+        enqueueNotification(text, { variant: "success" });
         setMessage({ type: "success", text });
         await loadPosts();
       } catch (error) {
@@ -146,6 +152,7 @@ export default function AdminBlogPage() {
         <ToggleButton value="drafts">Drafts</ToggleButton>
       </ToggleButtonGroup>
 
+      <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
       {isLoading ? (

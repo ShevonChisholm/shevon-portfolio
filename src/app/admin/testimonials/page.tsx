@@ -29,6 +29,10 @@ import FeaturedPlayListOutlinedIcon from "@mui/icons-material/FeaturedPlayListOu
 import PublishOutlinedIcon from "@mui/icons-material/PublishOutlined";
 import UnpublishedOutlinedIcon from "@mui/icons-material/UnpublishedOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import {
+  AdminNotificationBridge,
+  useAdminNotifications,
+} from "@/components/admin/notifications/AdminNotifications";
 import type { Testimonial } from "@/types/cms";
 import {
   deleteTestimonial,
@@ -55,6 +59,7 @@ function roleCompany(item: Testimonial) {
 
 export default function AdminTestimonialsPage() {
   const theme = useTheme();
+  const { enqueueNotification } = useAdminNotifications();
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [filter, setFilter] = useState<TestimonialFilter>("all");
   const [selectedTestimonial, setSelectedTestimonial] =
@@ -91,6 +96,7 @@ export default function AdminTestimonialsPage() {
     startTransition(async () => {
       try {
         const text = await action();
+        enqueueNotification(text, { variant: "success" });
         setMessage({ type: "success", text });
         await loadTestimonials();
       } catch (error) {
@@ -149,6 +155,7 @@ export default function AdminTestimonialsPage() {
         </ToggleButtonGroup>
       </Stack>
 
+      <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
       {isLoading ? (

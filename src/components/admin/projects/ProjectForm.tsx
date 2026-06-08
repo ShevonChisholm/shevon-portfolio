@@ -25,6 +25,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import MediaUploadField from "@/components/admin/media/MediaUploadField";
+import { AdminNotificationBridge } from "@/components/admin/notifications/AdminNotifications";
 import type {
   ProjectMutationResult,
   QueuedProjectMedia,
@@ -161,12 +162,12 @@ export default function ProjectForm({
           highlights: ordered(values.highlights),
           technical_focus: ordered(values.technical_focus),
         }, queuedMediaForSubmit);
-        setMessage({
-          type: result?.warning ? "warning" : "success",
-          text:
-            result?.warning ??
-            (mode === "create" ? "Project created." : "Project saved."),
-        });
+        if (mode === "edit") {
+          setMessage({
+            type: result?.warning ? "warning" : "success",
+            text: result?.warning ?? "Project saved.",
+          });
+        }
       } catch (error) {
         setMessage({
           type: "error",
@@ -195,6 +196,7 @@ export default function ProjectForm({
         </Typography>
       </Box>
 
+      <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
       <Box component="form" onSubmit={handleSubmit}>

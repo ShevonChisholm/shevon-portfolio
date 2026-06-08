@@ -26,6 +26,10 @@ import StarBorderOutlinedIcon from "@mui/icons-material/StarBorderOutlined";
 import StarOutlinedIcon from "@mui/icons-material/StarOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import {
+  AdminNotificationBridge,
+  useAdminNotifications,
+} from "@/components/admin/notifications/AdminNotifications";
 import type { Project } from "@/types/cms";
 import {
   deleteProject,
@@ -40,6 +44,7 @@ type Message = {
 
 export default function AdminProjectsPage() {
   const theme = useTheme();
+  const { enqueueNotification } = useAdminNotifications();
   const [projects, setProjects] = useState<Project[]>([]);
   const [message, setMessage] = useState<Message>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,6 +76,7 @@ export default function AdminProjectsPage() {
     startTransition(async () => {
       try {
         const text = await action();
+        enqueueNotification(text, { variant: "success" });
         setMessage({ type: "success", text });
         await loadProjects();
       } catch (error) {
@@ -115,6 +121,7 @@ export default function AdminProjectsPage() {
         </Button>
       </Stack>
 
+      <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
       {isLoading ? (

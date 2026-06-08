@@ -24,6 +24,10 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import {
+  AdminNotificationBridge,
+  useAdminNotifications,
+} from "@/components/admin/notifications/AdminNotifications";
 import type { EducationItem } from "@/types/cms";
 import {
   deleteEducationItem,
@@ -38,6 +42,7 @@ type Message = {
 
 export default function AdminEducationPage() {
   const theme = useTheme();
+  const { enqueueNotification } = useAdminNotifications();
   const [items, setItems] = useState<EducationItem[]>([]);
   const [message, setMessage] = useState<Message>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,6 +74,7 @@ export default function AdminEducationPage() {
     startTransition(async () => {
       try {
         const text = await action();
+        enqueueNotification(text, { variant: "success" });
         setMessage({ type: "success", text });
         await loadItems();
       } catch (error) {
@@ -112,6 +118,7 @@ export default function AdminEducationPage() {
         </Button>
       </Stack>
 
+      <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
       {isLoading ? (

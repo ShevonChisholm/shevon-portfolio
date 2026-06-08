@@ -20,6 +20,7 @@ import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import MediaPreview from "@/components/admin/media/MediaPreview";
+import { AdminNotificationBridge } from "@/components/admin/notifications/AdminNotifications";
 import type {
   AboutSettingsValue,
   PortfolioContactSettings,
@@ -192,6 +193,7 @@ export default function AdminSettingsPage() {
         </Typography>
       </Box>
 
+      <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
       <Box component="form" onSubmit={handleSubmit}>

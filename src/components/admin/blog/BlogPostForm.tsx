@@ -21,6 +21,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AutoFixHighOutlinedIcon from "@mui/icons-material/AutoFixHighOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import MediaUploadField from "@/components/admin/media/MediaUploadField";
+import { AdminNotificationBridge } from "@/components/admin/notifications/AdminNotifications";
 import type { BlogMutationResult, QueuedBlogMedia } from "@/lib/cms/blog";
 import {
   calculateReadingTime,
@@ -93,12 +94,12 @@ export default function BlogPostForm({
     startTransition(async () => {
       try {
         const result = await onSubmit(values, mode === "create" ? queuedMedia : {});
-        setMessage({
-          type: result?.warning ? "warning" : "success",
-          text:
-            result?.warning ??
-            (mode === "create" ? "Blog post created." : "Blog post saved."),
-        });
+        if (mode === "edit") {
+          setMessage({
+            type: result?.warning ? "warning" : "success",
+            text: result?.warning ?? "Blog post saved.",
+          });
+        }
       } catch (error) {
         setMessage({
           type: "error",
@@ -125,6 +126,7 @@ export default function BlogPostForm({
         </Typography>
       </Box>
 
+      <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
 
       <Box component="form" onSubmit={handleSubmit}>

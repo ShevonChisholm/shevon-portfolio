@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import { adminDataRequest } from "@/lib/cms/admin-api";
+import { AdminNotificationBridge } from "@/components/admin/notifications/AdminNotifications";
 import type { CmsUploadKind } from "@/lib/cms/storage";
 import {
   acceptForUploadKind,
@@ -199,6 +200,7 @@ export default function MediaUploadField({
         <Box sx={{ flex: 1 }} />
       </Stack>
 
+      <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
       {queuedFile && localPreviewUrl && (
         <Box>

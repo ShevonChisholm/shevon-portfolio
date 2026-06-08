@@ -340,6 +340,14 @@ export interface ResumeSettingValue {
   label: string;
 }
 
+export interface AboutSettingsValue {
+  subtitle: string;
+  paragraph_one: string;
+  paragraph_two: string;
+  image_url: string;
+  image_alt: string;
+}
+
 export interface PortfolioContactSettings {
   resume: ResumeSettingValue | null;
   github_url: string;

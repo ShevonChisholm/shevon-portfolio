@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import type { SiteSetting } from "@/types/cms";
-import { settingsToPortfolioContactSettings } from "./settings-shared";
+import type { AboutSettingsValue, SiteSetting } from "@/types/cms";
+import {
+  settingsToPortfolioContactSettings,
+  valueAsAboutSettings,
+} from "./settings-shared";
 
 const settingKeys = [
   "resume",
@@ -21,4 +24,17 @@ export async function getPublicPortfolioContactSettings() {
   if (error) throw new Error(error.message);
 
   return settingsToPortfolioContactSettings((data ?? []) as SiteSetting[]);
+}
+
+export async function getPublicAboutSettings(): Promise<AboutSettingsValue> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("site_settings")
+    .select("*")
+    .eq("setting_key", "about")
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+
+  return valueAsAboutSettings((data as SiteSetting | null)?.setting_value);
 }

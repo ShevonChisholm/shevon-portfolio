@@ -5,6 +5,7 @@ export type CmsUploadKind =
   | "project-gallery"
   | "project-video"
   | "blog-cover"
+  | "about-image"
   | "document"
   | "resume-document"
   | "case-study-document";
@@ -24,6 +25,7 @@ const allowedExtensionsByKind: Record<CmsUploadKind, readonly string[]> = {
   "project-gallery": imageExtensions,
   "project-video": videoExtensions,
   "blog-cover": imageExtensions,
+  "about-image": imageExtensions,
   document: documentExtensions,
   "resume-document": documentExtensions,
   "case-study-document": documentExtensions,
@@ -86,6 +88,8 @@ export function pathForUpload({
       return `projects/${safeProjectSlug}/videos/${timestamp}-${filename}`;
     case "blog-cover":
       return `blog/${safePostSlug}/cover-${timestamp}.${extension}`;
+    case "about-image":
+      return `about/about-image-${timestamp}.${extension}`;
     case "case-study-document":
       return projectSlug
         ? `projects/${safeProjectSlug}/documents/${timestamp}-${filename}`

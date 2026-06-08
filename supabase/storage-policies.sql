@@ -16,7 +16,7 @@ for insert
 to authenticated
 with check (
   bucket_id = 'portfolio-media'
-  and (storage.foldername(name))[1] in ('projects', 'blog')
+  and (storage.foldername(name))[1] in ('projects', 'blog', 'about')
   and exists (
     select 1
     from public.admin_profiles
@@ -31,7 +31,7 @@ for update
 to authenticated
 using (
   bucket_id = 'portfolio-media'
-  and (storage.foldername(name))[1] in ('projects', 'blog')
+  and (storage.foldername(name))[1] in ('projects', 'blog', 'about')
   and exists (
     select 1
     from public.admin_profiles
@@ -40,7 +40,7 @@ using (
 )
 with check (
   bucket_id = 'portfolio-media'
-  and (storage.foldername(name))[1] in ('projects', 'blog')
+  and (storage.foldername(name))[1] in ('projects', 'blog', 'about')
   and exists (
     select 1
     from public.admin_profiles
@@ -55,7 +55,7 @@ for delete
 to authenticated
 using (
   bucket_id = 'portfolio-media'
-  and (storage.foldername(name))[1] in ('projects', 'blog')
+  and (storage.foldername(name))[1] in ('projects', 'blog', 'about')
   and exists (
     select 1
     from public.admin_profiles
@@ -70,7 +70,7 @@ for select
 to authenticated
 using (
   bucket_id = 'portfolio-media'
-  and (storage.foldername(name))[1] in ('projects', 'blog')
+  and (storage.foldername(name))[1] in ('projects', 'blog', 'about')
   and exists (
     select 1
     from public.admin_profiles

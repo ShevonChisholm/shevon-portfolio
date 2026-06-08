@@ -19,15 +19,24 @@ import { alpha } from "@mui/material/styles";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
-import type { PortfolioContactSettings, ResumeSettingValue } from "@/types/cms";
+import MediaPreview from "@/components/admin/media/MediaPreview";
+import type {
+  AboutSettingsValue,
+  PortfolioContactSettings,
+  ResumeSettingValue,
+} from "@/types/cms";
 import {
   listSiteSettings,
+  updateAboutSettings,
+  uploadAboutImage,
   uploadResumePdf,
   upsertSiteSetting,
 } from "@/lib/cms/settings";
 import { publicMediaUrl } from "@/lib/cms/media-url";
 import {
+  fallbackAboutSettings,
   fallbackPortfolioContactSettings,
+  settingsToAboutSettings,
   settingsToPortfolioContactSettings,
 } from "@/lib/cms/settings-shared";
 
@@ -38,18 +47,22 @@ type Message = {
 
 type SettingsFormValues = Omit<PortfolioContactSettings, "resume"> & {
   resume: ResumeSettingValue | null;
+  about: AboutSettingsValue;
 };
 
 export default function AdminSettingsPage() {
   const theme = useTheme();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [values, setValues] = useState<SettingsFormValues>(
-    fallbackPortfolioContactSettings
-  );
+  const resumeInputRef = useRef<HTMLInputElement>(null);
+  const aboutImageInputRef = useRef<HTMLInputElement>(null);
+  const [values, setValues] = useState<SettingsFormValues>({
+    ...fallbackPortfolioContactSettings,
+    about: fallbackAboutSettings,
+  });
   const [message, setMessage] = useState<Message>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
-  const [isUploading, setIsUploading] = useState(false);
+  const [isResumeUploading, setIsResumeUploading] = useState(false);
+  const [isAboutImageUploading, setIsAboutImageUploading] = useState(false);
   const cardSx = {
     border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
     backgroundColor: alpha(theme.palette.background.paper, 0.82),
@@ -60,7 +73,11 @@ export default function AdminSettingsPage() {
     setMessage(null);
 
     try {
-      setValues(settingsToPortfolioContactSettings(await listSiteSettings()));
+      const settings = await listSiteSettings();
+      setValues({
+        ...settingsToPortfolioContactSettings(settings),
+        about: settingsToAboutSettings(settings),
+      });
     } catch (error) {
       setMessage({
         type: "error",
@@ -95,6 +112,7 @@ export default function AdminSettingsPage() {
           upsertSiteSetting("contact_phone", values.contact_phone),
           upsertSiteSetting("location", values.location),
           values.resume ? upsertSiteSetting("resume", values.resume) : Promise.resolve(),
+          updateAboutSettings(values.about),
         ]);
         setMessage({ type: "success", text: "Settings saved." });
       } catch (error) {
@@ -112,7 +130,7 @@ export default function AdminSettingsPage() {
     event.target.value = "";
     if (!file) return;
 
-    setIsUploading(true);
+    setIsResumeUploading(true);
     setMessage(null);
 
     try {
@@ -126,7 +144,32 @@ export default function AdminSettingsPage() {
           error instanceof Error ? error.message : "Unable to upload resume.",
       });
     } finally {
-      setIsUploading(false);
+      setIsResumeUploading(false);
+    }
+  };
+
+  const handleAboutImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setIsAboutImageUploading(true);
+    setMessage(null);
+
+    try {
+      const about = await uploadAboutImage(file, values.about);
+      updateValue("about", about);
+      setMessage({ type: "success", text: "About image uploaded and saved." });
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Unable to upload the About image.",
+      });
+    } finally {
+      setIsAboutImageUploading(false);
     }
   };
 
@@ -145,7 +188,7 @@ export default function AdminSettingsPage() {
           Site Settings
         </Typography>
         <Typography sx={{ color: "text.secondary", lineHeight: 1.7 }}>
-          Manage public contact links and the resume document used by the portfolio.
+          Manage the public About section, contact links, and resume document.
         </Typography>
       </Box>
 
@@ -153,6 +196,118 @@ export default function AdminSettingsPage() {
 
       <Box component="form" onSubmit={handleSubmit}>
         <Stack spacing={3}>
+          <Card elevation={0} sx={cardSx}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+              <Stack spacing={3}>
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                    About Section
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.75 }}>
+                    Control the introductory copy and profile image shown on the
+                    public portfolio.
+                  </Typography>
+                </Box>
+
+                <TextField
+                  fullWidth
+                  label="Section subtitle"
+                  value={values.about.subtitle}
+                  onChange={(event) =>
+                    updateValue("about", {
+                      ...values.about,
+                      subtitle: event.target.value,
+                    })
+                  }
+                />
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={5}
+                  label="First paragraph"
+                  value={values.about.paragraph_one}
+                  onChange={(event) =>
+                    updateValue("about", {
+                      ...values.about,
+                      paragraph_one: event.target.value,
+                    })
+                  }
+                />
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={5}
+                  label="Second paragraph"
+                  value={values.about.paragraph_two}
+                  onChange={(event) =>
+                    updateValue("about", {
+                      ...values.about,
+                      paragraph_two: event.target.value,
+                    })
+                  }
+                />
+
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, md: 8 }}>
+                    <TextField
+                      fullWidth
+                      label="About image URL"
+                      value={values.about.image_url}
+                      helperText="Paste an image URL or upload an image below."
+                      onChange={(event) =>
+                        updateValue("about", {
+                          ...values.about,
+                          image_url: event.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      fullWidth
+                      label="Image alt text"
+                      value={values.about.image_alt}
+                      onChange={(event) =>
+                        updateValue("about", {
+                          ...values.about,
+                          image_alt: event.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                </Grid>
+
+                <input
+                  ref={aboutImageInputRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.svg"
+                  hidden
+                  onChange={handleAboutImageChange}
+                />
+                <Button
+                  variant="outlined"
+                  startIcon={
+                    isAboutImageUploading ? (
+                      <CircularProgress size={16} color="inherit" />
+                    ) : (
+                      <CloudUploadOutlinedIcon />
+                    )
+                  }
+                  disabled={isAboutImageUploading}
+                  onClick={() => aboutImageInputRef.current?.click()}
+                  sx={{ alignSelf: { sm: "flex-start" } }}
+                >
+                  {isAboutImageUploading ? "Uploading..." : "Upload About Image"}
+                </Button>
+
+                <MediaPreview
+                  url={values.about.image_url}
+                  label={values.about.image_alt || "About image"}
+                />
+              </Stack>
+            </CardContent>
+          </Card>
+
           <Card elevation={0} sx={cardSx}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack spacing={3}>
@@ -188,7 +343,7 @@ export default function AdminSettingsPage() {
                   </Grid>
                   <Grid size={{ xs: 12 }}>
                     <input
-                      ref={inputRef}
+                      ref={resumeInputRef}
                       type="file"
                       accept=".pdf"
                       hidden
@@ -202,16 +357,16 @@ export default function AdminSettingsPage() {
                       <Button
                         variant="outlined"
                         startIcon={
-                          isUploading ? (
+                          isResumeUploading ? (
                             <CircularProgress size={16} color="inherit" />
                           ) : (
                             <CloudUploadOutlinedIcon />
                           )
                         }
-                        disabled={isUploading}
-                        onClick={() => inputRef.current?.click()}
+                        disabled={isResumeUploading}
+                        onClick={() => resumeInputRef.current?.click()}
                       >
-                        {isUploading ? "Uploading..." : "Upload Resume PDF"}
+                        {isResumeUploading ? "Uploading..." : "Upload Resume PDF"}
                       </Button>
                       {values.resume?.url && (
                         <Link
@@ -294,7 +449,7 @@ export default function AdminSettingsPage() {
               type="submit"
               variant="contained"
               startIcon={<SaveOutlinedIcon />}
-              disabled={isPending || isUploading}
+              disabled={isPending || isResumeUploading || isAboutImageUploading}
             >
               {isPending ? "Saving..." : "Save Settings"}
             </Button>

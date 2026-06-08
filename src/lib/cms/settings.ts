@@ -1,8 +1,17 @@
 import { adminDataRequest } from "@/lib/cms/admin-api";
 import { uploadCmsMedia } from "@/lib/cms/storage";
-import type { ResumeSettingValue, SiteSetting } from "@/types/cms";
+import type {
+  AboutSettingsValue,
+  ResumeSettingValue,
+  SiteSetting,
+} from "@/types/cms";
+import {
+  fallbackAboutSettings,
+  settingsToAboutSettings,
+} from "@/lib/cms/settings-shared";
 
 const settingKeys = [
+  "about",
   "resume",
   "github_url",
   "linkedin_url",
@@ -35,6 +44,25 @@ export async function upsertSiteSetting(
     },
     onConflict: "setting_key",
   });
+}
+
+export async function getAboutSettings() {
+  const settings = await listSiteSettings();
+  return settingsToAboutSettings(settings);
+}
+
+export async function updateAboutSettings(value: AboutSettingsValue) {
+  await upsertSiteSetting("about", value);
+}
+
+export async function uploadAboutImage(
+  file: File,
+  currentValue: AboutSettingsValue = fallbackAboutSettings
+) {
+  const result = await uploadCmsMedia({ file, kind: "about-image" });
+  const aboutValue = { ...currentValue, image_url: result.publicUrl };
+  await updateAboutSettings(aboutValue);
+  return aboutValue;
 }
 
 export async function uploadResumePdf(file: File) {

@@ -5,6 +5,7 @@ const allowedTables = new Set([
   "projects",
   "project_tags",
   "project_images",
+  "project_videos",
   "project_highlights",
   "project_technical_focus",
   "blog_posts",

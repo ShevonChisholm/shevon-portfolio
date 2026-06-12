@@ -23,15 +23,17 @@ export default function EducationClient({
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
-    <Container maxWidth="lg" sx={{ py: 8 }}>
+    <Container maxWidth="xl" sx={{ py: { xs: 9, md: 15 }, px: { xs: 2.5, sm: 4, lg: 6 } }}>
+      <Typography variant="overline" sx={{ color: "primary.main", fontWeight: 800, letterSpacing: "0.12em" }}>
+        Foundation
+      </Typography>
       <Typography
         variant="h2"
         component="h2"
-        align="center"
-        gutterBottom
         sx={{
-          fontSize: { xs: "2.5rem", sm: "3.75rem" },
-          mb: { xs: 4, sm: 6 },
+          fontSize: { xs: "2.3rem", md: "4.4rem" },
+          lineHeight: 1.02,
+          mb: { xs: 4, sm: 7 },
         }}
       >
         Education
@@ -78,7 +80,7 @@ export default function EducationClient({
                   animate={{ scale: 1 }}
                   transition={{ delay: index * 0.2 }}
                 >
-                  <TimelineDot color="secondary">
+                  <TimelineDot color="primary" sx={{ borderRadius: 1 }}>
                     <SchoolIcon />
                   </TimelineDot>
                 </motion.div>

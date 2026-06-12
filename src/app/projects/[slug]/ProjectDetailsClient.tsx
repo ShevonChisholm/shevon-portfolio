@@ -1,72 +1,65 @@
 "use client";
 
 import { useState, type ReactElement } from "react";
+import type {
+  PublicProject,
+  PublicProjectShowcaseItem,
+  PublicProjectVideo,
+} from "@/lib/cms/public-projects";
 import {
   Box,
   Button,
   Chip,
   Container,
-  Grid,
   Typography,
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import Image from "next/image";
+import {
+  CheckCircleOutline as CheckCircleOutlineIcon,
+  GitHub as GitHubIcon,
+  InsertDriveFileOutlined as InsertDriveFileOutlinedIcon,
+  OpenInNew as OpenInNewIcon,
+  PlayCircleOutline as PlayCircleOutlineIcon,
+} from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import GitHubIcon from "@mui/icons-material/GitHub";
-import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
-import type { PublicProject } from "@/lib/cms/public-projects";
-import MobileAppScreens from "@/components/MobileAppScreens/MobileAppScreens";
-import ProjectVideoDialog from "@/components/Projects/ProjectVideoDialog";
 import DetailPageToolbar from "@/components/DetailPageToolbar/DetailPageToolbar";
+import ProjectShowcaseCarousel from "@/components/Projects/ProjectShowcaseCarousel";
+import ProjectVideoDialog from "@/components/Projects/ProjectVideoDialog";
+import ProjectVideosSection from "@/components/Projects/ProjectVideosSection";
+
+type ProjectDetailsClientProps = {
+  project: PublicProject;
+};
 
 interface FeatureItem {
   title: string;
   description: string;
 }
 
-type ProjectDetailsClientProps = {
-  project: PublicProject;
-};
-
-function initialsFor(title: string) {
-  return title
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase())
-    .join("");
-}
-
-export default function ProjectDetailsClient({
-  project,
-}: ProjectDetailsClientProps) {
+export default function ProjectDetailsClient({ project }: ProjectDetailsClientProps) {
   const theme = useTheme();
   const router = useRouter();
-  const [videoOpen, setVideoOpen] = useState(false);
-  const hasMobileScreens =
-    project.category === "Mobile Apps" && project.images.length > 0;
-  const fallbackFeatures = getFallbackFeatures(project);
+  const [selectedVideo, setSelectedVideo] = useState<PublicProjectVideo | null>(null);
+  const showcaseItems: PublicProjectShowcaseItem[] =
+    project.showcase.length > 0
+      ? project.showcase
+      : project.image
+        ? [
+            {
+              title: project.title,
+              description: project.status ?? "",
+              image: project.image,
+              altText: project.title,
+            },
+          ]
+        : [];
   const highlightFeatures: FeatureItem[] = project.highlights.length
-    ? project.highlights.map((highlight) => ({
-        title: highlight,
-        description: "",
-      }))
-    : fallbackFeatures;
+    ? project.highlights.map((highlight) => ({ title: highlight, description: "" }))
+    : getFallbackFeatures(project);
   const secondaryLinks = [
-    {
-      label: "GitHub",
-      href: project.githubUrl,
-      icon: <GitHubIcon />,
-    },
-    {
-      label: "Demo",
-      href: project.demoUrl,
-      icon: <OpenInNewIcon />,
-    },
+    { label: "GitHub", href: project.githubUrl, icon: <GitHubIcon /> },
+    { label: "Demo", href: project.demoUrl, icon: <OpenInNewIcon /> },
     {
       label: "Case Study",
       href: project.caseStudyUrl,
@@ -78,593 +71,332 @@ export default function ProjectDetailsClient({
 
   const handleBackClick = () => {
     router.push("/#projects");
-
     setTimeout(() => {
-      const element = document.getElementById("projects");
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+      document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
 
   return (
-    <Box>
+    <Box sx={{ minHeight: "100svh", bgcolor: "background.default" }}>
       <DetailPageToolbar
         backLabel="Back to Projects"
         onBack={handleBackClick}
         actions={
-          <StackedActions
+          <DetailActions
             siteUrl={project.siteUrl}
             secondaryLinks={secondaryLinks}
-            videoUrl={project.videoUrl}
-            onVideoClick={() => setVideoOpen(true)}
+            hasVideos={project.videos.length > 0}
+            onVideoClick={() =>
+              document
+                .getElementById("project-videos")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
           />
         }
       />
 
       <Container
-        maxWidth="lg"
-        sx={{ pt: { xs: 3.5, md: 5 }, pb: { xs: 6, md: 8 } }}
+        maxWidth={false}
+        sx={{
+          width: { xs: "calc(100% - 32px)", sm: "calc(100% - 48px)" },
+          maxWidth: 1040,
+          minWidth: 0,
+          mx: "auto",
+          px: 0,
+          pt: { xs: 4, md: 5 },
+          pb: { xs: 7, md: 10 },
+        }}
       >
         <Typography
-          variant="h2"
           component="h1"
-          gutterBottom
           sx={{
+            mb: 1.5,
+            fontFamily: '"Montserrat", sans-serif',
+            fontSize: { xs: "2rem", sm: "2.5rem", md: "2.35rem" },
+            lineHeight: 1.12,
             fontWeight: 800,
-            mb: 2,
-            fontSize: {
-              xs: "1.75rem",
-              sm: "2.4rem",
-              md: "3rem",
-            },
-            lineHeight: { xs: 1.16, sm: 1.2 },
+            overflowWrap: "anywhere",
           }}
         >
           {project.title}
         </Typography>
 
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: { xs: 3, sm: 4 } }}>
-        {project.role && (
-          <Chip
-            label={project.role}
-            sx={{
-              height: { xs: 34, sm: 40 },
-              backgroundColor: alpha(theme.palette.primary.main, 0.14),
-              color: theme.palette.primary.main,
-              fontWeight: 700,
-            }}
-          />
-        )}
-
-        {project.status && (
-          <Chip
-            label={project.status}
-            variant="outlined"
-            sx={{
-              height: { xs: 34, sm: 40 },
-              borderColor: alpha(theme.palette.primary.main, 0.35),
-              color: theme.palette.text.secondary,
-              fontWeight: 600,
-            }}
-          />
-        )}
-
-        {project.tags.map((tag) => (
-          <Chip
-            key={tag}
-            label={tag}
-            sx={{
-              height: { xs: 32, sm: 40 },
-              backgroundColor: alpha(theme.palette.primary.main, 0.1),
-              color: theme.palette.primary.main,
-              fontWeight: 500,
-            }}
-          />
-        ))}
-      </Box>
-
-      <Box
-        sx={{
-          position: "relative",
-          width: "100%",
-          height: {
-            xs: hasMobileScreens ? "420px" : "220px",
-            sm: hasMobileScreens ? "600px" : "400px",
-            md: hasMobileScreens ? "600px" : "500px",
-          },
-          mb: { xs: 4, sm: 6 },
-          borderRadius: { xs: "14px", sm: "20px" },
-          overflow: "hidden",
-          backgroundColor: alpha(theme.palette.common.black, 0.22),
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-        }}
-      >
-        {hasMobileScreens ? (
-          <MobileAppScreens images={project.images} title={project.title} />
-        ) : project.image ? (
-          <Image
-            src={project.image}
-            alt={project.title}
-            fill
-            priority
-            sizes="(max-width: 1200px) 100vw, 1200px"
-            style={{ objectFit: "cover" }}
-          />
-        ) : (
-          <Box
-            sx={{
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: `linear-gradient(135deg, ${alpha(
-                theme.palette.primary.main,
-                0.28
-              )}, ${alpha(theme.palette.common.black, 0.72)})`,
-            }}
-          >
-            <Box
-              sx={{
-                width: { xs: 112, sm: 144 },
-                height: { xs: 112, sm: 144 },
-                borderRadius: { xs: "22px", sm: "28px" },
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.4)}`,
-                backgroundColor: alpha(theme.palette.common.black, 0.28),
-              }}
-            >
-              <Typography
-                variant="h2"
-                sx={{
-                  color: theme.palette.primary.main,
-                  fontWeight: 900,
-                  letterSpacing: 0,
-                  whiteSpace: "nowrap",
-                  lineHeight: 1,
-                }}
-              >
-                {initialsFor(project.title)}
-              </Typography>
-            </Box>
-          </Box>
-        )}
-      </Box>
-
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" },
-          gap: { xs: 3, md: 4 },
-        }}
-      >
-        <Box>
-          <SectionTitle title="Overview" />
-          <Typography
-            variant="body1"
-            paragraph
-            sx={{
-              color: theme.palette.text.secondary,
-              lineHeight: 1.8,
-              fontSize: { xs: "1rem", sm: "1.05rem" },
-            }}
-          >
-            {project.description}
-          </Typography>
-
-          {project.role && (
-            <Box sx={{ mt: { xs: 4, sm: 5 } }}>
-              <SectionTitle title="My Role" />
-              <Typography
-                variant="body1"
-                sx={{
-                  color: theme.palette.text.secondary,
-                  lineHeight: 1.8,
-                }}
-              >
-                {project.role}
-              </Typography>
-            </Box>
-          )}
-
-          {project.impact && (
-            <Box sx={{ mt: { xs: 4, sm: 5 } }}>
-              <SectionTitle title="Impact / Outcome" />
-              <Typography
-                variant="body1"
-                sx={{
-                  color: theme.palette.text.secondary,
-                  lineHeight: 1.8,
-                }}
-              >
-                {project.impact}
-              </Typography>
-            </Box>
-          )}
-
-          {project.showcase.length > 0 && (
-            <Box sx={{ mt: { xs: 4.5, sm: 6 } }}>
-              <SectionTitle title="Project Showcase" />
-              <Grid container spacing={{ xs: 3, md: 4 }}>
-                {project.showcase.map((feature) => (
-                  <Grid
-                    key={`${feature.image}-${feature.title}`}
-                    size={{ xs: 12, md: 6 }}
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        position: "relative",
-                        width: "100%",
-                        minHeight: { xs: 320, sm: 360 },
-                        maxHeight: { xs: 640, md: 760 },
-                        aspectRatio: { xs: "4 / 5", sm: "16 / 10" },
-                        mb: 1.5,
-                        borderRadius: { xs: "10px", sm: "12px" },
-                        overflow: "hidden",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: alpha(theme.palette.common.white, 0.03),
-                        border: `1px solid ${alpha(
-                          theme.palette.primary.main,
-                          0.22
-                        )}`,
-                        boxShadow: theme.shadows[2],
-                        transition:
-                          "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
-                        "&:hover": {
-                          transform: { xs: "none", md: "scale(1.04)" },
-                          zIndex: 1,
-                          boxShadow: theme.shadows[6],
-                          cursor: "pointer",
-                        },
-                      }}
-                    >
-                      <Image
-                        src={feature.image}
-                        alt={feature.altText}
-                        fill
-                        sizes="(max-width: 900px) 100vw, 50vw"
-                        style={{
-                          objectFit: "contain",
-                          objectPosition: "center",
-                        }}
-                      />
-                    </Box>
-
-                    <Typography
-                      variant="h6"
-                      component="h3"
-                      sx={{
-                        fontWeight: 700,
-                        mb: 1,
-                        fontSize: {
-                          xs: "1.1rem",
-                          sm: "1.25rem",
-                        },
-                      }}
-                    >
-                      {feature.title}
-                    </Typography>
-
-                    {feature.description && (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          fontSize: {
-                            xs: "0.875rem",
-                            sm: "1rem",
-                          },
-                          lineHeight: 1.6,
-                        }}
-                      >
-                        {feature.description}
-                      </Typography>
-                    )}
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          )}
-
-          <Box sx={{ mt: { xs: 4.5, sm: 6 } }}>
-            <SectionTitle title="Key Features" />
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                gap: { xs: 2, sm: 3 },
-              }}
-            >
-              {highlightFeatures.map((feature) => (
-                <FeatureCard
-                  key={`${feature.title}-${feature.description}`}
-                  title={feature.title}
-                  description={feature.description}
-                />
-              ))}
-            </Box>
-          </Box>
-
-          {project.technicalFocus.length > 0 && (
-            <Box sx={{ mt: 6 }}>
-              <SectionTitle title="Technical Focus" />
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                  gap: 2,
-                }}
-              >
-                {project.technicalFocus.map((item) => (
-                  <Box
-                    key={item}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1.5,
-                      backgroundColor: alpha(
-                        theme.palette.background.paper,
-                        0.5
-                      ),
-                      borderRadius: "14px",
-                      p: 2,
-                      border: `1px solid ${alpha(
-                        theme.palette.primary.main,
-                        0.08
-                      )}`,
-                    }}
-                  >
-                    <CheckCircleOutlineIcon
-                      sx={{
-                        color: theme.palette.primary.main,
-                        fontSize: 22,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      {item}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          )}
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.7, mb: { xs: 4, md: 4.5 } }}>
+          {project.role && <MetaChip label={project.role} primary />}
+          {project.status && <MetaChip label={project.status} />}
+          {project.tags.map((tag) => (
+            <MetaChip key={tag} label={tag} />
+          ))}
         </Box>
 
-        <Box>
-          <Box
-            sx={{
-              backgroundColor: alpha(theme.palette.background.paper, 0.6),
-              borderRadius: "20px",
-              p: 3,
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-              position: { md: "sticky" },
-              top: { md: 100 },
-            }}
-          >
-            <Typography
-              variant="h5"
-              component="h3"
-              gutterBottom
-              sx={{ fontWeight: 700 }}
-            >
-              Project Stack
-            </Typography>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "minmax(0, 1fr) 308px" },
+            gap: { xs: 5, lg: 3.5 },
+            alignItems: "start",
+          }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            {showcaseItems.length > 0 && (
+              <ContentSection title="Project Showcase">
+                <ProjectShowcaseCarousel items={showcaseItems} />
+              </ContentSection>
+            )}
 
-            <Typography variant="body2" component="div">
-              <Box sx={{ mb: 2 }}>
-                <strong>Category:</strong> {project.category}
-              </Box>
+            <ProjectVideosSection videos={project.videos} onWatch={setSelectedVideo} />
 
-              {project.role && (
-                <Box sx={{ mb: 2 }}>
-                  <strong>Role:</strong> {project.role}
-                </Box>
-              )}
+            <ContentSection title="Overview">
+              <BodyCopy>{project.description}</BodyCopy>
+            </ContentSection>
 
-              {project.status && (
-                <Box sx={{ mb: 2 }}>
-                  <strong>Status:</strong> {project.status}
-                </Box>
-              )}
+            {project.role && (
+              <ContentSection title="My Role">
+                <BodyCopy>{project.role}</BodyCopy>
+              </ContentSection>
+            )}
 
-              {project.tags.length > 0 && (
-                <Box sx={{ mb: 2 }}>
-                  <strong>Technologies:</strong>
-                  <Box component="ul" sx={{ mt: 1, pl: 2 }}>
-                    {project.tags.map((tech) => (
-                      <li key={tech}>{tech}</li>
-                    ))}
-                  </Box>
-                </Box>
-              )}
-            </Typography>
+            {project.impact && (
+              <ContentSection title="Impact / Outcome">
+                <BodyCopy>{project.impact}</BodyCopy>
+              </ContentSection>
+            )}
+
+            <ContentSection title="Key Features">
+              <ItemGrid>
+                {highlightFeatures.map((feature) => (
+                  <FeatureItemCard
+                    key={`${feature.title}-${feature.description}`}
+                    title={feature.title}
+                    description={feature.description}
+                  />
+                ))}
+              </ItemGrid>
+            </ContentSection>
+
+            {project.technicalFocus.length > 0 && (
+              <ContentSection title="Technical Focus" last>
+                <ItemGrid>
+                  {project.technicalFocus.map((item) => (
+                    <FeatureItemCard key={item} title={item} />
+                  ))}
+                </ItemGrid>
+              </ContentSection>
+            )}
           </Box>
-        </Box>
-      </Box>
 
+          <ProjectStack project={project} />
+        </Box>
       </Container>
 
-      {project.videoUrl && (
+      {selectedVideo && (
         <ProjectVideoDialog
-          open={videoOpen}
-          onClose={() => setVideoOpen(false)}
-          title={project.title}
-          videoUrl={project.videoUrl}
+          open
+          onClose={() => setSelectedVideo(null)}
+          title={selectedVideo.title}
+          videoUrl={selectedVideo.videoUrl}
         />
       )}
     </Box>
   );
 }
 
-function StackedActions({
-  siteUrl,
-  secondaryLinks,
-  videoUrl,
-  onVideoClick,
+function MetaChip({ label, primary = false }: { label: string; primary?: boolean }) {
+  const theme = useTheme();
+  return (
+    <Chip
+      label={label}
+      size="small"
+      variant={primary ? "filled" : "outlined"}
+      sx={{
+        height: 25,
+        maxWidth: "100%",
+        borderRadius: 4,
+        color: primary ? "primary.contrastText" : "text.secondary",
+        bgcolor: primary ? "primary.main" : alpha(theme.palette.common.white, 0.025),
+        borderColor: primary ? "primary.main" : alpha(theme.palette.common.white, 0.13),
+        fontSize: "0.65rem",
+        fontWeight: primary ? 800 : 600,
+      }}
+    />
+  );
+}
+
+function ContentSection({
+  title,
+  children,
+  last = false,
 }: {
-  siteUrl: string | null;
-  secondaryLinks: { label: string; href: string; icon: ReactElement }[];
-  videoUrl: string | null;
-  onVideoClick: () => void;
+  title: string;
+  children: React.ReactNode;
+  last?: boolean;
 }) {
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexWrap: "wrap",
-        width: { xs: "100%", sm: "auto" },
-        justifyContent: { xs: "stretch", sm: "flex-end" },
-        gap: 1,
-        "& .MuiButton-root": {
-          flex: { xs: "1 1 calc(50% - 4px)", sm: "0 0 auto" },
-          minWidth: 0,
-          minHeight: { xs: 42, sm: 40 },
-          px: { xs: 1.5, sm: 2.25 },
-          whiteSpace: "nowrap",
-        },
-      }}
-    >
-      {siteUrl && (
-        <Button
-          variant="contained"
-          color="primary"
-          endIcon={<OpenInNewIcon />}
-          href={siteUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{
-            borderRadius: "50px",
-            textTransform: "none",
-            px: { xs: 1.5, sm: 3 },
-            fontWeight: 600,
-          }}
-        >
-          Visit Site
-        </Button>
-      )}
-
-      {secondaryLinks.map((link) => (
-        <Button
-          key={link.label}
-          variant="outlined"
-          color="primary"
-          startIcon={link.icon}
-          href={link.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{
-            borderRadius: "50px",
-            textTransform: "none",
-            px: 2.25,
-            fontWeight: 600,
-          }}
-        >
-          {link.label}
-        </Button>
-      ))}
-
-      {videoUrl && (
-        <Button
-          variant="outlined"
-          color="primary"
-          startIcon={<PlayCircleOutlineIcon />}
-          onClick={onVideoClick}
-          sx={{
-            borderRadius: "50px",
-            textTransform: "none",
-            px: 2.25,
-            fontWeight: 600,
-          }}
-        >
-          Video
-        </Button>
-      )}
+    <Box sx={{ mb: last ? 0 : { xs: 5, md: 6 }, scrollMarginTop: 92 }}>
+      <Typography
+        component="h2"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          mb: 2,
+          fontFamily: '"Montserrat", sans-serif',
+          fontSize: "1.05rem",
+          fontWeight: 800,
+          "&::before": {
+            content: '""',
+            width: 3,
+            height: 16,
+            borderRadius: 4,
+            bgcolor: "primary.main",
+          },
+        }}
+      >
+        {title}
+      </Typography>
+      {children}
     </Box>
   );
 }
 
-function SectionTitle({ title }: { title: string }) {
+function BodyCopy({ children }: { children: React.ReactNode }) {
   return (
-    <Typography
-      variant="h4"
-      component="h2"
-      gutterBottom
-      sx={{
-        fontWeight: 700,
-        fontSize: {
-          xs: "1.5rem",
-          sm: "1.75rem",
-          md: "2rem",
-        },
-        mb: { xs: 1.5, sm: 2 },
-      }}
-    >
-      {title}
+    <Typography sx={{ color: "text.secondary", fontSize: "0.82rem", lineHeight: 1.75, whiteSpace: "pre-wrap" }}>
+      {children}
     </Typography>
   );
 }
 
-function FeatureCard({
-  title,
-  description,
-}: {
-  title: string;
-  description?: string;
-}) {
-  const theme = useTheme();
-
+function ItemGrid({ children }: { children: React.ReactNode }) {
   return (
     <Box
       sx={{
-        backgroundColor: alpha(theme.palette.background.paper, 0.5),
-        borderRadius: { xs: "14px", sm: "20px" },
-        p: { xs: 2, sm: 3 },
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-        transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
-        "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow: `0 8px 24px ${alpha(theme.palette.common.black, 0.1)}`,
-        },
+        display: "grid",
+        gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
+        gap: 1.25,
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "flex-start", mb: 1, gap: 1 }}>
-        <CheckCircleOutlineIcon
-          sx={{
-            color: theme.palette.primary.main,
-            fontSize: { xs: 22, sm: 24 },
-            flexShrink: 0,
-            mt: 0.2,
-          }}
-        />
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 700,
-            lineHeight: 1.3,
-            fontSize: { xs: "1.12rem", sm: "1.25rem" },
-          }}
-        >
-          {title}
-        </Typography>
-      </Box>
+      {children}
+    </Box>
+  );
+}
 
-      {description && (
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ lineHeight: 1.6 }}
-        >
-          {description}
-        </Typography>
+function FeatureItemCard({ title, description }: { title: string; description?: string }) {
+  const theme = useTheme();
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 1.3,
+        minHeight: 52,
+        p: 1.6,
+        borderRadius: 1.5,
+        bgcolor: alpha(theme.palette.background.paper, 0.68),
+        border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+      }}
+    >
+      <CheckCircleOutlineIcon sx={{ mt: 0.1, flexShrink: 0, color: "primary.main", fontSize: 15 }} />
+      <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, lineHeight: 1.35 }}>{title}</Typography>
+        {description && (
+          <Typography sx={{ mt: 0.5, color: "text.secondary", fontSize: "0.66rem", lineHeight: 1.45 }}>
+            {description}
+          </Typography>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+function ProjectStack({ project }: { project: PublicProject }) {
+  const theme = useTheme();
+  const rows = [
+    { label: "Category", value: project.category, accent: false },
+    { label: "Role", value: project.role, accent: true },
+    { label: "Status", value: project.status, accent: false },
+  ].filter((row): row is { label: string; value: string; accent: boolean } => Boolean(row.value));
+
+  return (
+    <Box
+      component="aside"
+      sx={{
+        position: { lg: "sticky" },
+        top: { lg: 78 },
+        p: 2.75,
+        borderRadius: 1.5,
+        bgcolor: alpha(theme.palette.background.paper, 0.72),
+        border: `1px solid ${alpha(theme.palette.common.white, 0.11)}`,
+      }}
+    >
+      <Typography sx={{ mb: 2.3, color: "text.secondary", fontSize: "0.65rem", fontWeight: 800, letterSpacing: "0.08em" }}>
+        PROJECT STACK
+      </Typography>
+      {rows.map((row) => (
+        <Box key={row.label} sx={{ py: 1.8, borderBottom: `1px solid ${alpha(theme.palette.common.white, 0.08)}` }}>
+          <Typography sx={{ mb: 0.8, color: "text.secondary", fontSize: "0.58rem", textTransform: "uppercase" }}>
+            {row.label}
+          </Typography>
+          <Typography sx={{ color: row.accent ? "primary.main" : "text.primary", fontSize: "0.75rem", fontWeight: 800 }}>
+            {row.value}
+          </Typography>
+        </Box>
+      ))}
+      {project.tags.length > 0 && (
+        <Box sx={{ pt: 1.8 }}>
+          <Typography sx={{ mb: 1.2, color: "text.secondary", fontSize: "0.58rem", textTransform: "uppercase" }}>
+            Technologies
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.65 }}>
+            {project.tags.map((tag) => (
+              <Chip
+                key={tag}
+                label={tag}
+                size="small"
+                variant="outlined"
+                sx={{
+                  height: 23,
+                  borderRadius: 1,
+                  color: "text.secondary",
+                  borderColor: alpha(theme.palette.common.white, 0.12),
+                  fontSize: "0.6rem",
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+function DetailActions({
+  siteUrl,
+  secondaryLinks,
+  hasVideos,
+  onVideoClick,
+}: {
+  siteUrl: string | null;
+  secondaryLinks: { label: string; href: string; icon: ReactElement }[];
+  hasVideos: boolean;
+  onVideoClick: () => void;
+}) {
+  return (
+    <Box sx={{ display: "flex", flexWrap: "nowrap", minWidth: 0, justifyContent: "flex-end", gap: 0.7 }}>
+      {siteUrl && (
+        <Button variant="outlined" endIcon={<OpenInNewIcon />} href={siteUrl} target="_blank" rel="noopener noreferrer">
+          Visit Site
+        </Button>
+      )}
+      {secondaryLinks.map((link) => (
+        <Button key={link.label} variant="outlined" startIcon={link.icon} href={link.href} target="_blank" rel="noopener noreferrer">
+          {link.label}
+        </Button>
+      ))}
+      {hasVideos && (
+        <Button variant="outlined" startIcon={<PlayCircleOutlineIcon />} onClick={onVideoClick}>
+          Videos
+        </Button>
       )}
     </Box>
   );
@@ -672,22 +404,9 @@ function FeatureCard({
 
 function getFallbackFeatures(project: PublicProject): FeatureItem[] {
   return [
-    {
-      title: `${project.category} Experience`,
-      description: "A focused interface shaped around the project goals and audience.",
-    },
-    {
-      title: "Responsive Design",
-      description: "Optimized for desktop, tablet, and mobile screens.",
-    },
-    {
-      title: "Maintainable Structure",
-      description:
-        "Organized implementation patterns for easier long-term updates.",
-    },
-    {
-      title: "Performance-minded UI",
-      description: "Built with attention to loading, usability, and clear flows.",
-    },
+    { title: `${project.category} Experience`, description: "A focused interface shaped around the project goals and audience." },
+    { title: "Responsive Design", description: "Optimized for desktop, tablet, and mobile screens." },
+    { title: "Maintainable Structure", description: "Organized implementation patterns for easier long-term updates." },
+    { title: "Performance-minded UI", description: "Built with attention to loading, usability, and clear flows." },
   ];
 }

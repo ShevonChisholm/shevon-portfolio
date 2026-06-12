@@ -21,8 +21,11 @@ export default function ExperienceClient({ experiences }: ExperienceClientProps)
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
-    <Container maxWidth="lg" sx={{ py: 8 }}>
-      <Typography variant="h2" component="h2" align="center" gutterBottom>
+    <Container maxWidth="xl" sx={{ py: { xs: 9, md: 15 }, px: { xs: 2.5, sm: 4, lg: 6 } }}>
+      <Typography variant="overline" sx={{ color: "primary.main", fontWeight: 800, letterSpacing: "0.12em" }}>
+        Career
+      </Typography>
+      <Typography variant="h2" component="h2" sx={{ fontSize: { xs: "2.3rem", md: "4.4rem" }, lineHeight: 1.02, mb: { xs: 4, md: 7 } }}>
         Experience
       </Typography>
 
@@ -73,7 +76,7 @@ export default function ExperienceClient({ experiences }: ExperienceClientProps)
                   animate={{ scale: 1 }}
                   transition={{ delay: index * 0.2 }}
                 >
-                  <TimelineDot color="primary">
+                  <TimelineDot color="primary" sx={{ borderRadius: 1 }}>
                     <WorkIcon />
                   </TimelineDot>
                 </motion.div>

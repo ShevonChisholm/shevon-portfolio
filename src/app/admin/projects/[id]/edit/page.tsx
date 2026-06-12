@@ -8,7 +8,9 @@ import {
   getProjectWithRelations,
   projectToFormValues,
   updateProject,
+  updateProjectSection,
 } from "@/lib/cms/projects";
+import type { ProjectFormSection } from "@/lib/cms/projects";
 import type { ProjectFormValues } from "@/types/cms";
 
 type Message = {
@@ -58,6 +60,14 @@ export default function EditProjectPage() {
     router.refresh();
   };
 
+  const handleSaveSection = async (
+    section: ProjectFormSection,
+    values: ProjectFormValues
+  ) => {
+    await updateProjectSection(params.id, section, values);
+    router.refresh();
+  };
+
   if (isLoading) {
     return (
       <Stack sx={{ alignItems: "center", py: 8 }}>
@@ -82,6 +92,7 @@ export default function EditProjectPage() {
         mode="edit"
         projectId={params.id}
         onSubmit={handleSubmit}
+        onSaveSection={handleSaveSection}
       />
     </Stack>
   );

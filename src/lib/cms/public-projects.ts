@@ -6,6 +6,8 @@ import type {
   ProjectImage,
   ProjectTag,
   ProjectTechnicalFocus,
+  ProjectVideo,
+  ProjectVideoType,
   ProjectWithRelations,
 } from "@/types/cms";
 import { publicMediaUrl } from "@/lib/cms/media-url";
@@ -15,6 +17,15 @@ export type PublicProjectShowcaseItem = {
   description: string;
   image: string;
   altText: string;
+};
+
+export type PublicProjectVideo = {
+  title: string;
+  description: string;
+  videoUrl: string;
+  thumbnailUrl: string | null;
+  videoType: ProjectVideoType;
+  sortOrder: number;
 };
 
 export type PublicProject = {
@@ -38,6 +49,7 @@ export type PublicProject = {
   highlights: string[];
   technicalFocus: string[];
   showcase: PublicProjectShowcaseItem[];
+  videos: PublicProjectVideo[];
   seoTitle: string | null;
   seoDescription: string | null;
 };
@@ -62,6 +74,36 @@ function groupByProjectId<T extends { project_id: string }>(items: T[]) {
 
 function mapToPublicProject(project: ProjectWithRelations): PublicProject {
   const images = sortBySortOrder(project.images);
+  const videos = sortBySortOrder(project.videos)
+    .filter((video) => video.is_published)
+    .map((video) => ({
+      title: video.title,
+      description: video.description ?? "",
+      videoUrl: publicMediaUrl(video.video_url),
+      thumbnailUrl: video.thumbnail_url
+        ? publicMediaUrl(video.thumbnail_url)
+        : null,
+      videoType: video.video_type,
+      sortOrder: video.sort_order,
+    }));
+  const legacyVideoUrl = project.video_url
+    ? publicMediaUrl(project.video_url)
+    : null;
+  const publicVideos: PublicProjectVideo[] =
+    videos.length > 0
+      ? videos
+      : legacyVideoUrl
+        ? [
+            {
+              title: "Project Demo",
+              description: "",
+              videoUrl: legacyVideoUrl,
+              thumbnailUrl: null,
+              videoType: "demo",
+              sortOrder: 0,
+            },
+          ]
+        : [];
 
   return {
     id: project.id,
@@ -76,7 +118,7 @@ function mapToPublicProject(project: ProjectWithRelations): PublicProject {
     siteUrl: project.site_url,
     githubUrl: project.github_url,
     demoUrl: project.demo_url,
-    videoUrl: project.video_url ? publicMediaUrl(project.video_url) : null,
+    videoUrl: legacyVideoUrl,
     caseStudyUrl: project.case_study_url
       ? publicMediaUrl(project.case_study_url)
       : null,
@@ -95,6 +137,7 @@ function mapToPublicProject(project: ProjectWithRelations): PublicProject {
       image: publicMediaUrl(image.image_url),
       altText: image.alt_text ?? image.title ?? project.title,
     })),
+    videos: publicVideos,
     seoTitle: project.seo_title,
     seoDescription: project.seo_description,
   };
@@ -109,10 +152,11 @@ async function fetchRelations(projectIds: string[]) {
       imagesByProject: {},
       highlightsByProject: {},
       technicalFocusByProject: {},
+      videosByProject: {},
     };
   }
 
-  const [tags, images, highlights, technicalFocus] = await Promise.all([
+  const [tags, images, highlights, technicalFocus, videos] = await Promise.all([
     supabase
       .from("project_tags")
       .select("*")
@@ -133,12 +177,21 @@ async function fetchRelations(projectIds: string[]) {
       .select("*")
       .in("project_id", projectIds)
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("project_videos")
+      .select("*")
+      .in("project_id", projectIds)
+      .eq("is_published", true)
+      .order("sort_order", { ascending: true }),
   ]);
 
   const relationError =
     tags.error ?? images.error ?? highlights.error ?? technicalFocus.error;
 
   if (relationError) throw new Error(relationError.message);
+  if (videos.error) {
+    console.warn("Unable to fetch published project videos.", videos.error.message);
+  }
 
   return {
     tagsByProject: groupByProjectId((tags.data ?? []) as ProjectTag[]),
@@ -149,6 +202,7 @@ async function fetchRelations(projectIds: string[]) {
     technicalFocusByProject: groupByProjectId(
       (technicalFocus.data ?? []) as ProjectTechnicalFocus[]
     ),
+    videosByProject: groupByProjectId((videos.data ?? []) as ProjectVideo[]),
   };
 }
 
@@ -188,6 +242,7 @@ export async function getPublishedProjects(options: PublishedProjectListOptions 
     imagesByProject,
     highlightsByProject,
     technicalFocusByProject,
+    videosByProject,
   } = await fetchRelations(projectIds);
 
   return projects.map((project) =>
@@ -197,6 +252,7 @@ export async function getPublishedProjects(options: PublishedProjectListOptions 
       images: imagesByProject[project.id] ?? [],
       highlights: highlightsByProject[project.id] ?? [],
       technical_focus: technicalFocusByProject[project.id] ?? [],
+      videos: videosByProject[project.id] ?? [],
     })
   );
 }
@@ -219,6 +275,7 @@ export async function getPublishedProjectBySlug(slug: string) {
     imagesByProject,
     highlightsByProject,
     technicalFocusByProject,
+    videosByProject,
   } = await fetchRelations([project.id]);
 
   return mapToPublicProject({
@@ -227,5 +284,6 @@ export async function getPublishedProjectBySlug(slug: string) {
     images: imagesByProject[project.id] ?? [],
     highlights: highlightsByProject[project.id] ?? [],
     technical_focus: technicalFocusByProject[project.id] ?? [],
+    videos: videosByProject[project.id] ?? [],
   });
 }

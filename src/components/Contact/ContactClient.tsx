@@ -1,11 +1,12 @@
 "use client";
 
-import type { ReactElement } from "react";
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
+import type { PortfolioContactSettings } from "@/types/cms";
 import {
   Alert,
   Box,
   Button,
+  Chip,
   Container,
   Link as MuiLink,
   Paper,
@@ -14,16 +15,19 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import Grid from "@mui/material/Grid";
 import { alpha } from "@mui/material/styles";
 import {
-  Email as EmailIcon,
+  EmailOutlined as EmailIcon,
   LinkedIn as LinkedInIcon,
-  LocationOn as LocationIcon,
-  Phone as PhoneIcon,
+  LocationOnOutlined as LocationIcon,
+  PhoneOutlined as PhoneIcon,
+  SendOutlined as SendIcon,
 } from "@mui/icons-material";
 import { m as motion } from "framer-motion";
-import type { PortfolioContactSettings } from "@/types/cms";
+
+type ContactClientProps = {
+  settings: PortfolioContactSettings;
+};
 
 interface ContactInfo {
   icon: ReactElement;
@@ -32,10 +36,6 @@ interface ContactInfo {
   href?: string;
 }
 
-type ContactClientProps = {
-  settings: PortfolioContactSettings;
-};
-
 function phoneHref(phone: string) {
   const normalized = phone.replace(/[^\d+]/g, "");
   return normalized ? `tel:${normalized}` : undefined;
@@ -43,24 +43,17 @@ function phoneHref(phone: string) {
 
 export default function ContactClient({ settings }: ContactClientProps) {
   const theme = useTheme();
+  const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
+  const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error",
+  });
   const contactInfo: ContactInfo[] = [
-    {
-      icon: <EmailIcon />,
-      title: "Email",
-      content: settings.contact_email,
-      href: `mailto:${settings.contact_email}`,
-    },
-    {
-      icon: <PhoneIcon />,
-      title: "Phone",
-      content: settings.contact_phone,
-      href: phoneHref(settings.contact_phone),
-    },
-    {
-      icon: <LocationIcon />,
-      title: "Location",
-      content: settings.location,
-    },
+    { icon: <EmailIcon />, title: "Email", content: settings.contact_email, href: `mailto:${settings.contact_email}` },
+    { icon: <PhoneIcon />, title: "Phone", content: settings.contact_phone, href: phoneHref(settings.contact_phone) },
+    { icon: <LocationIcon />, title: "Location", content: settings.location },
     {
       icon: <LinkedInIcon />,
       title: "LinkedIn",
@@ -69,44 +62,19 @@ export default function ContactClient({ settings }: ContactClientProps) {
     },
   ];
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success" as "success" | "error",
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setLoading(true);
-
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
       const data = await response.json();
-
-      if (response.ok) {
-        setSnackbar({
-          open: true,
-          message: "Message sent successfully!",
-          severity: "success",
-        });
-        setFormData({ name: "", email: "", subject: "", message: "" });
-      } else {
-        throw new Error(data.error || "Failed to send message");
-      }
+      if (!response.ok) throw new Error(data.error || "Failed to send message");
+      setSnackbar({ open: true, message: "Message sent successfully!", severity: "success" });
+      setFormData({ name: "", email: "", subject: "", message: "" });
     } catch {
       setSnackbar({
         open: true,
@@ -118,120 +86,136 @@ export default function ContactClient({ settings }: ContactClientProps) {
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target;
+    setFormData((current) => ({ ...current, [name]: value }));
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 8 }} id="contact">
-      <Typography variant="h2" component="h2" align="center" gutterBottom>
-        Let&apos;s Work Together
-      </Typography>
-
-      <Typography
-        variant="subtitle1"
-        align="center"
-        sx={{
-          color: theme.palette.text.secondary,
-          maxWidth: "760px",
-          mx: "auto",
-          mb: 6,
-          lineHeight: 1.7,
-        }}
-      >
-        Have a role, project, or product idea that needs a reliable full-stack
-        developer? I&apos;m open to remote opportunities, freelance work, and
-        product-focused engineering roles.
-      </Typography>
-
-      <Grid container spacing={4}>
-        <Grid size={{ xs: 12, md: 4 }}>
+    <Box
+      component="section"
+      id="contact"
+      sx={{
+        py: { xs: 9, md: 12 },
+        width: "100%",
+        minWidth: 0,
+        overflow: "hidden",
+        borderTop: `1px solid ${alpha(theme.palette.common.white, 0.08)}`,
+      }}
+    >
+      <Container maxWidth={false} sx={{ width: "100%", maxWidth: 1040 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: { xs: "flex-start", md: "flex-end" },
+            justifyContent: "space-between",
+            flexDirection: { xs: "column", md: "row" },
+            gap: 2.5,
+            mb: { xs: 4.5, md: 5.5 },
+          }}
+        >
           <Box>
+            <Chip
+              label="CONTACT"
+              size="small"
+              variant="outlined"
+              sx={{
+                height: 28,
+                mb: 2,
+                borderRadius: 4,
+                color: "primary.main",
+                borderColor: alpha(theme.palette.primary.main, 0.38),
+                bgcolor: alpha(theme.palette.primary.main, 0.04),
+                fontSize: "0.65rem",
+                fontWeight: 800,
+              }}
+            />
+            <Typography
+              variant="h2"
+              component="h2"
+              sx={{ fontSize: { xs: "2rem", md: "2.3rem" }, lineHeight: 1.12, fontWeight: 800 }}
+            >
+              Let&apos;s work{" "}
+              <Box component="span" sx={{ color: "primary.main" }}>
+                together
+              </Box>
+            </Typography>
+          </Box>
+          <Typography
+            sx={{
+              maxWidth: 360,
+              color: "text.secondary",
+              textAlign: { xs: "left", md: "right" },
+              fontSize: "0.8rem",
+              lineHeight: 1.55,
+            }}
+          >
+            Open to remote opportunities, freelance work, and product-focused engineering roles
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "380px minmax(0, 1fr)" },
+            gap: { xs: 3, md: 3 },
+            alignItems: "start",
+          }}
+        >
+          <Box sx={{ display: "grid", gap: 1.25 }}>
             {contactInfo.map((info, index) => (
               <motion.div
                 key={info.title}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.12 }}
+                transition={{ duration: 0.35, delay: index * 0.05 }}
               >
                 <Paper
                   elevation={0}
                   sx={{
-                    p: 2.5,
-                    mb: 2,
+                    minHeight: 66,
                     display: "flex",
                     alignItems: "center",
-                    gap: 2,
-                    borderRadius: "18px",
-                    backgroundColor: alpha(theme.palette.background.paper, 0.7),
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-                    transition:
-                      "transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
-                    "&:hover": {
-                      transform: "translateY(-4px)",
-                      borderColor: alpha(theme.palette.primary.main, 0.35),
-                      boxShadow: `0 14px 28px ${alpha(
-                        theme.palette.common.black,
-                        0.16
-                      )}`,
-                    },
+                    gap: 1.6,
+                    px: 2,
+                    py: 1.25,
+                    borderRadius: 1.5,
+                    bgcolor: alpha(theme.palette.background.paper, 0.72),
+                    border: `1px solid ${alpha(theme.palette.common.white, 0.11)}`,
                   }}
                 >
                   <Box
                     sx={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: "14px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: theme.palette.primary.main,
-                      backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                      width: 34,
+                      height: 34,
+                      display: "grid",
+                      placeItems: "center",
                       flexShrink: 0,
+                      borderRadius: 1,
+                      color: "primary.main",
+                      bgcolor: alpha(theme.palette.primary.main, 0.13),
+                      "& svg": { fontSize: 17 },
                     }}
                   >
                     {info.icon}
                   </Box>
-
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography
-                      variant="h6"
-                      component="h3"
-                      sx={{ fontWeight: 700, fontSize: "1rem" }}
-                    >
+                    <Typography sx={{ color: "text.secondary", fontSize: "0.58rem", fontWeight: 800, textTransform: "uppercase" }}>
                       {info.title}
                     </Typography>
-
                     {info.href ? (
                       <MuiLink
                         href={info.href}
                         target={info.href.startsWith("http") ? "_blank" : undefined}
-                        rel={
-                          info.href.startsWith("http")
-                            ? "noopener noreferrer"
-                            : undefined
-                        }
+                        rel={info.href.startsWith("http") ? "noopener noreferrer" : undefined}
                         underline="hover"
-                        sx={{
-                          color: theme.palette.text.secondary,
-                          wordBreak: "break-word",
-                        }}
+                        sx={{ color: "text.primary", fontSize: "0.75rem", overflowWrap: "anywhere" }}
                       >
                         {info.content}
                       </MuiLink>
                     ) : (
-                      <Typography
-                        color="text.secondary"
-                        sx={{ wordBreak: "break-word" }}
-                      >
+                      <Typography sx={{ color: "text.primary", fontSize: "0.75rem", overflowWrap: "anywhere" }}>
                         {info.content}
                       </Typography>
                     )}
@@ -240,139 +224,76 @@ export default function ContactClient({ settings }: ContactClientProps) {
               </motion.div>
             ))}
           </Box>
-        </Grid>
 
-        <Grid size={{ xs: 12, md: 8 }}>
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
+          <Paper
+            component={motion.div}
+            initial={{ opacity: 0, x: 16 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
+            elevation={0}
+            sx={{
+              p: { xs: 2.5, sm: 3.25 },
+              borderRadius: 1.5,
+              bgcolor: alpha(theme.palette.background.paper, 0.72),
+              border: `1px solid ${alpha(theme.palette.common.white, 0.11)}`,
+            }}
           >
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 3, sm: 4 },
-                borderRadius: "22px",
-                backgroundColor: alpha(theme.palette.background.paper, 0.7),
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-              }}
-            >
-              <Typography
-                variant="h5"
-                component="h3"
-                sx={{ fontWeight: 700, mb: 1 }}
+            <Typography sx={{ fontFamily: '"Montserrat", sans-serif', fontSize: "0.92rem", fontWeight: 800 }}>
+              Send a Message
+            </Typography>
+            <Typography sx={{ mt: 0.6, mb: 2.5, color: "text.secondary", fontSize: "0.76rem" }}>
+              Tell me about the opportunity or project, and I&apos;ll get back to you.
+            </Typography>
+
+            <Box component="form" onSubmit={handleSubmit}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" },
+                  gap: 1.5,
+                }}
               >
-                Send a Message
-              </Typography>
-
-              <Typography
-                variant="body2"
-                sx={{ color: theme.palette.text.secondary, mb: 3 }}
-              >
-                Tell me a little about the opportunity or project, and I&apos;ll
-                get back to you.
-              </Typography>
-
-              <form onSubmit={handleSubmit}>
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      disabled={loading}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      disabled={loading}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12 }}>
-                    <TextField
-                      fullWidth
-                      label="Subject"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      disabled={loading}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12 }}>
-                    <TextField
-                      fullWidth
-                      label="Message"
-                      name="message"
-                      multiline
-                      rows={5}
-                      value={formData.message}
-                      onChange={handleChange}
-                      required
-                      disabled={loading}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12 }}>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      size="large"
-                      fullWidth
-                      disabled={loading}
-                      sx={{
-                        borderRadius: "999px",
-                        py: 1.4,
-                        textTransform: "none",
-                        fontWeight: 700,
-                        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                        "&:hover": {
-                          transform: "translateY(-2px)",
-                          boxShadow: `0 12px 24px ${alpha(
-                            theme.palette.primary.main,
-                            0.28
-                          )}`,
-                        },
-                        "&:active": {
-                          transform: "translateY(0)",
-                        },
-                      }}
-                    >
-                      {loading ? "Sending..." : "Send Message"}
-                    </Button>
-                  </Grid>
-                </Grid>
-              </form>
-            </Paper>
-          </motion.div>
-        </Grid>
-      </Grid>
+                <TextField fullWidth required placeholder="Name *" name="name" value={formData.name} onChange={handleChange} disabled={loading} />
+                <TextField fullWidth required type="email" placeholder="Email *" name="email" value={formData.email} onChange={handleChange} disabled={loading} />
+                <TextField fullWidth placeholder="Subject" name="subject" value={formData.subject} onChange={handleChange} disabled={loading} sx={{ gridColumn: "1 / -1" }} />
+                <TextField
+                  fullWidth
+                  required
+                  multiline
+                  rows={5}
+                  placeholder="Message *"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  disabled={loading}
+                  sx={{ gridColumn: "1 / -1" }}
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  disabled={loading}
+                  startIcon={<SendIcon />}
+                  sx={{ gridColumn: "1 / -1", minHeight: 40 }}
+                >
+                  {loading ? "Sending..." : "Send Message"}
+                </Button>
+              </Box>
+            </Box>
+          </Paper>
+        </Box>
+      </Container>
 
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
       >
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar((current) => ({ ...current, open: false }))}>
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
   );
 }

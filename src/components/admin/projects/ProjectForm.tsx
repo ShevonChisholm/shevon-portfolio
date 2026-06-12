@@ -25,17 +25,21 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import MediaUploadField from "@/components/admin/media/MediaUploadField";
+import SectionSaveButton from "@/components/admin/SectionSaveButton";
 import { AdminNotificationBridge } from "@/components/admin/notifications/AdminNotifications";
 import type {
   ProjectMutationResult,
+  ProjectFormSection,
   QueuedProjectMedia,
 } from "@/lib/cms/projects";
+import type { VideoUploadStatus } from "@/lib/cms/video-compression";
 import type {
   ProjectCategory,
   ProjectFormValues,
   ProjectImageType,
   ProjectTagType,
   ProjectType,
+  ProjectVideoType,
 } from "@/types/cms";
 
 type ProjectFormProps = {
@@ -46,6 +50,10 @@ type ProjectFormProps = {
     values: ProjectFormValues,
     queuedMedia: QueuedProjectMedia
   ) => Promise<ProjectMutationResult | void>;
+  onSaveSection?: (
+    section: ProjectFormSection,
+    values: ProjectFormValues
+  ) => Promise<void>;
 };
 
 type Message = {
@@ -76,6 +84,14 @@ const imageTypes: ProjectImageType[] = [
   "architecture",
   "logo",
 ];
+const videoTypes: { value: ProjectVideoType; label: string }[] = [
+  { value: "website_walkthrough", label: "Website Walkthrough" },
+  { value: "admin_cms_walkthrough", label: "Admin CMS Walkthrough" },
+  { value: "mobile_experience", label: "Mobile Experience" },
+  { value: "technical_backend", label: "Technical / Backend Demonstration" },
+  { value: "demo", label: "General Demo" },
+  { value: "other", label: "Other" },
+];
 
 function normalizeSlug(value: string) {
   return value
@@ -89,28 +105,105 @@ function ordered<T extends { sort_order: number }>(items: T[]) {
   return [...items].sort((a, b) => a.sort_order - b.sort_order);
 }
 
+function projectSectionSnapshot(
+  section: ProjectFormSection,
+  values: ProjectFormValues
+) {
+  const sectionValues = {
+    core: {
+      title: values.title,
+      slug: values.slug,
+      short_description: values.short_description,
+      description: values.description,
+      category: values.category,
+      project_type: values.project_type,
+      client_name: values.client_name,
+      is_client_project: values.is_client_project,
+      role: values.role,
+      status: values.status,
+      impact: values.impact,
+      started_at: values.started_at,
+      completed_at: values.completed_at,
+      sort_order: values.sort_order,
+      is_featured: values.is_featured,
+      is_published: values.is_published,
+    },
+    media: {
+      image_url: values.image_url,
+      site_url: values.site_url,
+      github_url: values.github_url,
+      demo_url: values.demo_url,
+      video_url: values.video_url,
+      case_study_url: values.case_study_url,
+    },
+    videos: ordered(values.videos),
+    seo: {
+      seo_title: values.seo_title,
+      seo_description: values.seo_description,
+    },
+    tags: ordered(values.tags),
+    images: ordered(values.images),
+    highlights: ordered(values.highlights),
+    technical_focus: ordered(values.technical_focus),
+  };
+
+  return JSON.stringify(sectionValues[section]);
+}
+
 export default function ProjectForm({
   initialValues,
   mode,
   projectId,
   onSubmit,
+  onSaveSection,
 }: ProjectFormProps) {
   const theme = useTheme();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<Message>(null);
+  const [activeMediaTasks, setActiveMediaTasks] = useState(0);
+  const [legacyVideoUploadStatus, setLegacyVideoUploadStatus] =
+    useState<VideoUploadStatus | null>(null);
+  const [videoUploadStatuses, setVideoUploadStatuses] = useState<
+    Record<number, VideoUploadStatus | null>
+  >({});
   const [queuedMedia, setQueuedMedia] = useState<QueuedProjectMedia>({
     coverImage: null,
     video: null,
     caseStudyDocument: null,
     galleryImages: initialValues.images.map(() => null),
+    videos: initialValues.videos.map(() => ({
+      videoFile: null,
+      thumbnailFile: null,
+    })),
   });
   const [values, setValues] = useState<ProjectFormValues>({
     ...initialValues,
     tags: ordered(initialValues.tags),
     images: ordered(initialValues.images),
+    videos: ordered(initialValues.videos),
     highlights: ordered(initialValues.highlights),
     technical_focus: ordered(initialValues.technical_focus),
   });
+  const [savedSectionSnapshots, setSavedSectionSnapshots] = useState<
+    Partial<Record<ProjectFormSection, string>>
+  >(() =>
+    Object.fromEntries(
+      (
+        [
+          "core",
+          "media",
+          "videos",
+          "seo",
+          "tags",
+          "images",
+          "highlights",
+          "technical_focus",
+        ] as ProjectFormSection[]
+      ).map((section) => [section, projectSectionSnapshot(section, initialValues)])
+    )
+  );
+  const [savingSection, setSavingSection] =
+    useState<ProjectFormSection | null>(null);
 
   const pageTitle = mode === "create" ? "New Project" : "Edit Project";
   const submitLabel = mode === "create" ? "Create Project" : "Save Project";
@@ -139,6 +232,107 @@ export default function ProjectForm({
     });
   };
 
+  const updateQueuedVideoFile = (
+    index: number,
+    field: "videoFile" | "thumbnailFile",
+    file: File | null
+  ) => {
+    setQueuedMedia((current) => {
+      const videos = [...(current.videos ?? [])];
+      videos[index] = {
+        ...videos[index],
+        [field]: file,
+        ...(field === "videoFile"
+          ? {
+              videoStatus: file
+                ? (status: VideoUploadStatus | null) =>
+                    setVideoUploadStatuses((statuses) => ({
+                      ...statuses,
+                      [index]: status,
+                    }))
+                : undefined,
+            }
+          : {}),
+      };
+      return { ...current, videos };
+    });
+
+    if (field === "videoFile" && !file) {
+      setVideoUploadStatuses((statuses) => ({ ...statuses, [index]: null }));
+    }
+  };
+
+  const handleMediaBusyChange = (busy: boolean) => {
+    setActiveMediaTasks((current) => Math.max(0, current + (busy ? 1 : -1)));
+  };
+
+  const isSectionDirty = (section: ProjectFormSection) =>
+    savedSectionSnapshots[section] !== projectSectionSnapshot(section, values);
+
+  const handleSaveSection = async (section: ProjectFormSection) => {
+    if (!onSaveSection || activeMediaTasks > 0) return;
+
+    if (
+      section === "core" &&
+      (!values.title.trim() || !values.slug.trim() || !values.description.trim())
+    ) {
+      setMessage({
+        type: "error",
+        text: "Title, slug, and description are required before saving Core Details.",
+      });
+      return;
+    }
+
+    if (
+      section === "videos" &&
+      values.videos.some(
+        (video) =>
+          (video.title.trim() && !video.video_url.trim()) ||
+          (!video.title.trim() && video.video_url.trim())
+      )
+    ) {
+      setMessage({
+        type: "error",
+        text: "Each project video needs both a title and a video URL before saving.",
+      });
+      return;
+    }
+
+    setSavingSection(section);
+    setMessage(null);
+    try {
+      await onSaveSection(section, values);
+      setSavedSectionSnapshots((current) => ({
+        ...current,
+        [section]: projectSectionSnapshot(section, values),
+      }));
+      setMessage({
+        type: "success",
+        text: `${section.replace("_", " ")} section saved.`,
+      });
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : `Unable to save ${section.replace("_", " ")}.`,
+      });
+    } finally {
+      setSavingSection(null);
+    }
+  };
+
+  const sectionSaveButton = (section: ProjectFormSection) =>
+    mode === "edit" && onSaveSection ? (
+      <SectionSaveButton
+        dirty={isSectionDirty(section)}
+        saving={savingSection === section}
+        disabled={Boolean(savingSection) || activeMediaTasks > 0}
+        onClick={() => void handleSaveSection(section)}
+      />
+    ) : null;
+
   const queuedMediaForSubmit =
     mode === "create"
       ? queuedMedia
@@ -147,11 +341,20 @@ export default function ProjectForm({
           video: null,
           caseStudyDocument: null,
           galleryImages: [],
+          videos: [],
         };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMessage(null);
+
+    if (activeMediaTasks > 0) {
+      setMessage({
+        type: "warning",
+        text: "Please wait for the current video upload to finish before saving.",
+      });
+      return;
+    }
 
     startTransition(async () => {
       try {
@@ -159,10 +362,27 @@ export default function ProjectForm({
           ...values,
           tags: ordered(values.tags),
           images: values.images,
+          videos: ordered(values.videos),
           highlights: ordered(values.highlights),
           technical_focus: ordered(values.technical_focus),
         }, queuedMediaForSubmit);
         if (mode === "edit") {
+          setSavedSectionSnapshots(
+            Object.fromEntries(
+              (
+                [
+                  "core",
+                  "media",
+                  "videos",
+                  "seo",
+                  "tags",
+                  "images",
+                  "highlights",
+                  "technical_focus",
+                ] as ProjectFormSection[]
+              ).map((section) => [section, projectSectionSnapshot(section, values)])
+            )
+          );
           setMessage({
             type: result?.warning ? "warning" : "success",
             text: result?.warning ?? "Project saved.",
@@ -204,9 +424,16 @@ export default function ProjectForm({
           <Card elevation={0} sx={sectionCardSx}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack spacing={3}>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                  Core Details
-                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                    Core Details
+                  </Typography>
+                  {sectionSaveButton("core")}
+                </Stack>
                 <Typography variant="body2" sx={{ color: "text.secondary", mt: -2 }}>
                   Basic project information used for the admin list, project URL,
                   filtering, and display order.
@@ -428,9 +655,16 @@ export default function ProjectForm({
           <Card elevation={0} sx={sectionCardSx}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack spacing={3}>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                  Primary Media & Links
-                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                    Primary Media & Links
+                  </Typography>
+                  {sectionSaveButton("media")}
+                </Stack>
                 <Typography variant="body2" sx={{ color: "text.secondary", mt: -2 }}>
                   Use this section for the main cover visual and top-level external
                   links. Showcase images are managed separately below.
@@ -464,26 +698,32 @@ export default function ProjectForm({
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <MediaUploadField
-                      label="Project video URL"
+                      label="Legacy fallback video URL"
                       value={values.video_url}
                       uploadKind="project-video"
                       mode={mode}
                       uploadOnSelect={mode === "edit"}
                       queuedFile={queuedMedia.video ?? null}
-                      onFileQueued={(file) =>
+                      onFileQueued={(file) => {
+                        if (!file) setLegacyVideoUploadStatus(null);
                         setQueuedMedia((current) => ({
                           ...current,
                           video: file,
-                        }))
-                      }
+                          videoStatus: file
+                            ? setLegacyVideoUploadStatus
+                            : undefined,
+                        }));
+                      }}
+                      uploadStatus={legacyVideoUploadStatus}
+                      onBusyChange={handleMediaBusyChange}
                       projectSlug={projectSlug}
                       persistOnUpload={mode === "edit"}
                       table="projects"
                       field="video_url"
                       entityId={projectId}
-                      helperText="Optional demo, walkthrough, or thumbnail asset. Paste a URL or upload mp4/webm."
-                      previewLabel="Project video"
-                      uploadButtonLabel="Upload video"
+                      helperText="Kept for older projects. Uploaded MP4/WebM files up to 100MB are compressed before upload; external URLs remain supported."
+                      previewLabel="Legacy project video"
+                      uploadButtonLabel="Upload fallback video"
                       onChange={(value) => updateValue("video_url", value)}
                     />
                   </Grid>
@@ -549,9 +789,284 @@ export default function ProjectForm({
           <Card elevation={0} sx={sectionCardSx}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack spacing={3}>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                  SEO
-                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ justifyContent: "space-between" }}
+                >
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                      Project Videos
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary", mt: 0.75 }}
+                    >
+                      Add focused walkthroughs so visitors can choose the part of
+                      the project they want to see. Videos are displayed by sort
+                      order.
+                    </Typography>
+                  </Box>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                    {sectionSaveButton("videos")}
+                    <Button
+                      startIcon={<AddIcon />}
+                      onClick={() => {
+                        updateValue("videos", [
+                          ...values.videos,
+                          {
+                            title: "",
+                            description: "",
+                            video_url: "",
+                            thumbnail_url: "",
+                            video_type: "demo",
+                            sort_order: values.videos.length,
+                            is_published: true,
+                          },
+                        ]);
+                        setQueuedMedia((current) => ({
+                          ...current,
+                          videos: [
+                            ...(current.videos ?? []),
+                            { videoFile: null, thumbnailFile: null },
+                          ],
+                        }));
+                      }}
+                    >
+                      Add Video
+                    </Button>
+                  </Stack>
+                </Stack>
+
+                {values.videos.length === 0 && (
+                  <Alert severity="info">
+                    No dedicated videos yet. The legacy fallback video will be used
+                    publicly when available.
+                  </Alert>
+                )}
+
+                {values.videos.map((video, index) => (
+                  <Card key={`video-${index}`} variant="outlined">
+                    <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                      <Stack spacing={2}>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          sx={{ alignItems: "center", justifyContent: "space-between" }}
+                        >
+                          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                            {video.title || `Video ${index + 1}`}
+                          </Typography>
+                          <IconButton
+                            color="error"
+                            onClick={() => {
+                              updateValue(
+                                "videos",
+                                values.videos.filter(
+                                  (_, itemIndex) => itemIndex !== index
+                                )
+                              );
+                              setQueuedMedia((current) => ({
+                                ...current,
+                                videos: (current.videos ?? [])
+                                  .filter((_, itemIndex) => itemIndex !== index)
+                                  .map((item, nextIndex) => ({
+                                    ...item,
+                                    videoStatus: item.videoFile
+                                      ? (status: VideoUploadStatus | null) =>
+                                          setVideoUploadStatuses((statuses) => ({
+                                            ...statuses,
+                                            [nextIndex]: status,
+                                          }))
+                                      : undefined,
+                                  })),
+                              }));
+                              setVideoUploadStatuses((statuses) =>
+                                Object.fromEntries(
+                                  Object.entries(statuses)
+                                    .filter(([itemIndex]) => Number(itemIndex) !== index)
+                                    .map(([itemIndex, status]) => [
+                                      Number(itemIndex) > index
+                                        ? Number(itemIndex) - 1
+                                        : Number(itemIndex),
+                                      status,
+                                    ])
+                                )
+                              );
+                            }}
+                            aria-label={`Remove ${video.title || `video ${index + 1}`}`}
+                          >
+                            <DeleteOutlineIcon />
+                          </IconButton>
+                        </Stack>
+
+                        <Grid container spacing={2}>
+                          <Grid size={{ xs: 12, md: 5 }}>
+                            <TextField
+                              fullWidth
+                              required
+                              label="Video title"
+                              helperText="Example: Admin CMS Walkthrough."
+                              value={video.title}
+                              onChange={(event) => {
+                                const next = [...values.videos];
+                                next[index] = {
+                                  ...video,
+                                  title: event.target.value,
+                                };
+                                updateValue("videos", next);
+                              }}
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <TextField
+                              fullWidth
+                              select
+                              label="Video type"
+                              helperText="Used as the public category label."
+                              value={video.video_type}
+                              onChange={(event) => {
+                                const next = [...values.videos];
+                                next[index] = {
+                                  ...video,
+                                  video_type: event.target.value as ProjectVideoType,
+                                };
+                                updateValue("videos", next);
+                              }}
+                            >
+                              {videoTypes.map((type) => (
+                                <MenuItem key={type.value} value={type.value}>
+                                  {type.label}
+                                </MenuItem>
+                              ))}
+                            </TextField>
+                          </Grid>
+                          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="Sort order"
+                              helperText="Lower first"
+                              value={video.sort_order}
+                              onChange={(event) => {
+                                const next = [...values.videos];
+                                next[index] = {
+                                  ...video,
+                                  sort_order: Number(event.target.value),
+                                };
+                                updateValue("videos", next);
+                              }}
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={video.is_published}
+                                  onChange={(event) => {
+                                    const next = [...values.videos];
+                                    next[index] = {
+                                      ...video,
+                                      is_published: event.target.checked,
+                                    };
+                                    updateValue("videos", next);
+                                  }}
+                                />
+                              }
+                              label="Published"
+                              sx={{ mt: 0.5 }}
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12 }}>
+                            <TextField
+                              fullWidth
+                              multiline
+                              minRows={2}
+                              label="Description"
+                              helperText="Briefly explain what visitors will see in this walkthrough."
+                              value={video.description}
+                              onChange={(event) => {
+                                const next = [...values.videos];
+                                next[index] = {
+                                  ...video,
+                                  description: event.target.value,
+                                };
+                                updateValue("videos", next);
+                              }}
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <MediaUploadField
+                              label="Video URL"
+                              value={video.video_url}
+                              uploadKind="project-video"
+                              mode={mode}
+                              uploadOnSelect={mode === "edit"}
+                              queuedFile={
+                                queuedMedia.videos?.[index]?.videoFile ?? null
+                              }
+                              onFileQueued={(file) =>
+                                updateQueuedVideoFile(index, "videoFile", file)
+                              }
+                              uploadStatus={videoUploadStatuses[index] ?? null}
+                              onBusyChange={handleMediaBusyChange}
+                              projectSlug={projectSlug}
+                              helperText="Paste a YouTube, Vimeo, Loom, or direct URL, or upload an MP4/WebM up to 100MB. Uploaded files are compressed to a storage-safe MP4."
+                              previewLabel={video.title || `Video ${index + 1}`}
+                              uploadButtonLabel="Upload video"
+                              onChange={(value) => {
+                                const next = [...values.videos];
+                                next[index] = { ...video, video_url: value };
+                                updateValue("videos", next);
+                              }}
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <MediaUploadField
+                              label="Thumbnail URL"
+                              value={video.thumbnail_url}
+                              uploadKind="project-video-thumbnail"
+                              mode={mode}
+                              uploadOnSelect={mode === "edit"}
+                              queuedFile={
+                                queuedMedia.videos?.[index]?.thumbnailFile ?? null
+                              }
+                              onFileQueued={(file) =>
+                                updateQueuedVideoFile(index, "thumbnailFile", file)
+                              }
+                              projectSlug={projectSlug}
+                              helperText="Optional preview image shown on the public video card."
+                              previewLabel={`${video.title || `Video ${index + 1}`} thumbnail`}
+                              uploadButtonLabel="Upload thumbnail"
+                              onChange={(value) => {
+                                const next = [...values.videos];
+                                next[index] = { ...video, thumbnail_url: value };
+                                updateValue("videos", next);
+                              }}
+                            />
+                          </Grid>
+                        </Grid>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Stack>
+            </CardContent>
+          </Card>
+
+          <Card elevation={0} sx={sectionCardSx}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+              <Stack spacing={3}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                    SEO
+                  </Typography>
+                  {sectionSaveButton("seo")}
+                </Stack>
                 <Typography variant="body2" sx={{ color: "text.secondary", mt: -2 }}>
                   Optional metadata for future project detail pages and social sharing.
                 </Typography>
@@ -602,18 +1117,20 @@ export default function ProjectForm({
                       filtering and display chips.
                     </Typography>
                   </Box>
-                  <Button
-                    startIcon={<AddIcon />}
-                    onClick={() =>
-                      updateValue("tags", [
-                        ...values.tags,
-                        { name: "", type: "tech", sort_order: values.tags.length },
-                      ])
-                    }
-                    sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}
-                  >
-                    Add Tag
-                  </Button>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                    {sectionSaveButton("tags")}
+                    <Button
+                      startIcon={<AddIcon />}
+                      onClick={() =>
+                        updateValue("tags", [
+                          ...values.tags,
+                          { name: "", type: "tech", sort_order: values.tags.length },
+                        ])
+                      }
+                    >
+                      Add Tag
+                    </Button>
+                  </Stack>
                 </Stack>
                 {values.tags.map((tag, index) => (
                   <Grid key={`tag-${index}`} container spacing={1.5}>
@@ -704,29 +1221,31 @@ export default function ProjectForm({
                       are separate from the main cover image above.
                     </Typography>
                   </Box>
-                  <Button
-                    startIcon={<AddIcon />}
-                    onClick={() => {
-                      updateValue("images", [
-                        ...values.images,
-                        {
-                          title: "",
-                          description: "",
-                          image_url: "",
-                          alt_text: "",
-                          image_type: "gallery",
-                          sort_order: values.images.length,
-                        },
-                      ]);
-                      setQueuedMedia((current) => ({
-                        ...current,
-                        galleryImages: [...(current.galleryImages ?? []), null],
-                      }));
-                    }}
-                    sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}
-                  >
-                    Add Showcase Image
-                  </Button>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                    {sectionSaveButton("images")}
+                    <Button
+                      startIcon={<AddIcon />}
+                      onClick={() => {
+                        updateValue("images", [
+                          ...values.images,
+                          {
+                            title: "",
+                            description: "",
+                            image_url: "",
+                            alt_text: "",
+                            image_type: "gallery",
+                            sort_order: values.images.length,
+                          },
+                        ]);
+                        setQueuedMedia((current) => ({
+                          ...current,
+                          galleryImages: [...(current.galleryImages ?? []), null],
+                        }));
+                      }}
+                    >
+                      Add Showcase Image
+                    </Button>
+                  </Stack>
                 </Stack>
                 {values.images.map((image, index) => (
                   <Card key={`image-${index}`} variant="outlined">
@@ -890,18 +1409,20 @@ export default function ProjectForm({
                             : "Implementation details, architecture notes, integrations, and technical decisions."}
                         </Typography>
                       </Box>
-                      <Button
-                        startIcon={<AddIcon />}
-                        onClick={() =>
-                          updateValue(section, [
-                            ...values[section],
-                            { content: "", sort_order: values[section].length },
-                          ])
-                        }
-                        sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}
-                      >
-                        Add
-                      </Button>
+                      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                        {sectionSaveButton(section)}
+                        <Button
+                          startIcon={<AddIcon />}
+                          onClick={() =>
+                            updateValue(section, [
+                              ...values[section],
+                              { content: "", sort_order: values[section].length },
+                            ])
+                          }
+                        >
+                          Add
+                        </Button>
+                      </Stack>
                     </Stack>
                     {values[section].map((item, index) => (
                       <Stack key={`${section}-${index}`} direction="row" spacing={1}>
@@ -963,7 +1484,17 @@ export default function ProjectForm({
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={1.5}
-            sx={{ justifyContent: "flex-end" }}
+            sx={{
+              position: "sticky",
+              bottom: 0,
+              zIndex: 4,
+              justifyContent: "flex-end",
+              p: 1.5,
+              borderRadius: 1.5,
+              backgroundColor: alpha(theme.palette.background.default, 0.94),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+              backdropFilter: "blur(12px)",
+            }}
           >
             <Button component={Link} href="/admin/projects" variant="outlined">
               Cancel
@@ -972,9 +1503,13 @@ export default function ProjectForm({
               type="submit"
               variant="contained"
               startIcon={<SaveOutlinedIcon />}
-              disabled={isPending}
+              disabled={isPending || activeMediaTasks > 0}
             >
-              {isPending ? "Saving..." : submitLabel}
+              {isPending
+                ? "Saving..."
+                : activeMediaTasks > 0
+                  ? "Preparing media..."
+                  : submitLabel}
             </Button>
           </Stack>
         </Stack>

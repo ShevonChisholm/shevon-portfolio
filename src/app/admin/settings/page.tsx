@@ -20,6 +20,7 @@ import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import MediaPreview from "@/components/admin/media/MediaPreview";
+import SectionSaveButton from "@/components/admin/SectionSaveButton";
 import { AdminNotificationBridge } from "@/components/admin/notifications/AdminNotifications";
 import type {
   AboutSettingsValue,
@@ -50,6 +51,22 @@ type SettingsFormValues = Omit<PortfolioContactSettings, "resume"> & {
   resume: ResumeSettingValue | null;
   about: AboutSettingsValue;
 };
+type SettingsSection = "about" | "resume" | "contact";
+
+function settingsSectionSnapshot(
+  section: SettingsSection,
+  values: SettingsFormValues
+) {
+  if (section === "about") return JSON.stringify(values.about);
+  if (section === "resume") return JSON.stringify(values.resume);
+  return JSON.stringify({
+    github_url: values.github_url,
+    linkedin_url: values.linkedin_url,
+    contact_email: values.contact_email,
+    contact_phone: values.contact_phone,
+    location: values.location,
+  });
+}
 
 export default function AdminSettingsPage() {
   const theme = useTheme();
@@ -64,6 +81,10 @@ export default function AdminSettingsPage() {
   const [isPending, startTransition] = useTransition();
   const [isResumeUploading, setIsResumeUploading] = useState(false);
   const [isAboutImageUploading, setIsAboutImageUploading] = useState(false);
+  const [savingSection, setSavingSection] = useState<SettingsSection | null>(null);
+  const [savedSnapshots, setSavedSnapshots] = useState<
+    Partial<Record<SettingsSection, string>>
+  >({});
   const cardSx = {
     border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
     backgroundColor: alpha(theme.palette.background.paper, 0.82),
@@ -75,9 +96,15 @@ export default function AdminSettingsPage() {
 
     try {
       const settings = await listSiteSettings();
-      setValues({
+      const nextValues = {
         ...settingsToPortfolioContactSettings(settings),
         about: settingsToAboutSettings(settings),
+      };
+      setValues(nextValues);
+      setSavedSnapshots({
+        about: settingsSectionSnapshot("about", nextValues),
+        resume: settingsSectionSnapshot("resume", nextValues),
+        contact: settingsSectionSnapshot("contact", nextValues),
       });
     } catch (error) {
       setMessage({
@@ -115,6 +142,11 @@ export default function AdminSettingsPage() {
           values.resume ? upsertSiteSetting("resume", values.resume) : Promise.resolve(),
           updateAboutSettings(values.about),
         ]);
+        setSavedSnapshots({
+          about: settingsSectionSnapshot("about", values),
+          resume: settingsSectionSnapshot("resume", values),
+          contact: settingsSectionSnapshot("contact", values),
+        });
         setMessage({ type: "success", text: "Settings saved." });
       } catch (error) {
         setMessage({
@@ -125,6 +157,58 @@ export default function AdminSettingsPage() {
       }
     });
   };
+
+  const saveSection = (section: SettingsSection) => {
+    setSavingSection(section);
+    setMessage(null);
+
+    startTransition(async () => {
+      try {
+        if (section === "about") {
+          await updateAboutSettings(values.about);
+        } else if (section === "resume") {
+          if (values.resume) await upsertSiteSetting("resume", values.resume);
+        } else {
+          await Promise.all([
+            upsertSiteSetting("github_url", values.github_url),
+            upsertSiteSetting("linkedin_url", values.linkedin_url),
+            upsertSiteSetting("contact_email", values.contact_email),
+            upsertSiteSetting("contact_phone", values.contact_phone),
+            upsertSiteSetting("location", values.location),
+          ]);
+        }
+
+        setSavedSnapshots((current) => ({
+          ...current,
+          [section]: settingsSectionSnapshot(section, values),
+        }));
+        setMessage({ type: "success", text: `${section} settings saved.` });
+      } catch (error) {
+        setMessage({
+          type: "error",
+          text:
+            error instanceof Error
+              ? error.message
+              : `Unable to save ${section} settings.`,
+        });
+      } finally {
+        setSavingSection(null);
+      }
+    });
+  };
+
+  const sectionSaveButton = (section: SettingsSection) => (
+    <SectionSaveButton
+      dirty={savedSnapshots[section] !== settingsSectionSnapshot(section, values)}
+      saving={savingSection === section}
+      disabled={
+        Boolean(savingSection) ||
+        isResumeUploading ||
+        isAboutImageUploading
+      }
+      onClick={() => saveSection(section)}
+    />
+  );
 
   const handleResumeChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -137,6 +221,10 @@ export default function AdminSettingsPage() {
     try {
       const resume = await uploadResumePdf(file);
       updateValue("resume", resume);
+      setSavedSnapshots((current) => ({
+        ...current,
+        resume: settingsSectionSnapshot("resume", { ...values, resume }),
+      }));
       setMessage({ type: "success", text: "Resume uploaded and saved." });
     } catch (error) {
       setMessage({
@@ -160,6 +248,10 @@ export default function AdminSettingsPage() {
     try {
       const about = await uploadAboutImage(file, values.about);
       updateValue("about", about);
+      setSavedSnapshots((current) => ({
+        ...current,
+        about: settingsSectionSnapshot("about", { ...values, about }),
+      }));
       setMessage({ type: "success", text: "About image uploaded and saved." });
     } catch (error) {
       setMessage({
@@ -201,15 +293,22 @@ export default function AdminSettingsPage() {
           <Card elevation={0} sx={cardSx}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack spacing={3}>
-                <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                    About Section
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.75 }}>
-                    Control the introductory copy and profile image shown on the
-                    public portfolio.
-                  </Typography>
-                </Box>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
+                >
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                      About Section
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.75 }}>
+                      Control the introductory copy and profile image shown on the
+                      public portfolio.
+                    </Typography>
+                  </Box>
+                  {sectionSaveButton("about")}
+                </Stack>
 
                 <TextField
                   fullWidth
@@ -313,9 +412,16 @@ export default function AdminSettingsPage() {
           <Card elevation={0} sx={cardSx}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack spacing={3}>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                  Resume
-                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                    Resume
+                  </Typography>
+                  {sectionSaveButton("resume")}
+                </Stack>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <TextField
@@ -391,9 +497,16 @@ export default function AdminSettingsPage() {
           <Card elevation={0} sx={cardSx}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack spacing={3}>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                  Contact & Social Links
-                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                    Contact & Social Links
+                  </Typography>
+                  {sectionSaveButton("contact")}
+                </Stack>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <TextField
@@ -446,7 +559,20 @@ export default function AdminSettingsPage() {
             </CardContent>
           </Card>
 
-          <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "flex-end" }}>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            sx={{
+              position: "sticky",
+              bottom: 0,
+              zIndex: 4,
+              justifyContent: "flex-end",
+              p: 1.5,
+              borderRadius: 1.5,
+              backgroundColor: alpha(theme.palette.background.default, 0.94),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+              backdropFilter: "blur(12px)",
+            }}
+          >
             <Button
               type="submit"
               variant="contained"

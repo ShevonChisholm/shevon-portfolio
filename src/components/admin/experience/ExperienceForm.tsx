@@ -240,7 +240,17 @@ export default function ExperienceForm({
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={1.5}
-            sx={{ justifyContent: "flex-end" }}
+            sx={{
+              position: "sticky",
+              bottom: 0,
+              zIndex: 4,
+              justifyContent: "flex-end",
+              p: 1.5,
+              borderRadius: 1.5,
+              backgroundColor: alpha(theme.palette.background.default, 0.94),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+              backdropFilter: "blur(12px)",
+            }}
           >
             <Button component={Link} href="/admin/experience" variant="outlined">
               Cancel

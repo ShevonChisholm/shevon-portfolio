@@ -120,15 +120,23 @@ export default function Navbar() {
           key={item.id}
           onClick={() => handleNavClick(item.id)}
           sx={{
-            color: theme.palette.text.primary,
+            color:
+              activeSection === item.id
+                ? theme.palette.text.primary
+                : theme.palette.text.secondary,
             position: 'relative',
+            px: 1.25,
+            py: 1,
+            minWidth: 0,
+            fontSize: '0.82rem',
+            fontWeight: 700,
             '&::after': {
               content: '""',
               position: 'absolute',
               bottom: 0,
               left: '50%',
               transform: activeSection === item.id ? 'translateX(-50%)' : 'translateX(-50%) scaleX(0)',
-              width: '100%',
+              width: 'calc(100% - 20px)',
               height: '2px',
               bgcolor: theme.palette.primary.main,
               transition: 'transform 0.3s ease-in-out',
@@ -148,36 +156,27 @@ export default function Navbar() {
     <>
       <AppBar
         position="fixed"
-        elevation={trigger ? 4 : 0}
+        elevation={0}
         sx={{
           width: '100%',
           maxWidth: '100%',
           overflowX: 'clip',
-          bgcolor: {
-            xs: alpha(theme.palette.background.default, 0.94),
-            md: trigger
-              ? alpha(theme.palette.background.default, 0.96)
-              : alpha(theme.palette.background.default, 0.74),
-          },
+          bgcolor: alpha(theme.palette.background.default, trigger ? 0.94 : 0.82),
           transition: 'all 0.3s ease-in-out',
           backdropFilter: {
             xs: 'blur(14px)',
             md: trigger ? 'blur(16px)' : 'blur(12px)',
           },
-          borderBottom: {
-            xs: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-            md: trigger
-              ? `1px solid ${alpha(theme.palette.primary.main, 0.12)}`
-              : `1px solid ${alpha(theme.palette.primary.main, 0.06)}`,
-          },
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, trigger ? 0.16 : 0.08)}`,
         }}
       >
-        <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
+        <Container maxWidth={false} sx={{ width: '100%', maxWidth: 1040 }}>
           <Toolbar
             disableGutters
             sx={{
-              minHeight: { xs: 64, md: 72 },
+              minHeight: { xs: 64, md: 62 },
               justifyContent: 'space-between',
+              position: 'relative',
               minWidth: 0,
               gap: { xs: 1, md: 2 },
             }}
@@ -205,8 +204,9 @@ export default function Navbar() {
                   src="/sc-logo.svg"
                   alt="Shevon Chisholm logo"
                   sx={{
-                    width: { xs: 34, sm: 40 },
-                    height: { xs: 34, sm: 40 },
+                    width: { xs: 34, sm: 34 },
+                    height: { xs: 34, sm: 34 },
+                    display: "block",
                     flexShrink: 0,
                   }}
                 />
@@ -224,7 +224,7 @@ export default function Navbar() {
                     sx={{
                       color: theme.palette.text.primary,
                       fontWeight: 800,
-                      fontSize: { xs: "1rem", sm: "1.05rem" },
+                      fontSize: { xs: "0.92rem", sm: "0.9rem" },
                       whiteSpace: 'nowrap',
                     }}
                   >
@@ -236,8 +236,8 @@ export default function Navbar() {
                     sx={{
                       color: theme.palette.primary.main,
                       fontWeight: 600,
-                      fontSize: "0.7rem",
-                      letterSpacing: 0,
+                      fontSize: "0.58rem",
+                      letterSpacing: "0.08em",
                       textTransform: "uppercase",
                       whiteSpace: 'nowrap',
                     }}
@@ -247,15 +247,24 @@ export default function Navbar() {
                 </Box>
               </Box>
 
-              <Box sx={{ display: { xs: 'none', md: 'block' }, ml: 4 }}>
-                <NavLinks />
-              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                display: { xs: 'none', md: 'flex' },
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                alignItems: 'center',
+                gap: 0.5,
+              }}
+            >
+              <NavLinks />
             </Box>
 
             <IconButton
               color="inherit"
               aria-label="Open navigation"
-              edge="end"
               onClick={() => setMobileOpen(true)}
               sx={{
                 display: { xs: 'inline-flex', md: 'none' },
@@ -286,6 +295,8 @@ export default function Navbar() {
                   sx={{
                     borderRadius: '8px',
                     textTransform: 'none',
+                    minHeight: 36,
+                    px: 2.5,
                   }}
                 >
                   View Resume
@@ -304,13 +315,30 @@ export default function Navbar() {
         sx={{
           display: { xs: 'block', md: 'none' },
           '& .MuiDrawer-paper': {
-            width: 'min(82vw, 320px)',
+            width: 'min(88vw, 340px)',
             bgcolor: alpha(theme.palette.background.default, 0.98),
             borderLeft: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
             boxShadow: `-24px 0 60px ${alpha(theme.palette.common.black, 0.45)}`,
           },
         }}
       >
+        <Box sx={{ p: 3, borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.14)}` }}>
+          <Box
+            component="img"
+            src="/sc-logo.svg"
+            alt="Shevon Chisholm logo"
+            sx={{
+              width: 44,
+              height: 44,
+              display: "block",
+              mb: 1.5,
+            }}
+          />
+          <Box sx={{ fontWeight: 800, fontSize: '1.2rem' }}>Shevon Chisholm</Box>
+          <Box sx={{ color: 'primary.main', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Full-Stack Engineer
+          </Box>
+        </Box>
         <List sx={{ mt: 2, px: 1.5 }}>
           {navItems.map((item) => (
             <ListItem

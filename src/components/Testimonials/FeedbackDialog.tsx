@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
+  IconButton,
   Rating,
   Stack,
   TextField,
@@ -20,6 +21,7 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   emptyTestimonialFormValues,
   type TestimonialFormValues,
@@ -139,28 +141,63 @@ export default function FeedbackDialog({ open, onClose }: FeedbackDialogProps) {
       maxWidth="md"
       PaperProps={{
         sx: {
+          maxHeight: { xs: "100dvh", sm: "calc(100dvh - 52px)" },
+          borderRadius: { xs: 0, sm: 1.5 },
+          overflow: "hidden",
           backgroundImage: "none",
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+          bgcolor: alpha(theme.palette.background.paper, 0.98),
+          border: `1px solid ${alpha(theme.palette.common.white, 0.13)}`,
         },
       }}
     >
-      <Box component="form" onSubmit={handleSubmit}>
-        <DialogTitle sx={{ pb: 1 }}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            <RateReviewOutlinedIcon color="primary" />
-            <Box>
-              <Typography variant="h5" component="h2" sx={{ fontWeight: 800 }}>
+      <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+        <DialogTitle
+          sx={{
+            px: { xs: 2, sm: 3 },
+            py: 2,
+            borderBottom: `1px solid ${alpha(theme.palette.common.white, 0.09)}`,
+          }}
+        >
+          <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                display: "grid",
+                placeItems: "center",
+                flexShrink: 0,
+                borderRadius: 1,
+                color: "primary.main",
+                bgcolor: alpha(theme.palette.primary.main, 0.13),
+                "& svg": { fontSize: 16 },
+              }}
+            >
+              <RateReviewOutlinedIcon />
+            </Box>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography component="h2" sx={{ fontFamily: '"Montserrat", sans-serif', fontSize: "0.82rem", fontWeight: 800 }}>
                 Leave Feedback
               </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+              <Typography sx={{ color: "text.secondary", mt: 0.35, fontSize: "0.62rem" }}>
                 Every submission is reviewed before publication.
               </Typography>
             </Box>
+            <IconButton onClick={handleClose} disabled={isSubmitting} aria-label="Close feedback dialog" size="small">
+              <CloseIcon sx={{ fontSize: 16 }} />
+            </IconButton>
           </Stack>
         </DialogTitle>
 
-        <DialogContent dividers sx={{ py: 3 }}>
-          <Stack spacing={2.5}>
+        <DialogContent
+          sx={{
+            px: { xs: 2, sm: 3 },
+            py: 2.5,
+            overflowY: "auto",
+            scrollbarWidth: "thin",
+            scrollbarColor: `${alpha(theme.palette.common.white, 0.4)} transparent`,
+          }}
+        >
+          <Stack spacing={2}>
             {message && <Alert severity={message.type}>{message.text}</Alert>}
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -218,13 +255,13 @@ export default function FeedbackDialog({ open, onClose }: FeedbackDialogProps) {
             />
 
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.75 }}>
+              <Typography sx={{ color: "text.secondary", fontSize: "0.62rem", fontWeight: 800, mb: 0.75, textTransform: "uppercase" }}>
                 Rating
               </Typography>
               <Rating
                 value={values.rating}
                 onChange={(_, value) => setField("rating", value)}
-                size="large"
+                size="medium"
               />
             </Box>
 
@@ -245,6 +282,16 @@ export default function FeedbackDialog({ open, onClose }: FeedbackDialogProps) {
 
             <Box>
               <FormControlLabel
+                sx={{
+                  m: 0,
+                  alignItems: "flex-start",
+                  "& .MuiFormControlLabel-label": {
+                    pt: 0.75,
+                    color: "text.secondary",
+                    fontSize: "0.7rem",
+                    lineHeight: 1.45,
+                  },
+                }}
                 control={
                   <Checkbox
                     checked={values.consent_to_publish}
@@ -265,11 +312,22 @@ export default function FeedbackDialog({ open, onClose }: FeedbackDialogProps) {
           </Stack>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={handleClose} disabled={isSubmitting}>
+        <DialogActions
+          sx={{
+            px: { xs: 2, sm: 3 },
+            py: 1.5,
+            borderTop: `1px solid ${alpha(theme.palette.common.white, 0.09)}`,
+          }}
+        >
+          <Button onClick={handleClose} disabled={isSubmitting} sx={{ minHeight: 34, fontSize: "0.68rem" }}>
             Close
           </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSubmitting || !values.consent_to_publish}
+            sx={{ minHeight: 34, fontSize: "0.68rem" }}
+          >
             {isSubmitting ? "Submitting..." : "Submit Feedback"}
           </Button>
         </DialogActions>

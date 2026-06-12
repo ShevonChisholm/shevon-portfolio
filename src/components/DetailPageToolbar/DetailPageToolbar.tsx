@@ -38,15 +38,23 @@ export default function DetailPageToolbar({
         boxShadow: `0 10px 28px ${alpha(theme.palette.common.black, 0.32)}`,
       }}
     >
-      <Container maxWidth="lg">
+      <Container
+        maxWidth={false}
+        sx={{
+          width: { xs: "calc(100% - 32px)", sm: "calc(100% - 48px)" },
+          maxWidth: 1040,
+          mx: "auto",
+          px: 0,
+        }}
+      >
         <Box
           sx={{
-            minHeight: { xs: 64, sm: 76 },
-            py: { xs: 1.25, sm: 1 },
+            minHeight: { xs: 58, sm: 54 },
+            py: 0.75,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            flexWrap: { xs: "wrap", sm: "nowrap" },
+            flexWrap: "nowrap",
             minWidth: 0,
             gap: { xs: 1.25, sm: 1.5 },
           }}
@@ -75,9 +83,22 @@ export default function DetailPageToolbar({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "flex-end",
-                flexWrap: "wrap",
-                width: { xs: "100%", sm: "auto" },
+                flexWrap: "nowrap",
+                width: "auto",
+                maxWidth: { xs: "58%", sm: "none" },
+                minWidth: 0,
+                overflowX: { xs: "auto", sm: "visible" },
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": { display: "none" },
                 gap: 1,
+                "& .MuiButton-root": {
+                  flexShrink: 0,
+                  minHeight: 30,
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 4,
+                  fontSize: "0.68rem",
+                },
               }}
             >
               {actions}

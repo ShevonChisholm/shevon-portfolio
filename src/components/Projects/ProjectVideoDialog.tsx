@@ -53,6 +53,11 @@ function getEmbedUrl(url: string) {
       const videoId = parsedUrl.pathname.split("/").filter(Boolean).at(-1);
       return videoId ? `https://player.vimeo.com/video/${videoId}` : null;
     }
+
+    if (parsedUrl.hostname.includes("loom.com")) {
+      const videoId = parsedUrl.pathname.split("/").filter(Boolean).at(-1);
+      return videoId ? `https://www.loom.com/embed/${videoId}` : null;
+    }
   } catch {
     return null;
   }

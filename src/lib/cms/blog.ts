@@ -13,6 +13,7 @@ export type BlogMutationResult = {
   id: string;
   warning?: string;
 };
+export type BlogFormSection = "details" | "cover_seo";
 
 const nullableString = (value: string) => {
   const trimmed = value.trim();
@@ -158,6 +159,37 @@ export async function updateBlogPost(id: string, values: BlogPostFormValues) {
     table: "blog_posts",
     action: "update",
     values: blogPostPayload(values),
+    filters: [{ column: "id", value: id }],
+  });
+}
+
+export async function updateBlogPostSection(
+  id: string,
+  section: BlogFormSection,
+  values: BlogPostFormValues
+) {
+  const payload = blogPostPayload(values);
+  const fieldsBySection = {
+    details: [
+      "title",
+      "slug",
+      "excerpt",
+      "content",
+      "tags",
+      "author_name",
+      "reading_time",
+      "published_at",
+      "is_published",
+    ],
+    cover_seo: ["cover_image_url", "seo_title", "seo_description"],
+  } as const;
+
+  await adminDataRequest({
+    table: "blog_posts",
+    action: "update",
+    values: Object.fromEntries(
+      fieldsBySection[section].map((field) => [field, payload[field]])
+    ),
     filters: [{ column: "id", value: id }],
   });
 }

@@ -11,6 +11,7 @@ const uploadKinds = new Set<CmsUploadKind>([
   "project-cover",
   "project-gallery",
   "project-video",
+  "project-video-thumbnail",
   "blog-cover",
   "about-image",
   "document",
@@ -50,6 +51,15 @@ export async function POST(request: Request) {
 
     const uploadKind = kind as CmsUploadKind;
     validateCmsUploadFile(file, uploadKind);
+    if (uploadKind === "project-video" && file.size > 45 * 1024 * 1024) {
+      return NextResponse.json(
+        {
+          error:
+            "The compressed video is still too large. Please shorten the video or reduce its quality and try again.",
+        },
+        { status: 400 }
+      );
+    }
 
     const projectSlug = formData.get("projectSlug");
     const postSlug = formData.get("postSlug");

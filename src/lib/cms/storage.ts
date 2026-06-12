@@ -4,6 +4,7 @@ export type CmsUploadKind =
   | "project-cover"
   | "project-gallery"
   | "project-video"
+  | "project-video-thumbnail"
   | "blog-cover"
   | "about-image"
   | "document"
@@ -14,7 +15,13 @@ export type CmsUploadResult = {
   bucket: CmsStorageBucket;
   path: string;
   publicUrl: string;
+  originalSize?: number;
+  compressedSize?: number;
 };
+
+export type CmsUploadStatus = import("./video-compression").VideoUploadStatus;
+export type CmsUploadStatusCallback =
+  import("./video-compression").VideoUploadStatusCallback;
 
 const imageExtensions = ["jpg", "jpeg", "png", "webp", "svg"] as const;
 const videoExtensions = ["mp4", "webm"] as const;
@@ -24,6 +31,7 @@ const allowedExtensionsByKind: Record<CmsUploadKind, readonly string[]> = {
   "project-cover": imageExtensions,
   "project-gallery": imageExtensions,
   "project-video": videoExtensions,
+  "project-video-thumbnail": imageExtensions,
   "blog-cover": imageExtensions,
   "about-image": imageExtensions,
   document: documentExtensions,
@@ -54,6 +62,16 @@ function sanitizeFilename(fileName: string) {
 export function validateCmsUploadFile(file: File, kind: CmsUploadKind) {
   const extension = extensionFor(file);
   const allowed = allowedExtensionsByKind[kind];
+
+  if (kind === "project-video" && !file.type.startsWith("video/")) {
+    throw new Error("Unsupported video type. Please select an MP4 or WebM video.");
+  }
+
+  if (kind === "project-video" && file.size > 100 * 1024 * 1024) {
+    throw new Error(
+      "This video is too large. Please select a video that is 100MB or smaller."
+    );
+  }
 
   if (!allowed.includes(extension)) {
     throw new Error(
@@ -86,6 +104,8 @@ export function pathForUpload({
       return `projects/${safeProjectSlug}/gallery/${timestamp}-${filename}`;
     case "project-video":
       return `projects/${safeProjectSlug}/videos/${timestamp}-${filename}`;
+    case "project-video-thumbnail":
+      return `projects/${safeProjectSlug}/videos/thumbnails/${timestamp}-${filename}`;
     case "blog-cover":
       return `blog/${safePostSlug}/cover-${timestamp}.${extension}`;
     case "about-image":
@@ -118,15 +138,37 @@ export async function uploadCmsMedia({
   kind,
   projectSlug,
   postSlug,
+  onStatus,
 }: {
   file: File;
   kind: CmsUploadKind;
   projectSlug?: string;
   postSlug?: string;
+  onStatus?: CmsUploadStatusCallback;
 }): Promise<CmsUploadResult> {
   validateCmsUploadFile(file, kind);
+  let uploadFile = file;
+  let compression:
+    | { originalSize: number; compressedSize: number }
+    | undefined;
+
+  if (kind === "project-video") {
+    const { compressProjectVideo } = await import("./video-compression");
+    const result = await compressProjectVideo(file, onStatus);
+    uploadFile = result.file;
+    compression = {
+      originalSize: result.originalSize,
+      compressedSize: result.compressedSize,
+    };
+    onStatus?.({
+      stage: "uploading",
+      originalSize: result.originalSize,
+      compressedSize: result.compressedSize,
+    });
+  }
+
   const formData = new FormData();
-  formData.set("file", file);
+  formData.set("file", uploadFile);
   formData.set("kind", kind);
   if (projectSlug) formData.set("projectSlug", projectSlug);
   if (postSlug) formData.set("postSlug", postSlug);
@@ -145,5 +187,14 @@ export async function uploadCmsMedia({
     throw new Error(result?.error || "Unable to upload media.");
   }
 
-  return result;
+  if (kind === "project-video" && compression) {
+    onStatus?.({
+      stage: "success",
+      originalSize: compression.originalSize,
+      compressedSize: compression.compressedSize,
+      progress: 100,
+    });
+  }
+
+  return { ...result, ...compression };
 }

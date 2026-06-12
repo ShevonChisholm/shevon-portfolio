@@ -1,5 +1,8 @@
 import { adminDataRequest } from "@/lib/cms/admin-api";
-import { uploadCmsMedia } from "@/lib/cms/storage";
+import {
+  uploadCmsMedia,
+  type CmsUploadStatusCallback,
+} from "@/lib/cms/storage";
 import type {
   Project,
   ProjectFormValues,
@@ -7,6 +10,7 @@ import type {
   ProjectImage,
   ProjectTag,
   ProjectTechnicalFocus,
+  ProjectVideo,
   ProjectWithRelations,
 } from "@/types/cms";
 import { emptyProjectFormValues } from "@/types/cms";
@@ -14,14 +18,30 @@ import { emptyProjectFormValues } from "@/types/cms";
 export type QueuedProjectMedia = {
   coverImage?: File | null;
   video?: File | null;
+  videoStatus?: CmsUploadStatusCallback;
   caseStudyDocument?: File | null;
   galleryImages?: (File | null)[];
+  videos?: {
+    videoFile?: File | null;
+    thumbnailFile?: File | null;
+    videoStatus?: CmsUploadStatusCallback;
+  }[];
 };
 
 export type ProjectMutationResult = {
   id: string;
   warning?: string;
 };
+
+export type ProjectFormSection =
+  | "core"
+  | "media"
+  | "videos"
+  | "seo"
+  | "tags"
+  | "images"
+  | "highlights"
+  | "technical_focus";
 
 type ProjectInsertPayload = Omit<
   Project,
@@ -74,6 +94,7 @@ async function replaceProjectRelations(projectId: string, values: ProjectFormVal
     [
       "project_tags",
       "project_images",
+      "project_videos",
       "project_highlights",
       "project_technical_focus",
     ].map((table) =>
@@ -122,12 +143,28 @@ async function replaceProjectRelations(projectId: string, values: ProjectFormVal
       sort_order: focus.sort_order,
     }));
 
+  const videos = sortBySortOrder(values.videos)
+    .filter((video) => video.title.trim() && video.video_url.trim())
+    .map((video) => ({
+      project_id: projectId,
+      title: requiredString(video.title),
+      description: nullableString(video.description),
+      video_url: requiredString(video.video_url),
+      thumbnail_url: nullableString(video.thumbnail_url),
+      video_type: video.video_type,
+      sort_order: video.sort_order,
+      is_published: video.is_published,
+    }));
+
   await Promise.all([
     tags.length
       ? adminDataRequest({ table: "project_tags", action: "insert", values: tags })
       : Promise.resolve(),
     images.length
       ? adminDataRequest({ table: "project_images", action: "insert", values: images })
+      : Promise.resolve(),
+    videos.length
+      ? adminDataRequest({ table: "project_videos", action: "insert", values: videos })
       : Promise.resolve(),
     highlights.length
       ? adminDataRequest({
@@ -144,6 +181,139 @@ async function replaceProjectRelations(projectId: string, values: ProjectFormVal
         })
       : Promise.resolve(),
   ]);
+}
+
+async function replaceProjectRelation(
+  projectId: string,
+  section: Extract<
+    ProjectFormSection,
+    "videos" | "tags" | "images" | "highlights" | "technical_focus"
+  >,
+  values: ProjectFormValues
+) {
+  const tableBySection = {
+    videos: "project_videos",
+    tags: "project_tags",
+    images: "project_images",
+    highlights: "project_highlights",
+    technical_focus: "project_technical_focus",
+  } as const;
+  const rowsBySection = {
+    tags: sortBySortOrder(values.tags)
+      .filter((tag) => tag.name.trim())
+      .map((tag) => ({
+        project_id: projectId,
+        name: requiredString(tag.name),
+        type: tag.type,
+        sort_order: tag.sort_order,
+      })),
+    images: sortBySortOrder(values.images)
+      .filter((image) => image.image_url.trim())
+      .map((image) => ({
+        project_id: projectId,
+        title: nullableString(image.title),
+        description: nullableString(image.description),
+        image_url: requiredString(image.image_url),
+        alt_text: nullableString(image.alt_text),
+        image_type: image.image_type,
+        sort_order: image.sort_order,
+      })),
+    videos: sortBySortOrder(values.videos)
+      .filter((video) => video.title.trim() && video.video_url.trim())
+      .map((video) => ({
+        project_id: projectId,
+        title: requiredString(video.title),
+        description: nullableString(video.description),
+        video_url: requiredString(video.video_url),
+        thumbnail_url: nullableString(video.thumbnail_url),
+        video_type: video.video_type,
+        sort_order: video.sort_order,
+        is_published: video.is_published,
+      })),
+    highlights: sortBySortOrder(values.highlights)
+      .filter((highlight) => highlight.content.trim())
+      .map((highlight) => ({
+        project_id: projectId,
+        content: requiredString(highlight.content),
+        sort_order: highlight.sort_order,
+      })),
+    technical_focus: sortBySortOrder(values.technical_focus)
+      .filter((focus) => focus.content.trim())
+      .map((focus) => ({
+        project_id: projectId,
+        content: requiredString(focus.content),
+        sort_order: focus.sort_order,
+      })),
+  };
+  const table = tableBySection[section];
+  const rows = rowsBySection[section];
+
+  await adminDataRequest({
+    table,
+    action: "delete",
+    filters: [{ column: "project_id", value: projectId }],
+  });
+  if (rows.length) {
+    await adminDataRequest({ table, action: "insert", values: rows });
+  }
+}
+
+export async function updateProjectSection(
+  projectId: string,
+  section: ProjectFormSection,
+  values: ProjectFormValues
+) {
+  if (
+    section === "videos" ||
+    section === "tags" ||
+    section === "images" ||
+    section === "highlights" ||
+    section === "technical_focus"
+  ) {
+    await replaceProjectRelation(projectId, section, values);
+    return;
+  }
+
+  const payload = projectPayload(values);
+  const fieldsBySection = {
+    core: [
+      "title",
+      "slug",
+      "short_description",
+      "description",
+      "category",
+      "project_type",
+      "client_name",
+      "is_client_project",
+      "role",
+      "status",
+      "impact",
+      "started_at",
+      "completed_at",
+      "sort_order",
+      "is_featured",
+      "is_published",
+    ],
+    media: [
+      "image_url",
+      "site_url",
+      "github_url",
+      "demo_url",
+      "video_url",
+      "case_study_url",
+    ],
+    seo: ["seo_title", "seo_description"],
+  } as const;
+  const partialPayload = Object.fromEntries(
+    fieldsBySection[section].map((field) => [field, payload[field]])
+  );
+
+  await adminDataRequest({
+    table: "projects",
+    action: "update",
+    values: partialPayload,
+    filters: [{ column: "id", value: projectId }],
+  });
 }
 
 export async function listProjects() {
@@ -163,7 +333,7 @@ export async function getProjectWithRelations(projectId: string) {
   });
   if (!project) return null;
 
-  const [tags, images, highlights, technicalFocus] = await Promise.all([
+  const [tags, images, videos, highlights, technicalFocus] = await Promise.all([
     adminDataRequest<ProjectTag[]>({
       table: "project_tags",
       action: "select",
@@ -172,6 +342,12 @@ export async function getProjectWithRelations(projectId: string) {
     }),
     adminDataRequest<ProjectImage[]>({
       table: "project_images",
+      action: "select",
+      filters: [{ column: "project_id", value: projectId }],
+      orders: [{ column: "sort_order" }],
+    }),
+    adminDataRequest<ProjectVideo[]>({
+      table: "project_videos",
       action: "select",
       filters: [{ column: "project_id", value: projectId }],
       orders: [{ column: "sort_order" }],
@@ -194,6 +370,7 @@ export async function getProjectWithRelations(projectId: string) {
     ...project,
     tags,
     images,
+    videos,
     highlights,
     technical_focus: technicalFocus,
   } satisfies ProjectWithRelations;
@@ -213,6 +390,11 @@ export async function createProject(
     case_study_url: hasQueuedCaseStudy ? "" : values.case_study_url,
     images: values.images.filter(
       (_, index) => !queuedMedia.galleryImages?.[index]
+    ),
+    videos: values.videos.filter(
+      (_, index) =>
+        !queuedMedia.videos?.[index]?.videoFile &&
+        !queuedMedia.videos?.[index]?.thumbnailFile
     ),
   };
 
@@ -266,9 +448,11 @@ export async function createProject(
         file: queuedMedia.video,
         kind: "project-video",
         projectSlug,
+        onStatus: queuedMedia.videoStatus,
       });
       projectUpdates.video_url = result.publicUrl;
     } catch (error) {
+      queuedMedia.videoStatus?.(null);
       warnings.push(
         error instanceof Error
           ? `Project video failed to upload: ${error.message}`
@@ -370,6 +554,92 @@ export async function createProject(
     }
   }
 
+  const queuedVideos = values.videos
+    .map((video, index) => ({
+      video,
+      queued: queuedMedia.videos?.[index],
+    }))
+    .filter(
+      (item) => item.queued?.videoFile || item.queued?.thumbnailFile
+    )
+    .sort((a, b) => a.video.sort_order - b.video.sort_order);
+
+  const uploadedVideoRows = [];
+
+  for (const item of queuedVideos) {
+    let videoUrl = item.video.video_url;
+    let thumbnailUrl = item.video.thumbnail_url;
+
+    if (item.queued?.videoFile) {
+      try {
+        const result = await uploadCmsMedia({
+          file: item.queued.videoFile,
+          kind: "project-video",
+          projectSlug,
+          onStatus: item.queued.videoStatus,
+        });
+        videoUrl = result.publicUrl;
+      } catch (error) {
+        item.queued.videoStatus?.(null);
+        warnings.push(
+          error instanceof Error
+            ? `Video "${item.video.title || item.queued.videoFile.name}" failed to upload: ${error.message}`
+            : `Video "${item.video.title || item.queued.videoFile.name}" failed to upload.`
+        );
+      }
+    }
+
+    if (item.queued?.thumbnailFile) {
+      try {
+        const result = await uploadCmsMedia({
+          file: item.queued.thumbnailFile,
+          kind: "project-video-thumbnail",
+          projectSlug,
+        });
+        thumbnailUrl = result.publicUrl;
+      } catch (error) {
+        warnings.push(
+          error instanceof Error
+            ? `Thumbnail for "${item.video.title || item.queued.thumbnailFile.name}" failed to upload: ${error.message}`
+            : `Thumbnail for "${item.video.title || item.queued.thumbnailFile.name}" failed to upload.`
+        );
+      }
+    }
+
+    if (item.video.title.trim() && videoUrl.trim()) {
+      uploadedVideoRows.push({
+        project_id: projectId,
+        title: requiredString(item.video.title),
+        description: nullableString(item.video.description),
+        video_url: requiredString(videoUrl),
+        thumbnail_url: nullableString(thumbnailUrl),
+        video_type: item.video.video_type,
+        sort_order: item.video.sort_order,
+        is_published: item.video.is_published,
+      });
+    } else {
+      warnings.push(
+        `Video "${item.video.title || "Untitled video"}" was not saved because it has no video URL.`
+      );
+    }
+  }
+
+  if (uploadedVideoRows.length) {
+    try {
+      await adminDataRequest({
+        table: "project_videos",
+        action: "insert",
+        values: uploadedVideoRows,
+      });
+    } catch (error) {
+      warnings.push(
+        `Uploaded project videos failed to save: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
   return {
     id: projectId,
     warning: warnings.length ? warnings.join(" ") : undefined,
@@ -392,6 +662,7 @@ export async function deleteProject(projectId: string) {
     [
       "project_tags",
       "project_images",
+      "project_videos",
       "project_highlights",
       "project_technical_focus",
     ].map((table) =>
@@ -463,6 +734,15 @@ export function projectToFormValues(
       alt_text: image.alt_text ?? "",
       image_type: image.image_type ?? "gallery",
       sort_order: image.sort_order,
+    })),
+    videos: sortBySortOrder(project.videos).map((video) => ({
+      title: video.title,
+      description: video.description ?? "",
+      video_url: video.video_url,
+      thumbnail_url: video.thumbnail_url ?? "",
+      video_type: video.video_type,
+      sort_order: video.sort_order,
+      is_published: video.is_published,
     })),
     highlights: sortBySortOrder(project.highlights).map((highlight) => ({
       content: highlight.content,

@@ -26,12 +26,12 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
       dark: '#212121',
     },
     background: {
-      default: mode === 'light' ? '#FFFFFF' : '#121212',
-      paper: mode === 'light' ? '#F5F5F5' : '#1E1E1E',
+      default: mode === 'light' ? '#F7F7F5' : '#090909',
+      paper: mode === 'light' ? '#FFFFFF' : '#141414',
     },
     text: {
       primary: mode === 'light' ? '#000000' : '#FFFFFF',
-      secondary: mode === 'light' ? '#424242' : '#B0B0B0',
+      secondary: mode === 'light' ? '#525252' : '#A8A8A8',
     },
     grey: {
       100: '#F5F5F5', // soft light gray
@@ -50,10 +50,12 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     h1: {
       fontFamily: '"Montserrat", sans-serif',
       fontWeight: 700,
+      letterSpacing: '-0.035em',
     },
     h2: {
       fontFamily: '"Montserrat", sans-serif',
       fontWeight: 700,
+      letterSpacing: '-0.025em',
     },
     h3: {
       fontFamily: '"Montserrat", sans-serif',
@@ -89,11 +91,8 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     MuiCard: {
       styleOverrides: {
         root: {
-          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-          '&:hover': {
-            transform: 'translateY(-4px)',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-          },
+          borderRadius: 8,
+          backgroundImage: 'none',
         },
       },
     },
@@ -101,7 +100,8 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          padding: '8px 24px',
+          padding: '10px 22px',
+          fontWeight: 700,
         },
         contained: {
           boxShadow: 'none',
@@ -118,4 +118,4 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
 export const theme = createTheme(getDesignTokens('light'));
 
 // Create the dark theme
-export const darkTheme = createTheme(getDesignTokens('dark')); 
+export const darkTheme = createTheme(getDesignTokens('dark'));

@@ -22,6 +22,14 @@ export type ProjectImageType =
   | "architecture"
   | "logo";
 
+export type ProjectVideoType =
+  | "website_walkthrough"
+  | "admin_cms_walkthrough"
+  | "mobile_experience"
+  | "technical_backend"
+  | "demo"
+  | "other";
+
 export interface Project {
   id: string;
   title: string;
@@ -72,6 +80,30 @@ export interface ProjectImage {
   created_at: string;
 }
 
+export interface ProjectVideo {
+  id: string;
+  project_id: string;
+  title: string;
+  description: string | null;
+  video_url: string;
+  thumbnail_url: string | null;
+  video_type: ProjectVideoType;
+  sort_order: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectVideoFormValue {
+  title: string;
+  description: string;
+  video_url: string;
+  thumbnail_url: string;
+  video_type: ProjectVideoType;
+  sort_order: number;
+  is_published: boolean;
+}
+
 export interface ProjectHighlight {
   id: string;
   project_id: string;
@@ -89,6 +121,7 @@ export interface ProjectTechnicalFocus {
 export interface ProjectWithRelations extends Project {
   tags: ProjectTag[];
   images: ProjectImage[];
+  videos: ProjectVideo[];
   highlights: ProjectHighlight[];
   technical_focus: ProjectTechnicalFocus[];
 }
@@ -131,6 +164,7 @@ export interface ProjectFormValues {
     image_type: ProjectImageType;
     sort_order: number;
   }[];
+  videos: ProjectVideoFormValue[];
   highlights: {
     content: string;
     sort_order: number;
@@ -168,6 +202,7 @@ export const emptyProjectFormValues: ProjectFormValues = {
   seo_description: "",
   tags: [],
   images: [],
+  videos: [],
   highlights: [],
   technical_focus: [],
 };

@@ -6,6 +6,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  LinearProgress,
   Link,
   Stack,
   TextField,
@@ -21,6 +22,10 @@ import {
   validateCmsUploadFile,
 } from "@/lib/cms/storage";
 import MediaPreview from "./MediaPreview";
+import {
+  formatFileSize,
+  type VideoUploadStatus,
+} from "@/lib/cms/video-compression";
 
 type MediaUploadFieldProps = {
   label: string;
@@ -44,6 +49,8 @@ type MediaUploadFieldProps = {
   table?: string;
   field?: string;
   entityId?: string;
+  uploadStatus?: VideoUploadStatus | null;
+  onBusyChange?: (busy: boolean) => void;
 };
 
 export default function MediaUploadField({
@@ -68,6 +75,8 @@ export default function MediaUploadField({
   table,
   field,
   entityId,
+  uploadStatus,
+  onBusyChange,
 }: MediaUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -76,7 +85,11 @@ export default function MediaUploadField({
     type: "success" | "error" | "info";
     text: string;
   } | null>(null);
+  const [localUploadStatus, setLocalUploadStatus] =
+    useState<VideoUploadStatus | null>(null);
   const shouldUploadOnSelect = uploadOnSelect ?? mode === "edit";
+  const videoUploadStatus = uploadStatus ?? localUploadStatus;
+  const isVideoUpload = uploadKind === "project-video";
 
   useEffect(() => {
     if (!queuedFile) {
@@ -108,6 +121,7 @@ export default function MediaUploadField({
     if (!file) return;
 
     setMessage(null);
+    setLocalUploadStatus(null);
 
     if (!shouldUploadOnSelect) {
       try {
@@ -118,6 +132,7 @@ export default function MediaUploadField({
           text: "Queued for upload after project is created.",
         });
       } catch (error) {
+        setLocalUploadStatus(null);
         setMessage({
           type: "error",
           text:
@@ -130,22 +145,32 @@ export default function MediaUploadField({
     }
 
     startTransition(async () => {
+      onBusyChange?.(true);
       try {
         const result = await uploadCmsMedia({
           file,
           kind: uploadKind,
           projectSlug,
           postSlug,
+          onStatus: isVideoUpload ? setLocalUploadStatus : undefined,
         });
         onChange(result.publicUrl);
         onFileQueued?.(null);
         await persistUploadedUrl(result.publicUrl);
-        setMessage({ type: "success", text: "Upload complete." });
+        setMessage({
+          type: "success",
+          text: isVideoUpload
+            ? "Video uploaded successfully"
+            : "Upload complete.",
+        });
       } catch (error) {
+        setLocalUploadStatus(null);
         setMessage({
           type: "error",
           text: error instanceof Error ? error.message : "Unable to upload file.",
         });
+      } finally {
+        onBusyChange?.(false);
       }
     });
   };
@@ -155,6 +180,7 @@ export default function MediaUploadField({
     if (nextValue.trim()) {
       onFileQueued?.(null);
       setMessage(null);
+      setLocalUploadStatus(null);
     }
   };
 
@@ -202,10 +228,52 @@ export default function MediaUploadField({
 
       <AdminNotificationBridge message={message} />
       {message && <Alert severity={message.type}>{message.text}</Alert>}
+      {isVideoUpload && videoUploadStatus && (
+        <Box
+          sx={{
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 1.5,
+            p: 1.5,
+          }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 800 }}>
+            {videoUploadStatus.stage === "preparing" && "Preparing video..."}
+            {videoUploadStatus.stage === "compressing" &&
+              "Compressing video..."}
+            {videoUploadStatus.stage === "uploading" &&
+              "Uploading compressed video..."}
+            {videoUploadStatus.stage === "success" &&
+              "Video uploaded successfully"}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Original: {formatFileSize(videoUploadStatus.originalSize)}
+            {typeof videoUploadStatus.compressedSize === "number" &&
+              ` | Compressed: ${formatFileSize(
+                videoUploadStatus.compressedSize
+              )}`}
+          </Typography>
+          {(videoUploadStatus.stage === "preparing" ||
+            videoUploadStatus.stage === "compressing" ||
+            videoUploadStatus.stage === "uploading") && (
+            <LinearProgress
+              variant={
+                videoUploadStatus.stage === "compressing" &&
+                typeof videoUploadStatus.progress === "number"
+                  ? "determinate"
+                  : "indeterminate"
+              }
+              value={videoUploadStatus.progress ?? 0}
+              sx={{ mt: 1, borderRadius: 99 }}
+            />
+          )}
+        </Box>
+      )}
       {queuedFile && localPreviewUrl && (
         <Box>
           <Alert severity="info" sx={{ mb: 1.25 }}>
-            {queuedFile.name} is queued for upload after project is created.
+            {queuedFile.name} ({formatFileSize(queuedFile.size)}) is queued for
+            upload after project is created.
           </Alert>
           {queuedFile.type.startsWith("image/") && (
             <Box
@@ -249,6 +317,7 @@ export default function MediaUploadField({
             onClick={() => {
               onFileQueued?.(null);
               setMessage(null);
+              setLocalUploadStatus(null);
             }}
           >
             Remove queued file

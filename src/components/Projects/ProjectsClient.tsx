@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import type { PublicProject } from "@/lib/cms/public-projects";
+import type { PublicTestimonial } from "@/lib/cms/public-testimonials";
 import {
   Box,
   Button,
-  Grid,
+  Chip,
+  Container,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
   useTheme,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { AnimatePresence } from "framer-motion";
-import type { PublicProject } from "@/lib/cms/public-projects";
-import type { PublicTestimonial } from "@/lib/cms/public-testimonials";
 import ProjectCard from "../ProjectCard/ProjectCard";
-import SectionContainer from "../SectionContainer/SectionContainer";
 import TestimonialCarousel from "../TestimonialCarousel/TestimonialCarousel";
 
 type ProjectCategory = "All" | "Web Apps" | "Mobile Apps";
@@ -58,130 +59,229 @@ export default function ProjectsClient({
   };
 
   return (
-    <SectionContainer
+    <Box
+      component="section"
       id="projects"
-      title="My Projects"
-      subtitle="Production-focused web and mobile projects across fintech, media, healthcare, travel, and business platforms"
+      sx={{
+        py: { xs: 9, md: 12 },
+        width: "100%",
+        minWidth: 0,
+        overflow: "hidden",
+        borderTop: `1px solid ${alpha(theme.palette.common.white, 0.08)}`,
+        bgcolor: alpha(theme.palette.background.paper, 0.1),
+      }}
     >
-      <Box sx={{ mb: 6, display: "flex", justifyContent: "center" }}>
-        <ToggleButtonGroup
-          value={category}
-          exclusive
-          onChange={handleCategoryChange}
-          aria-label="project category"
+      <Container maxWidth={false} sx={{ width: "100%", maxWidth: 1040 }}>
+        <Box
           sx={{
-            backgroundColor: theme.palette.background.paper,
-            borderRadius: "50px",
-            p: 1,
-            flexWrap: "wrap",
-            justifyContent: "center",
-            "& .MuiToggleButton-root": {
-              border: "none",
-              borderRadius: "50px !important",
-              px: { xs: 2, sm: 3 },
-              py: 1,
-              color: theme.palette.text.secondary,
-              textTransform: "none",
-              fontWeight: 600,
-              "&.Mui-selected": {
-                backgroundColor: theme.palette.primary.main,
-                color: theme.palette.primary.contrastText,
-                "&:hover": {
-                  backgroundColor: theme.palette.primary.dark,
-                },
-              },
-            },
+            display: "flex",
+            alignItems: { xs: "stretch", md: "flex-end" },
+            justifyContent: "space-between",
+            flexDirection: { xs: "column", md: "row" },
+            gap: { xs: 3, md: 5 },
+            mb: { xs: 4.5, md: 5.5 },
           }}
         >
-          <ToggleButton value="All">All</ToggleButton>
-          <ToggleButton value="Web Apps">Web Apps</ToggleButton>
-          <ToggleButton value="Mobile Apps">Mobile Apps</ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
-
-      <Grid container spacing={4} sx={{ alignItems: "stretch" }}>
-        <AnimatePresence mode="wait">
-          {visibleProjects.map((project) => (
-            <Grid
-              key={project.slug}
-              size={{ xs: 12, sm: 6, md: 4 }}
-              sx={{ display: "flex" }}
+          <Box sx={{ minWidth: 0 }}>
+            <Chip
+              label="PROJECTS"
+              size="small"
+              variant="outlined"
+              sx={{
+                height: 28,
+                mb: 2,
+                borderRadius: 4,
+                color: "primary.main",
+                borderColor: alpha(theme.palette.primary.main, 0.38),
+                bgcolor: alpha(theme.palette.primary.main, 0.04),
+                fontSize: "0.65rem",
+                fontWeight: 800,
+              }}
+            />
+            <Typography
+              variant="h2"
+              component="h2"
+              sx={{
+                fontSize: { xs: "2rem", sm: "2.25rem", md: "2.3rem" },
+                lineHeight: 1.12,
+                fontWeight: 800,
+              }}
             >
-              <ProjectCard {...project} />
-            </Grid>
-          ))}
-        </AnimatePresence>
-      </Grid>
+              My{" "}
+              <Box component="span" sx={{ color: "primary.main" }}>
+                projects
+              </Box>
+            </Typography>
+            <Typography
+              sx={{
+                maxWidth: 470,
+                mt: 0.8,
+                color: "text.secondary",
+                fontSize: "0.8rem",
+                lineHeight: 1.55,
+              }}
+            >
+              Production-focused web and mobile projects across fintech, media,
+              healthcare, travel, and business platforms
+            </Typography>
+          </Box>
 
-      {hasMoreProjects && (
-        <Box sx={{ mt: 5, display: "flex", justifyContent: "center" }}>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={handleShowMore}
+          <ToggleButtonGroup
+            value={category}
+            exclusive
+            onChange={handleCategoryChange}
+            aria-label="project category"
             sx={{
-              borderRadius: "50px",
-              px: 4,
-              py: 1.25,
-              textTransform: "none",
-              fontWeight: 700,
-              borderColor: theme.palette.primary.main,
-              backgroundColor:
-                theme.palette.mode === "dark"
-                  ? "rgba(255, 102, 0, 0.06)"
-                  : "rgba(255, 102, 0, 0.04)",
-              "&:hover": {
-                backgroundColor: theme.palette.primary.main,
-                color: theme.palette.primary.contrastText,
-                borderColor: theme.palette.primary.main,
+              alignSelf: { xs: "flex-start", md: "flex-end" },
+              maxWidth: "100%",
+              p: 0.4,
+              gap: 0.25,
+              borderRadius: 1.5,
+              bgcolor: alpha(theme.palette.background.paper, 0.62),
+              border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+              "& .MuiToggleButton-root": {
+                minWidth: 0,
+                border: 0,
+                borderRadius: "9px !important",
+                px: { xs: 1.8, sm: 2.2 },
+                py: 0.75,
+                color: "text.secondary",
+                textTransform: "none",
+                fontSize: "0.68rem",
+                fontWeight: 700,
+                "&.Mui-selected": {
+                  color: "primary.contrastText",
+                  bgcolor: "primary.main",
+                  "&:hover": { bgcolor: "primary.main" },
+                },
               },
             }}
           >
-            Show More
-          </Button>
+            <ToggleButton value="All">All</ToggleButton>
+            <ToggleButton value="Web Apps">Web Apps</ToggleButton>
+            <ToggleButton value="Mobile Apps">Mobile Apps</ToggleButton>
+          </ToggleButtonGroup>
         </Box>
-      )}
 
-      <Box sx={{ mt: 12 }}>
-        <Typography
-          variant="h4"
-          component="h3"
-          align="center"
-          sx={{
-            mb: 2,
-            fontWeight: 600,
-            color: theme.palette.text.primary,
-          }}
-        >
-          {testimonials.length > 0 ? "Client Feedback" : "Why Work With Me"}
-        </Typography>
+        {visibleProjects.length === 0 ? (
+          <Typography sx={{ color: "text.secondary" }}>
+            No published projects are available in this category yet.
+          </Typography>
+        ) : (
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "minmax(0, 1fr)",
+                sm: "repeat(2, minmax(0, 1fr))",
+                lg: "repeat(3, minmax(0, 1fr))",
+              },
+              gridAutoRows: "1fr",
+              gap: { xs: 2, md: 2 },
+              alignItems: "stretch",
+            }}
+          >
+            <AnimatePresence mode="popLayout">
+              {visibleProjects.map((project) => (
+                <ProjectCard key={project.slug} {...project} />
+              ))}
+            </AnimatePresence>
+          </Box>
+        )}
 
-        <Typography
-          variant="subtitle1"
-          align="center"
-          sx={{
-            mb: 6,
-            color: theme.palette.text.secondary,
-          }}
-        >
-          {testimonials.length > 0
-            ? "What clients and collaborators say about working together"
-            : "How I approach building reliable web and mobile products"}
-        </Typography>
+        {hasMoreProjects && (
+          <Box sx={{ mt: 4.5, display: "flex", justifyContent: "center" }}>
+            <Button
+              variant="outlined"
+              onClick={handleShowMore}
+              sx={{
+                minHeight: 38,
+                px: 3,
+                borderColor: alpha(theme.palette.primary.main, 0.45),
+                bgcolor: alpha(theme.palette.primary.main, 0.035),
+                "&:hover": {
+                  borderColor: "primary.main",
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                },
+              }}
+            >
+              Show More
+            </Button>
+          </Box>
+        )}
 
         <Box
           sx={{
-            backgroundColor:
-              theme.palette.mode === "dark"
-                ? "rgba(255, 255, 255, 0.05)"
-                : "rgba(0, 0, 0, 0.02)",
-            borderRadius: "20px",
-            p: { xs: 2, sm: 4 },
+            mt: { xs: 9, md: 12 },
+            pt: { xs: 7, md: 8 },
+            borderTop: `1px solid ${alpha(theme.palette.common.white, 0.08)}`,
           }}
         >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: { xs: "flex-start", md: "flex-end" },
+              justifyContent: "space-between",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 2.5,
+              mb: { xs: 4.5, md: 5 },
+            }}
+          >
+            <Box>
+              <Chip
+                label={testimonials.length > 0 ? "TESTIMONIALS" : "WHY WORK WITH ME"}
+                size="small"
+                variant="outlined"
+                sx={{
+                  height: 28,
+                  mb: 2,
+                  borderRadius: 4,
+                  color: "primary.main",
+                  borderColor: alpha(theme.palette.primary.main, 0.38),
+                  bgcolor: alpha(theme.palette.primary.main, 0.04),
+                  fontSize: "0.65rem",
+                  fontWeight: 800,
+                }}
+              />
+              <Typography
+                variant="h3"
+                component="h3"
+                sx={{ fontSize: { xs: "2rem", md: "2.3rem" }, lineHeight: 1.12, fontWeight: 800 }}
+              >
+                {testimonials.length > 0 ? (
+                  <>
+                    What clients{" "}
+                    <Box component="span" sx={{ color: "primary.main" }}>
+                      say
+                    </Box>
+                  </>
+                ) : (
+                  <>
+                    Why work{" "}
+                    <Box component="span" sx={{ color: "primary.main" }}>
+                      with me
+                    </Box>
+                  </>
+                )}
+              </Typography>
+            </Box>
+            <Typography
+              sx={{
+                maxWidth: 360,
+                color: "text.secondary",
+                textAlign: { xs: "left", md: "right" },
+                fontSize: "0.8rem",
+                lineHeight: 1.55,
+              }}
+            >
+              {testimonials.length > 0
+                ? "Feedback from clients and collaborators I've worked with"
+                : "How I approach building reliable web and mobile products"}
+            </Typography>
+          </Box>
           <TestimonialCarousel testimonials={testimonials} />
         </Box>
-      </Box>
-    </SectionContainer>
+      </Container>
+    </Box>
   );
 }

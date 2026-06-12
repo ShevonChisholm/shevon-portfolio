@@ -21,8 +21,13 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AutoFixHighOutlinedIcon from "@mui/icons-material/AutoFixHighOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import MediaUploadField from "@/components/admin/media/MediaUploadField";
+import SectionSaveButton from "@/components/admin/SectionSaveButton";
 import { AdminNotificationBridge } from "@/components/admin/notifications/AdminNotifications";
-import type { BlogMutationResult, QueuedBlogMedia } from "@/lib/cms/blog";
+import type {
+  BlogFormSection,
+  BlogMutationResult,
+  QueuedBlogMedia,
+} from "@/lib/cms/blog";
 import {
   calculateReadingTime,
   normalizeBlogSlug,
@@ -37,6 +42,10 @@ type BlogPostFormProps = {
     values: BlogPostFormValues,
     queuedMedia: QueuedBlogMedia
   ) => Promise<BlogMutationResult | void>;
+  onSaveSection?: (
+    section: BlogFormSection,
+    values: BlogPostFormValues
+  ) => Promise<void>;
 };
 
 type Message = {
@@ -44,11 +53,34 @@ type Message = {
   text: string;
 } | null;
 
+function blogSectionSnapshot(section: BlogFormSection, values: BlogPostFormValues) {
+  return JSON.stringify(
+    section === "details"
+      ? {
+          title: values.title,
+          slug: values.slug,
+          excerpt: values.excerpt,
+          content: values.content,
+          tags: values.tags,
+          author_name: values.author_name,
+          reading_time: values.reading_time,
+          published_at: values.published_at,
+          is_published: values.is_published,
+        }
+      : {
+          cover_image_url: values.cover_image_url,
+          seo_title: values.seo_title,
+          seo_description: values.seo_description,
+        }
+  );
+}
+
 export default function BlogPostForm({
   initialValues,
   mode,
   postId,
   onSubmit,
+  onSaveSection,
 }: BlogPostFormProps) {
   const theme = useTheme();
   const [values, setValues] = useState<BlogPostFormValues>(initialValues);
@@ -58,6 +90,13 @@ export default function BlogPostForm({
   const [slugTouched, setSlugTouched] = useState(Boolean(initialValues.slug));
   const [message, setMessage] = useState<Message>(null);
   const [isPending, startTransition] = useTransition();
+  const [savingSection, setSavingSection] = useState<BlogFormSection | null>(null);
+  const [savedSnapshots, setSavedSnapshots] = useState<
+    Record<BlogFormSection, string>
+  >({
+    details: blogSectionSnapshot("details", initialValues),
+    cover_seo: blogSectionSnapshot("cover_seo", initialValues),
+  });
   const pageTitle = mode === "create" ? "New Blog Post" : "Edit Blog Post";
   const submitLabel = mode === "create" ? "Create Post" : "Save Post";
   const postSlug = values.slug || normalizeBlogSlug(values.title) || "untitled-post";
@@ -95,6 +134,10 @@ export default function BlogPostForm({
       try {
         const result = await onSubmit(values, mode === "create" ? queuedMedia : {});
         if (mode === "edit") {
+          setSavedSnapshots({
+            details: blogSectionSnapshot("details", values),
+            cover_seo: blogSectionSnapshot("cover_seo", values),
+          });
           setMessage({
             type: result?.warning ? "warning" : "success",
             text: result?.warning ?? "Blog post saved.",
@@ -109,6 +152,55 @@ export default function BlogPostForm({
       }
     });
   };
+
+  const saveSection = (section: BlogFormSection) => {
+    if (!onSaveSection) return;
+    if (
+      section === "details" &&
+      (!values.title.trim() || !values.slug.trim() || !values.content.trim())
+    ) {
+      setMessage({
+        type: "error",
+        text: "Title, slug, and content are required before saving Post Details.",
+      });
+      return;
+    }
+
+    setSavingSection(section);
+    setMessage(null);
+
+    startTransition(async () => {
+      try {
+        await onSaveSection(section, values);
+        setSavedSnapshots((current) => ({
+          ...current,
+          [section]: blogSectionSnapshot(section, values),
+        }));
+        setMessage({
+          type: "success",
+          text: section === "details" ? "Post details saved." : "Cover and SEO saved.",
+        });
+      } catch (error) {
+        setMessage({
+          type: "error",
+          text:
+            error instanceof Error ? error.message : "Unable to save this section.",
+        });
+      } finally {
+        setSavingSection(null);
+      }
+    });
+  };
+
+  const sectionSaveButton = (section: BlogFormSection) =>
+    mode === "edit" && onSaveSection ? (
+      <SectionSaveButton
+        dirty={savedSnapshots[section] !== blogSectionSnapshot(section, values)}
+        saving={savingSection === section}
+        disabled={Boolean(savingSection)}
+        onClick={() => saveSection(section)}
+      />
+    ) : null;
 
   return (
     <Stack spacing={3}>
@@ -134,9 +226,16 @@ export default function BlogPostForm({
           <Card elevation={0} sx={cardSx}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack spacing={3}>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                  Post Details
-                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                    Post Details
+                  </Typography>
+                  {sectionSaveButton("details")}
+                </Stack>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <TextField
@@ -259,9 +358,16 @@ export default function BlogPostForm({
           <Card elevation={0} sx={cardSx}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack spacing={3}>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                  Cover Image & SEO
-                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                    Cover Image & SEO
+                  </Typography>
+                  {sectionSaveButton("cover_seo")}
+                </Stack>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <MediaUploadField
@@ -318,7 +424,17 @@ export default function BlogPostForm({
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={1.5}
-            sx={{ justifyContent: "flex-end" }}
+            sx={{
+              position: "sticky",
+              bottom: 0,
+              zIndex: 4,
+              justifyContent: "flex-end",
+              p: 1.5,
+              borderRadius: 1.5,
+              backgroundColor: alpha(theme.palette.background.default, 0.94),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+              backdropFilter: "blur(12px)",
+            }}
           >
             <Button component={Link} href="/admin/blog" variant="outlined">
               Cancel

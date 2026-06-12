@@ -2,24 +2,20 @@
 
 import {
   Box,
-  Button,
   Card,
-  CardContent,
   Chip,
-  Grid,
+  Container,
   Typography,
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { m } from "framer-motion";
+import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
+import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
+import { m as motion } from "framer-motion";
 import { format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import type { PublicBlogPost } from "@/lib/cms/public-blog";
-import SectionContainer from "../SectionContainer/SectionContainer";
 
 type BlogClientProps = {
   posts: PublicBlogPost[];
@@ -29,241 +25,285 @@ function displayDate(post: PublicBlogPost) {
   return format(new Date(post.publishedAt ?? post.createdAt), "MMM d, yyyy");
 }
 
-function initialsFor(title: string) {
-  return title
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase())
-    .join("");
-}
-
 export default function BlogClient({ posts }: BlogClientProps) {
   const theme = useTheme();
 
   return (
-    <SectionContainer
+    <Box
+      component="section"
       id="blog"
-      title="Blog"
-      subtitle="Sharing insights and experiences from my journey in software development"
+      sx={{
+        py: { xs: 9, md: 12 },
+        width: "100%",
+        overflowX: "clip",
+        borderTop: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+      }}
     >
-      {posts.length === 0 ? (
-        <Typography
-          align="center"
-          sx={{ color: "text.secondary", maxWidth: 640, mx: "auto" }}
+      <Container maxWidth={false} sx={{ width: "100%", maxWidth: 1040 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1fr minmax(260px, 340px)" },
+            gap: { xs: 2.5, md: 5 },
+            alignItems: "end",
+            mb: { xs: 5, md: 6 },
+          }}
         >
-          Blog posts are being updated.
-        </Typography>
-      ) : (
-        <Grid container spacing={4} sx={{ alignItems: "stretch" }}>
-          {posts.map((post) => (
-            <Grid
-              key={post.id}
-              size={{ xs: 12, sm: 6, md: 4 }}
-              sx={{ display: "flex" }}
+          <Box>
+            <Box
+              sx={{
+                display: "inline-flex",
+                px: 1.6,
+                py: 0.55,
+                mb: 1.4,
+                borderRadius: 5,
+                color: "primary.main",
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+                bgcolor: alpha(theme.palette.primary.main, 0.06),
+                fontSize: "0.66rem",
+                fontWeight: 800,
+                textTransform: "uppercase",
+              }}
             >
-              <Link
-                href={`/blog/${post.slug}`}
-                style={{
-                  display: "flex",
-                  flex: 1,
-                  textDecoration: "none",
-                  width: "100%",
-                }}
+              Blog
+            </Box>
+            <Typography
+              component="h2"
+              sx={{
+                fontFamily: '"Montserrat", sans-serif',
+                fontSize: { xs: "2rem", sm: "2.35rem" },
+                lineHeight: 1.08,
+                fontWeight: 800,
+              }}
+            >
+              Thoughts &amp;{" "}
+              <Box component="span" sx={{ color: "primary.main" }}>
+                writing
+              </Box>
+            </Typography>
+          </Box>
+
+          <Typography
+            sx={{
+              color: "text.secondary",
+              textAlign: { xs: "left", md: "right" },
+              fontSize: "0.86rem",
+              lineHeight: 1.55,
+              pb: 0.35,
+            }}
+          >
+            Insights and experiences from my journey in software development
+          </Typography>
+        </Box>
+
+        {posts.length === 0 ? (
+          <Box
+            sx={{
+              py: 8,
+              textAlign: "center",
+              borderRadius: 2,
+              border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+              bgcolor: alpha(theme.palette.background.paper, 0.42),
+            }}
+          >
+            <Typography color="text.secondary">Blog posts are being updated.</Typography>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "minmax(0, 1fr)",
+                sm: "repeat(2, minmax(0, 1fr))",
+                lg: "repeat(3, minmax(0, 1fr))",
+              },
+              gap: { xs: 2.5, md: 2.25 },
+            }}
+          >
+            {posts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.4, delay: Math.min(index * 0.06, 0.18) }}
+                style={{ minWidth: 0, height: "100%" }}
               >
-                <m.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5 }}
-                  style={{ display: "flex", flex: 1 }}
+                <Card
+                  component={Link}
+                  href={`/blog/${post.slug}`}
+                  sx={{
+                    display: "flex",
+                    height: "100%",
+                    minHeight: 380,
+                    flexDirection: "column",
+                    overflow: "hidden",
+                    textDecoration: "none",
+                    borderRadius: 2,
+                    bgcolor: alpha(theme.palette.background.paper, 0.72),
+                    border: `1px solid ${alpha(theme.palette.common.white, 0.11)}`,
+                    boxShadow: "none",
+                    transition:
+                      "transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      borderColor: alpha(theme.palette.primary.main, 0.48),
+                      boxShadow: `0 18px 44px ${alpha(theme.palette.common.black, 0.24)}`,
+                    },
+                  }}
                 >
-                  <Card
+                  <Box
                     sx={{
-                      height: "100%",
-                      minHeight: { xs: 520, sm: 560, md: 590 },
-                      width: "100%",
+                      position: "relative",
+                      height: 164,
+                      flexShrink: 0,
+                      overflow: "hidden",
+                      bgcolor: alpha(theme.palette.common.black, 0.28),
+                      borderBottom: `1px solid ${alpha(theme.palette.common.white, 0.05)}`,
+                    }}
+                  >
+                    {post.coverImageUrl ? (
+                      <Image
+                        src={post.coverImageUrl}
+                        alt={post.title}
+                        fill
+                        sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 340px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "grid",
+                          placeItems: "center",
+                          p: 3,
+                          background: `linear-gradient(145deg, ${alpha(
+                            theme.palette.primary.main,
+                            0.14
+                          )}, ${alpha(theme.palette.background.paper, 0.4)} 52%, ${alpha(
+                            theme.palette.common.black,
+                            0.3
+                          )})`,
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            maxWidth: 250,
+                            textAlign: "center",
+                            color: "text.secondary",
+                            fontSize: "0.9rem",
+                            lineHeight: 1.35,
+                            fontWeight: 800,
+                          }}
+                        >
+                          {post.title}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+
+                  <Box
+                    sx={{
                       display: "flex",
                       flex: 1,
+                      minWidth: 0,
                       flexDirection: "column",
-                      border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-                      transition:
-                        "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
-                      "&:hover": {
-                        transform: "translateY(-4px)",
-                        boxShadow: theme.shadows[8],
-                      },
+                      p: 2.25,
                     }}
                   >
                     <Box
                       sx={{
-                        position: "relative",
-                        height: { xs: 220, sm: 210, md: 220 },
-                        flexShrink: 0,
-                        width: "100%",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {post.coverImageUrl ? (
-                        <Image
-                          src={post.coverImageUrl}
-                          alt={post.title}
-                          fill
-                          sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
-                          style={{ objectFit: "cover" }}
-                        />
-                      ) : (
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            inset: 0,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            background: `linear-gradient(135deg, ${alpha(
-                              theme.palette.primary.main,
-                              0.24
-                            )}, ${alpha(theme.palette.common.black, 0.66)})`,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 82,
-                              height: 82,
-                              borderRadius: "22px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              border: `1px solid ${alpha(
-                                theme.palette.primary.main,
-                                0.36
-                              )}`,
-                              backgroundColor: alpha(
-                                theme.palette.common.black,
-                                0.24
-                              ),
-                            }}
-                          >
-                            <Typography
-                              variant="h4"
-                              sx={{
-                                color: theme.palette.primary.main,
-                                fontWeight: 900,
-                                letterSpacing: 0,
-                              }}
-                            >
-                              {initialsFor(post.title) || <ArticleOutlinedIcon />}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      )}
-                    </Box>
-                    <CardContent
-                      sx={{
-                        flexGrow: 1,
-                        p: 3,
-                        display: "flex",
-                        flexDirection: "column",
-                      }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 1,
-                        mb: 2,
-                        minHeight: 20,
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
+                        gap: 1.4,
+                        mb: 1.7,
+                        color: "text.secondary",
+                        fontSize: "0.64rem",
                       }}
                     >
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.55 }}>
+                        <CalendarTodayOutlinedIcon sx={{ fontSize: 12 }} />
                         {displayDate(post)}
-                        <Box component="span" sx={{ mx: 0.5 }}>
-                          -
-                        </Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                          <AccessTimeIcon sx={{ fontSize: 16 }} />
-                          {post.readingTime}
-                        </Box>
-                      </Typography>
-                      <Typography
-                        variant="h6"
-                        component="h3"
-                        sx={{
-                          mb: 1,
-                          fontWeight: 600,
-                          color: theme.palette.text.primary,
-                          minHeight: "3.2em",
-                          lineHeight: 1.6,
-                          overflow: "hidden",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                        }}
-                      >
-                        {post.title}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          mb: 2,
-                          minHeight: "4.8em",
-                          lineHeight: 1.6,
-                          overflow: "hidden",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: "vertical",
-                        }}
-                      >
-                        {post.excerpt || post.content}
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 1,
-                          mb: 2,
-                          minHeight: 64,
-                          maxHeight: 64,
-                          overflow: "hidden",
-                          alignContent: "flex-start",
-                        }}
-                      >
-                        {post.tags.slice(0, 4).map((tag) => (
-                          <Chip
-                            key={tag}
-                            label={tag}
-                            size="small"
-                            sx={{
-                              backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                              color: theme.palette.text.primary,
-                            }}
-                          />
-                        ))}
                       </Box>
-                      <Button
-                        component="span"
-                        endIcon={<ArrowForwardIcon />}
-                        sx={{
-                          alignSelf: "flex-start",
-                          mt: "auto",
-                          px: 0,
-                          fontWeight: 700,
-                        }}
-                      >
-                        Read More
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </m.div>
-              </Link>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-    </SectionContainer>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.55 }}>
+                        <AccessTimeOutlinedIcon sx={{ fontSize: 13 }} />
+                        {post.readingTime}
+                      </Box>
+                    </Box>
+
+                    <Typography
+                      component="h3"
+                      sx={{
+                        mb: 1.15,
+                        minHeight: "2.8em",
+                        color: "text.primary",
+                        fontSize: "0.88rem",
+                        lineHeight: 1.4,
+                        fontWeight: 800,
+                        overflow: "hidden",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      }}
+                    >
+                      {post.title}
+                    </Typography>
+
+                    <Typography
+                      sx={{
+                        mb: 2,
+                        minHeight: "3.1em",
+                        color: "text.secondary",
+                        fontSize: "0.78rem",
+                        lineHeight: 1.55,
+                        overflow: "hidden",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      }}
+                    >
+                      {post.excerpt || post.content}
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                        gap: 0.65,
+                        mt: "auto",
+                        minHeight: 24,
+                      }}
+                    >
+                      {post.tags.slice(0, 4).map((tag) => (
+                        <Chip
+                          key={tag}
+                          label={tag}
+                          size="small"
+                          sx={{
+                            height: 21,
+                            borderRadius: 1,
+                            bgcolor: alpha(theme.palette.common.white, 0.025),
+                            color: "text.secondary",
+                            border: `1px solid ${alpha(theme.palette.common.white, 0.11)}`,
+                            fontSize: "0.58rem",
+                          }}
+                        />
+                      ))}
+                      {post.tags.length > 4 && (
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.6rem" }}>
+                          +{post.tags.length - 4}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Card>
+              </motion.div>
+            ))}
+          </Box>
+        )}
+      </Container>
+    </Box>
   );
 }

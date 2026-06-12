@@ -8,7 +8,9 @@ import {
   blogPostToFormValues,
   getBlogPost,
   updateBlogPost,
+  updateBlogPostSection,
 } from "@/lib/cms/blog";
+import type { BlogFormSection } from "@/lib/cms/blog";
 import type { BlogPostFormValues } from "@/types/cms";
 
 type Message = {
@@ -60,6 +62,14 @@ export default function EditBlogPostPage() {
     router.refresh();
   };
 
+  const handleSaveSection = async (
+    section: BlogFormSection,
+    values: BlogPostFormValues
+  ) => {
+    await updateBlogPostSection(params.id, section, values);
+    router.refresh();
+  };
+
   if (isLoading) {
     return (
       <Stack sx={{ alignItems: "center", py: 8 }}>
@@ -84,6 +94,7 @@ export default function EditBlogPostPage() {
         mode="edit"
         postId={params.id}
         onSubmit={handleSubmit}
+        onSaveSection={handleSaveSection}
       />
     </Stack>
   );

@@ -1,13 +1,28 @@
 "use client";
 
-import { Box, Grid, Typography, useTheme } from "@mui/material";
+import type { ReactElement } from "react";
+import type { PublicTestimonial } from "@/lib/cms/public-testimonials";
+import { Box, Rating, Typography, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import {
+  AccountTreeOutlined as AccountTreeIcon,
+  CodeOutlined as CodeIcon,
+  FormatQuoteOutlined as FormatQuoteOutlinedIcon,
+  RocketLaunchOutlined as RocketLaunchIcon,
+} from "@mui/icons-material";
 import { m as motion } from "framer-motion";
-import CodeIcon from "@mui/icons-material/Code";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 
-const strengths = [
+type TestimonialCarouselProps = {
+  testimonials?: PublicTestimonial[];
+};
+
+type Strength = {
+  title: string;
+  description: string;
+  icon: ReactElement;
+};
+
+const strengths: Strength[] = [
   {
     title: "Product-Focused Engineering",
     description:
@@ -28,82 +43,208 @@ const strengths = [
   },
 ];
 
-export default function TestimonialCarousel() {
+function testimonialContext(testimonial: PublicTestimonial) {
+  return [testimonial.role, testimonial.company, testimonial.project_name]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function CardGrid({ children }: { children: React.ReactNode }) {
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "minmax(0, 1fr)",
+          md: "repeat(3, minmax(0, 1fr))",
+        },
+        gridAutoRows: "1fr",
+        gap: 2,
+        alignItems: "stretch",
+      }}
+    >
+      {children}
+    </Box>
+  );
+}
+
+export default function TestimonialCarousel({
+  testimonials = [],
+}: TestimonialCarouselProps) {
   const theme = useTheme();
 
+  if (testimonials.length > 0) {
+    return (
+      <CardGrid>
+        {testimonials.map((testimonial, index) => (
+          <motion.div
+            key={testimonial.id}
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.4, delay: index * 0.05 }}
+            style={{ display: "flex", minWidth: 0, width: "100%", height: "100%" }}
+          >
+            <Box
+              sx={{
+                width: "100%",
+                minWidth: 0,
+                minHeight: 270,
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                p: 2.75,
+                borderRadius: 1.5,
+                bgcolor: alpha(theme.palette.background.paper, 0.72),
+                border: `1px solid ${
+                  testimonial.is_featured
+                    ? alpha(theme.palette.primary.main, 0.38)
+                    : alpha(theme.palette.common.white, 0.11)
+                }`,
+                transition: "transform 200ms ease, border-color 200ms ease",
+                "&:hover": {
+                  transform: "translateY(-3px)",
+                  borderColor: alpha(theme.palette.primary.main, 0.45),
+                },
+              }}
+            >
+              <FormatQuoteOutlinedIcon sx={{ mb: 1.7, color: "primary.main", fontSize: 22 }} />
+
+              <Typography
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.8rem",
+                  lineHeight: 1.65,
+                  whiteSpace: "pre-wrap",
+                  flex: 1,
+                }}
+              >
+                &ldquo;{testimonial.feedback}&rdquo;
+              </Typography>
+
+              <Box
+                sx={{
+                  mt: 2,
+                  pt: 1.8,
+                  display: "flex",
+                  alignItems: "flex-end",
+                  justifyContent: "space-between",
+                  gap: 1.5,
+                  borderTop: `1px solid ${alpha(theme.palette.common.white, 0.08)}`,
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontSize: "0.75rem", fontWeight: 800 }}>
+                    {testimonial.name}
+                  </Typography>
+                  {testimonialContext(testimonial) && (
+                    <Typography
+                      sx={{
+                        mt: 0.35,
+                        color: "text.secondary",
+                        fontSize: "0.6rem",
+                        lineHeight: 1.35,
+                      }}
+                    >
+                      {testimonialContext(testimonial)}
+                    </Typography>
+                  )}
+                </Box>
+                {testimonial.rating && (
+                  <Rating
+                    value={testimonial.rating}
+                    readOnly
+                    size="small"
+                    sx={{
+                      flexShrink: 0,
+                      color: "primary.main",
+                      fontSize: "0.9rem",
+                      "& .MuiRating-iconEmpty": {
+                        color: alpha(theme.palette.common.white, 0.18),
+                      },
+                    }}
+                  />
+                )}
+              </Box>
+            </Box>
+          </motion.div>
+        ))}
+      </CardGrid>
+    );
+  }
+
   return (
-    <Box sx={{ width: "100%" }}>
-      <Grid container spacing={3}>
-        {strengths.map((item, index) => (
-          <Grid key={item.title} size={{ xs: 12, md: 4 }}>
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.12 }}
-              style={{ height: "100%" }}
+    <CardGrid>
+      {strengths.map((item, index) => {
+        const highlighted = index === 1;
+
+        return (
+          <motion.div
+            key={item.title}
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.4, delay: index * 0.06 }}
+            style={{ display: "flex", minWidth: 0, width: "100%", height: "100%" }}
+          >
+            <Box
+              sx={{
+                width: "100%",
+                minWidth: 0,
+                minHeight: 210,
+                height: "100%",
+                p: 2.75,
+                borderRadius: 1.5,
+                bgcolor: highlighted
+                  ? alpha(theme.palette.primary.main, 0.045)
+                  : alpha(theme.palette.background.paper, 0.72),
+                border: `1px solid ${
+                  highlighted
+                    ? alpha(theme.palette.primary.main, 0.38)
+                    : alpha(theme.palette.common.white, 0.11)
+                }`,
+                transition: "transform 200ms ease, border-color 200ms ease",
+                "&:hover": {
+                  transform: "translateY(-3px)",
+                  borderColor: alpha(theme.palette.primary.main, 0.45),
+                },
+              }}
             >
               <Box
                 sx={{
-                  height: "100%",
-                  p: 3,
-                  borderRadius: "20px",
-                  backgroundColor: alpha(theme.palette.background.paper, 0.6),
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-                  transition:
-                    "transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
-                  "&:hover": {
-                    transform: "translateY(-6px)",
-                    borderColor: alpha(theme.palette.primary.main, 0.35),
-                    boxShadow: `0 16px 32px ${alpha(
-                      theme.palette.common.black,
-                      0.18
-                    )}`,
-                  },
+                  width: 36,
+                  height: 36,
+                  display: "grid",
+                  placeItems: "center",
+                  mb: 2,
+                  borderRadius: 1,
+                  color: highlighted ? "primary.main" : "text.secondary",
+                  bgcolor: highlighted
+                    ? alpha(theme.palette.primary.main, 0.13)
+                    : alpha(theme.palette.common.white, 0.055),
+                  "& svg": { fontSize: 17 },
                 }}
               >
-                <Box
-                  sx={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: "16px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    mb: 2,
-                    color: theme.palette.primary.main,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                  }}
-                >
-                  {item.icon}
-                </Box>
-
-                <Typography
-                  variant="h6"
-                  component="h3"
-                  sx={{
-                    fontWeight: 700,
-                    mb: 1.5,
-                    color: theme.palette.text.primary,
-                  }}
-                >
-                  {item.title}
-                </Typography>
-
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: theme.palette.text.secondary,
-                    lineHeight: 1.7,
-                  }}
-                >
-                  {item.description}
-                </Typography>
+                {item.icon}
               </Box>
-            </motion.div>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
+              <Typography
+                component="h4"
+                sx={{
+                  mb: 1,
+                  fontFamily: '"Montserrat", sans-serif',
+                  fontSize: "0.82rem",
+                  fontWeight: 800,
+                }}
+              >
+                {item.title}
+              </Typography>
+              <Typography sx={{ color: "text.secondary", fontSize: "0.78rem", lineHeight: 1.65 }}>
+                {item.description}
+              </Typography>
+            </Box>
+          </motion.div>
+        );
+      })}
+    </CardGrid>
   );
 }

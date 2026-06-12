@@ -41,8 +41,8 @@ export default function ScrollToTop() {
           exit={{ opacity: 0, y: 20 }}
           style={{
             position: 'fixed',
-            bottom: 24,
-            right: 24,
+            bottom: 16,
+            right: 16,
             zIndex: 1000,
           }}
         >
@@ -51,6 +51,8 @@ export default function ScrollToTop() {
               onClick={scrollToTop}
               aria-label="scroll back to top"
               sx={{
+                width: { xs: 48, sm: 56 },
+                height: { xs: 48, sm: 56 },
                 bgcolor: '#FF6600',
                 color: '#FFFFFF',
                 '&:hover': {

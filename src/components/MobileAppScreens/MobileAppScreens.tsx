@@ -1,5 +1,5 @@
-import { Box, useTheme, useMediaQuery } from '@mui/material';
-import Image from 'next/image';
+import { Box, useMediaQuery, useTheme } from "@mui/material";
+import Image from "next/image";
 
 interface MobileAppScreensProps {
   images: string[];
@@ -8,7 +8,9 @@ interface MobileAppScreensProps {
 
 export default function MobileAppScreens({ images, title }: MobileAppScreensProps) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  if (!images.length) return null;
 
   return (
     <Box
@@ -57,9 +59,10 @@ export default function MobileAppScreens({ images, title }: MobileAppScreensProp
             src={image}
             alt={`${title} screen ${index + 1}`}
             fill
+            sizes="(max-width: 600px) 50vw, 25vw"
             style={{
-              objectFit: 'contain',
-              padding: '4px'
+              objectFit: "contain",
+              padding: "4px",
             }}
           />
         </Box>

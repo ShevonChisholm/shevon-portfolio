@@ -13,12 +13,19 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { useRouter } from 'next/navigation';
+import type { ResumeSettingValue } from '@/types/cms';
 
 const RESUME_URL = '/resume.pdf';
 
-export default function ResumeView() {
+type ResumeViewProps = {
+  resume?: ResumeSettingValue | null;
+};
+
+export default function ResumeView({ resume }: ResumeViewProps) {
   const theme = useTheme();
   const router = useRouter();
+  const resumeUrl = resume?.url || RESUME_URL;
+  const resumeLabel = resume?.label || 'Shevon Chisholm resume preview';
 
   return (
     <Box
@@ -86,7 +93,7 @@ export default function ResumeView() {
             <Button
               variant="outlined"
               startIcon={<OpenInNewIcon />}
-              href={RESUME_URL}
+              href={resumeUrl}
               target="_blank"
               rel="noopener noreferrer"
               sx={{
@@ -105,7 +112,7 @@ export default function ResumeView() {
             <Button
               variant="contained"
               startIcon={<FileDownloadIcon />}
-              href={RESUME_URL}
+              href={resumeUrl}
               download
               sx={{
                 borderRadius: '50px',
@@ -133,8 +140,8 @@ export default function ResumeView() {
         >
           <Box
             component="iframe"
-            src={RESUME_URL}
-            title="Shevon Chisholm resume preview"
+            src={resumeUrl}
+            title={resumeLabel}
             sx={{
               display: 'block',
               width: '100%',

@@ -1,0 +1,271 @@
+"use client";
+
+import { FormEvent, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  FormControlLabel,
+  Grid,
+  Stack,
+  TextField,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
+import { AdminNotificationBridge } from "@/components/admin/notifications/AdminNotifications";
+import type { ExperienceFormValues } from "@/types/cms";
+
+type ExperienceFormProps = {
+  initialValues: ExperienceFormValues;
+  mode: "create" | "edit";
+  onSubmit: (values: ExperienceFormValues) => Promise<void>;
+};
+
+type Message = {
+  type: "success" | "error";
+  text: string;
+} | null;
+
+export default function ExperienceForm({
+  initialValues,
+  mode,
+  onSubmit,
+}: ExperienceFormProps) {
+  const theme = useTheme();
+  const [values, setValues] = useState<ExperienceFormValues>(initialValues);
+  const [message, setMessage] = useState<Message>(null);
+  const [isPending, startTransition] = useTransition();
+  const pageTitle = mode === "create" ? "New Experience" : "Edit Experience";
+  const submitLabel = mode === "create" ? "Create Experience" : "Save Experience";
+  const cardSx = useMemo(
+    () => ({
+      border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
+      backgroundColor: alpha(theme.palette.background.paper, 0.82),
+    }),
+    [theme]
+  );
+
+  const updateValue = <K extends keyof ExperienceFormValues>(
+    key: K,
+    value: ExperienceFormValues[K]
+  ) => {
+    setValues((current) => ({ ...current, [key]: value }));
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setMessage(null);
+
+    startTransition(async () => {
+      try {
+        await onSubmit(values);
+        if (mode === "edit") {
+          setMessage({ type: "success", text: "Experience saved." });
+        }
+      } catch (error) {
+        setMessage({
+          type: "error",
+          text:
+            error instanceof Error
+              ? error.message
+              : "Unable to save experience.",
+        });
+      }
+    });
+  };
+
+  return (
+    <Stack spacing={3}>
+      <Box>
+        <Button
+          component={Link}
+          href="/admin/experience"
+          startIcon={<ArrowBackIcon />}
+          sx={{ mb: 1, px: 0 }}
+        >
+          Back to Experience
+        </Button>
+        <Typography variant="h3" component="h1" sx={{ fontWeight: 800 }}>
+          {pageTitle}
+        </Typography>
+      </Box>
+
+      <AdminNotificationBridge message={message} />
+      {message && <Alert severity={message.type}>{message.text}</Alert>}
+
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack spacing={3}>
+          <Card elevation={0} sx={cardSx}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+              <Stack spacing={3}>
+                <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                  Role Details
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Title"
+                      value={values.title}
+                      onChange={(event) => updateValue("title", event.target.value)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Company"
+                      value={values.company}
+                      onChange={(event) => updateValue("company", event.target.value)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Location"
+                      value={values.location}
+                      onChange={(event) =>
+                        updateValue("location", event.target.value)
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Employment type"
+                      value={values.employment_type}
+                      onChange={(event) =>
+                        updateValue("employment_type", event.target.value)
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Period label"
+                      helperText="Example: Jan 2025 - Present"
+                      value={values.period}
+                      onChange={(event) => updateValue("period", event.target.value)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="Start date"
+                      value={values.start_date}
+                      onChange={(event) =>
+                        updateValue("start_date", event.target.value)
+                      }
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="End date"
+                      disabled={values.is_current}
+                      value={values.end_date}
+                      onChange={(event) =>
+                        updateValue("end_date", event.target.value)
+                      }
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <TextField
+                      fullWidth
+                      required
+                      multiline
+                      minRows={5}
+                      label="Description"
+                      value={values.description}
+                      onChange={(event) =>
+                        updateValue("description", event.target.value)
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="Sort order"
+                      value={values.sort_order}
+                      onChange={(event) =>
+                        updateValue("sort_order", Number(event.target.value))
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={values.is_current}
+                            onChange={(event) =>
+                              updateValue("is_current", event.target.checked)
+                            }
+                          />
+                        }
+                        label="Current role"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={values.is_published}
+                            onChange={(event) =>
+                              updateValue("is_published", event.target.checked)
+                            }
+                          />
+                        }
+                        label="Published"
+                      />
+                    </Stack>
+                  </Grid>
+                </Grid>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            sx={{
+              position: "sticky",
+              bottom: 0,
+              zIndex: 4,
+              justifyContent: "flex-end",
+              p: 1.5,
+              borderRadius: 1.5,
+              backgroundColor: alpha(theme.palette.background.default, 0.94),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <Button component={Link} href="/admin/experience" variant="outlined">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              startIcon={<SaveOutlinedIcon />}
+              disabled={isPending}
+            >
+              {isPending ? "Saving..." : submitLabel}
+            </Button>
+          </Stack>
+        </Stack>
+      </Box>
+    </Stack>
+  );
+}

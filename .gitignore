@@ -41,4 +41,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# IDE and editor configurations
+.cursor/
+.codex-dev.*.log
+
+# Screenshots and assets
+.project-detail-*.png
+.visual-*.png
+
+# vercel
 .vercel

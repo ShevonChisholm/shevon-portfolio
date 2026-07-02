@@ -37,17 +37,18 @@ export const ThemeContext = createContext<ThemeContextType>({
 export const useTheme = () => useContext(ThemeContext);
 
 export default function ThemeRegistry({ children }: { children: ReactNode }) {
-  // Initialize theme from localStorage or default to dark
-  const [mode, setMode] = useState<PaletteMode>(() => {
-    // Default to dark during SSR
-    if (typeof window === 'undefined') return 'dark';
-    
+  // Initialize theme - start with dark theme to match SSR default
+  const [mode, setMode] = useState<PaletteMode>('dark');
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Sync with localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as PaletteMode;
-    if (savedTheme) return savedTheme;
-    
-    // Default to dark theme
-    return 'dark';
-  });
+    if (savedTheme && savedTheme !== mode) {
+      setMode(savedTheme);
+    }
+    setIsMounted(true);
+  }, [mode]);
 
   const [{ cache, flush }] = useState(() => {
     const cache = createCache({ key: 'mui' });
@@ -74,7 +75,7 @@ export default function ThemeRegistry({ children }: { children: ReactNode }) {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
       if (!localStorage.getItem('theme')) {
-        setMode('dark'); // Always set to dark when no preference is saved
+        setMode('dark');
       }
     };
 

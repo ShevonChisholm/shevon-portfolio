@@ -1,5 +1,6 @@
 "use client";
 
+import { forwardRef } from "react";
 import type { PublicProject } from "@/lib/cms/public-projects";
 import {
   Box,
@@ -38,40 +39,50 @@ function initialsFor(title: string) {
     .join("");
 }
 
-export default function ProjectCard({
-  title,
-  description,
-  shortDescription,
-  image,
-  images,
-  tags,
-  slug,
-  category,
-  role,
-  status,
-}: ProjectCardProps) {
-  const theme = useTheme();
-  const hasMobileScreens = category === "Mobile Apps" && images.length > 0;
-  const cardDescription = shortDescription ?? description;
-  const visibleTags = tags.slice(0, 5);
-  const hiddenTagCount = Math.max(tags.length - visibleTags.length, 0);
+const ProjectCard = forwardRef<HTMLDivElement, ProjectCardProps>(
+  (
+    {
+      title,
+      description,
+      shortDescription,
+      image,
+      images,
+      tags,
+      slug,
+      category,
+      role,
+      status,
+    },
+    ref
+  ) => {
+    const theme = useTheme();
+    const hasMobileScreens = category === "Mobile Apps" && images.length > 0;
+    const cardDescription = shortDescription ?? description;
+    const visibleTags = tags.slice(0, 5);
+    const hiddenTagCount = Math.max(tags.length - visibleTags.length, 0);
 
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
-      transition={{ duration: 0.3 }}
-      style={{ height: "100%", minWidth: 0, display: "flex" }}
-    >
-      <Link
-        href={`/projects/${slug}`}
-        aria-label={`View ${title} project details`}
-        style={{
-          display: "flex",
-          width: "100%",
-          minWidth: 0,
+    return (
+      <motion.div
+        ref={ref}
+        layout
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ duration: 0.3 }}
+        style={{ height: "100%", minWidth: 0, display: "flex" }}
+      >
+        <Link
+          href={`/projects/${slug}`}
+          aria-label={`View ${title} project details`}
+          style={{
+            display: "flex",
+            width: "100%",
+            minWidth: 0,
+            height: "100%",
+            color: "inherit",
+            textDecoration: "none",
+          }}
+        >
           height: "100%",
           color: "inherit",
           textDecoration: "none",
@@ -264,7 +275,12 @@ export default function ProjectCard({
             </Box>
           </CardContent>
         </Card>
-      </Link>
-    </motion.div>
-  );
-}
+        </Link>
+      </motion.div>
+    );
+  }
+);
+
+ProjectCard.displayName = "ProjectCard";
+
+export default ProjectCard;

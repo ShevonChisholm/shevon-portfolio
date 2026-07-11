@@ -30,6 +30,11 @@ function ClientLoginContent() {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const [login, loginState] = useLoginMutation();
+  const rawReturnTo = searchParams.get("returnTo");
+  const returnTo =
+    rawReturnTo && rawReturnTo.startsWith("/") && !rawReturnTo.startsWith("//")
+      ? rawReturnTo
+      : "/client/dashboard";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -49,7 +54,7 @@ function ClientLoginContent() {
       }).unwrap();
       dispatch(setSession(session));
       saveStoredSession(session);
-      router.replace("/client/dashboard");
+      router.replace(returnTo);
       router.refresh();
     } catch {
       setMessage("Could not sign in. Check your email and password.");

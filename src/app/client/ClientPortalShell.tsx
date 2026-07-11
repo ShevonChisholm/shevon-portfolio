@@ -138,12 +138,13 @@ export default function ClientPortalShell({ children }: { children: ReactNode })
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isLoginRoute = pathname === "/client/login";
+  const isPublicInvitationRoute = pathname.startsWith("/client/invitations/");
 
   useEffect(() => {
     setSidebarCollapsed(localStorage.getItem(sidebarStorageKey) === "true");
   }, []);
 
-  if (isLoginRoute) {
+  if (isLoginRoute || isPublicInvitationRoute) {
     return (
       <Box
         sx={{

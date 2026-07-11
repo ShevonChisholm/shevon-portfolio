@@ -3,6 +3,7 @@ import './globals.css';
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry';
 import MotionProvider from '@/components/MotionProvider';
 import ScrollToTop from '@/components/ScrollToTop/ScrollToTop';
+import AppStoreProvider from '@/components/AppStoreProvider';
 
 export const metadata: Metadata = {
   title: "Shevon Chisholm | Full-Stack Engineer",
@@ -41,12 +42,14 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Shevon Chisholm" />
       </head>
       <body suppressHydrationWarning>
-        <ThemeRegistry>
-          <MotionProvider>
-            {children}
-            <ScrollToTop />
-          </MotionProvider>
-        </ThemeRegistry>
+        <AppStoreProvider>
+          <ThemeRegistry>
+            <MotionProvider>
+              {children}
+              <ScrollToTop />
+            </MotionProvider>
+          </ThemeRegistry>
+        </AppStoreProvider>
       </body>
     </html>
   );

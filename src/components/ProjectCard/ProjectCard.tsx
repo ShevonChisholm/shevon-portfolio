@@ -83,11 +83,6 @@ const ProjectCard = forwardRef<HTMLDivElement, ProjectCardProps>(
             textDecoration: "none",
           }}
         >
-          height: "100%",
-          color: "inherit",
-          textDecoration: "none",
-        }}
-      >
         <Card
           sx={{
             width: "100%",

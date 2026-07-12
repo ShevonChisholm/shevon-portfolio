@@ -17,6 +17,7 @@ import { alpha } from "@mui/material/styles";
 import { AnimatePresence } from "framer-motion";
 import ProjectCard from "../ProjectCard/ProjectCard";
 import TestimonialCarousel from "../TestimonialCarousel/TestimonialCarousel";
+import { publicContainerSx } from "@/theme/layout";
 
 type ProjectCategory = "All" | "Web Apps" | "Mobile Apps";
 
@@ -71,7 +72,7 @@ export default function ProjectsClient({
         bgcolor: alpha(theme.palette.background.paper, 0.1),
       }}
     >
-      <Container maxWidth={false} sx={{ width: "100%", maxWidth: 1040 }}>
+      <Container maxWidth="xl" sx={publicContainerSx}>
         <Box
           sx={{
             display: "flex",

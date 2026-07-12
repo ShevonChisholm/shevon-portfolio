@@ -9,6 +9,7 @@ import {
 } from '@mui/icons-material';
 import Link from 'next/link';
 import type { ResumeSettingValue } from '@/types/cms';
+import { publicContainerSx } from '@/theme/layout';
 
 const RESUME_URL = '/resume.pdf';
 
@@ -31,16 +32,7 @@ export default function ResumeView({ resume }: ResumeViewProps) {
         pb: { xs: 8, md: 12 },
       }}
     >
-      <Container
-        maxWidth={false}
-        sx={{
-          width: { xs: 'calc(100% - 32px)', sm: 'calc(100% - 48px)' },
-          maxWidth: 1040,
-          minWidth: 0,
-          mx: 'auto',
-          px: 0,
-        }}
-      >
+      <Container maxWidth="xl" sx={{ ...publicContainerSx, minWidth: 0 }}>
         {/* Back Button */}
         <Link href="/#home" style={{ textDecoration: 'none' }}>
           <Box

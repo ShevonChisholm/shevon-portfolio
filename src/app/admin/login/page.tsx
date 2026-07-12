@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Container,
-  Divider,
   IconButton,
   InputAdornment,
   Link,
@@ -19,15 +18,19 @@ import { alpha } from "@mui/material/styles";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import { useRouter } from "next/navigation";
+import type { AuthSession } from "@/lib/api/auth-types";
+import { saveStoredSession } from "@/lib/auth/auth-storage";
+import { setSession } from "@/lib/auth/auth-slice";
+import { useAppDispatch } from "@/lib/store/hooks";
 
 export default function AdminLoginPage() {
   const theme = useTheme();
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
-  const [email, setEmail] = useState("chisholmshevon@gmail.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [magicLinkLoading, setMagicLinkLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -68,6 +71,7 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
       const result = (await response.json().catch(() => null)) as
+        | (AuthSession & { error?: string })
         | { error?: string }
         | null;
 
@@ -77,7 +81,14 @@ export default function AdminLoginPage() {
         );
       }
 
-      router.push("/admin/dashboard");
+      if (!result || !("access_token" in result)) {
+        throw new Error("The admin session response was incomplete.");
+      }
+
+      dispatch(setSession(result));
+      saveStoredSession(result);
+
+      router.replace("/admin/dashboard");
       router.refresh();
     } catch (error) {
       setMessage({
@@ -89,45 +100,6 @@ export default function AdminLoginPage() {
       });
     } finally {
       setPasswordLoading(false);
-    }
-  };
-
-  const handleMagicLink = async () => {
-    setMessage(null);
-    setMagicLinkLoading(true);
-
-    try {
-      const response = await fetch("/api/admin/magic-link", {
-        method: "POST",
-        credentials: "same-origin",
-        cache: "no-store",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-      const result = (await response.json().catch(() => null)) as
-        | { error?: string }
-        | null;
-
-      if (!response.ok) {
-        throw new Error(result?.error || "Unable to send magic link.");
-      }
-
-      setMessage({
-        type: "success",
-        text: "Magic link sent. Check your email to continue.",
-      });
-    } catch (error) {
-      setMessage({
-        type: "error",
-        text:
-          error instanceof Error
-            ? error.message
-            : "Admin services are temporarily unavailable. Please try again.",
-      });
-    } finally {
-      setMagicLinkLoading(false);
     }
   };
 
@@ -181,8 +153,8 @@ export default function AdminLoginPage() {
           variant="body2"
           sx={{ color: theme.palette.text.secondary, mb: 3, lineHeight: 1.7 }}
         >
-          Manage your portfolio content, projects, blog posts, skills,
-          experience, education, and contact messages.
+          Access the private CRM, delivery operations, service catalog, and
+          portfolio content tools.
         </Typography>
 
         {message && (
@@ -198,7 +170,7 @@ export default function AdminLoginPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={passwordLoading || magicLinkLoading}
+            disabled={passwordLoading}
             required
             sx={{ mb: 2 }}
           />
@@ -210,7 +182,7 @@ export default function AdminLoginPage() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            disabled={passwordLoading || magicLinkLoading}
+            disabled={passwordLoading}
             required
             slotProps={{
               input: {
@@ -240,7 +212,7 @@ export default function AdminLoginPage() {
             type="submit"
             variant="contained"
             fullWidth
-            disabled={passwordLoading || magicLinkLoading}
+            disabled={passwordLoading}
             sx={{
               py: 1.35,
               borderRadius: "999px",
@@ -258,24 +230,6 @@ export default function AdminLoginPage() {
             {passwordLoading ? "Signing in..." : "Sign In"}
           </Button>
         </Box>
-
-        <Divider sx={{ my: 3 }}>or</Divider>
-
-        <Button
-          variant="outlined"
-          fullWidth
-          disabled={passwordLoading || magicLinkLoading}
-          onClick={handleMagicLink}
-          sx={{
-            py: 1.25,
-            borderRadius: "999px",
-            fontWeight: 700,
-            borderColor: alpha(theme.palette.primary.main, 0.4),
-            color: theme.palette.primary.main,
-          }}
-        >
-          {magicLinkLoading ? "Sending link..." : "Send Magic Link"}
-        </Button>
 
         <Typography
           variant="caption"

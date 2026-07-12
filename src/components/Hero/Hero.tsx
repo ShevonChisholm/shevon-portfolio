@@ -5,7 +5,6 @@ import {
   Button,
   Chip,
   Container,
-  Divider,
   Stack,
   Typography,
   useTheme,
@@ -13,7 +12,9 @@ import {
 import { alpha } from "@mui/material/styles";
 import {
   ArrowOutward as ArrowOutwardIcon,
+  BusinessCenterOutlined as BusinessCenterOutlinedIcon,
   CheckCircleOutline as CheckCircleOutlineIcon,
+  CorporateFareOutlined as CorporateFareOutlinedIcon,
   DescriptionOutlined as DescriptionOutlinedIcon,
   FiberManualRecord as FiberManualRecordIcon,
   VisibilityOutlined as VisibilityOutlinedIcon,
@@ -21,6 +22,7 @@ import {
 import { m as motion } from "framer-motion";
 import Link from "next/link";
 import AnimatedBackground from "../AnimatedBackground/AnimatedBackground";
+import { publicContainerSx } from "@/theme/layout";
 
 const coreSkills = [
   "React",
@@ -39,12 +41,6 @@ const strengths = [
   "Available for full-time remote or contract roles",
 ];
 
-const metrics = [
-  { value: "5+", label: "Years Experience" },
-  { value: "20+", label: "Projects Delivered" },
-  { value: "10+", label: "Production Apps" },
-];
-
 function BrandMark({ size = 72 }: { size?: number }) {
   return (
     <Box
@@ -58,6 +54,144 @@ function BrandMark({ size = 72 }: { size?: number }) {
         flexShrink: 0,
       }}
     />
+  );
+}
+
+type AudienceCardProps = {
+  icon: React.ReactNode;
+  eyebrow: string;
+  title: string;
+  description: string;
+  highlighted?: boolean;
+  actions: {
+    label: string;
+    href: string;
+    variant?: "contained" | "outlined" | "text";
+  }[];
+};
+
+function AudienceCard({
+  icon,
+  eyebrow,
+  title,
+  description,
+  highlighted = false,
+  actions,
+}: AudienceCardProps) {
+  const theme = useTheme();
+
+  return (
+    <Box
+      sx={{
+        position: "relative",
+        overflow: "hidden",
+        p: 2.7,
+        borderRadius: 2,
+        bgcolor: alpha(theme.palette.background.paper, 0.82),
+        border: `1px solid ${
+          highlighted
+            ? alpha(theme.palette.primary.main, 0.38)
+            : alpha(theme.palette.common.white, 0.12)
+        }`,
+        boxShadow: `0 24px 70px ${alpha(theme.palette.common.black, 0.25)}`,
+        transition: "border-color 180ms ease, transform 180ms ease",
+        "&:hover": {
+          transform: "translateY(-3px)",
+          borderColor: alpha(theme.palette.primary.main, 0.5),
+        },
+      }}
+    >
+      <Box
+        aria-hidden="true"
+        sx={{
+          position: "absolute",
+          top: -40,
+          right: -28,
+          width: 132,
+          height: 132,
+          borderRadius: "50%",
+          bgcolor: alpha(theme.palette.primary.main, highlighted ? 0.12 : 0.07),
+          filter: "blur(38px)",
+        }}
+      />
+      <Stack direction="row" spacing={1.4} sx={{ alignItems: "center", mb: 1.8, position: "relative" }}>
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            display: "grid",
+            placeItems: "center",
+            flexShrink: 0,
+            borderRadius: 1.4,
+            color: "primary.main",
+            bgcolor: alpha(theme.palette.primary.main, 0.12),
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+            "& svg": { fontSize: 20 },
+          }}
+        >
+          {icon}
+        </Box>
+        <Typography
+          sx={{
+            color: highlighted ? "primary.main" : "text.secondary",
+            fontSize: "0.58rem",
+            fontWeight: 900,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+          }}
+        >
+          {eyebrow}
+        </Typography>
+      </Stack>
+      <Typography
+        component="h3"
+        sx={{
+          position: "relative",
+          mb: 1.1,
+          fontFamily: '"Montserrat", sans-serif',
+          fontSize: "0.98rem",
+          lineHeight: 1.3,
+          fontWeight: 900,
+        }}
+      >
+        {title}
+      </Typography>
+      <Typography
+        sx={{
+          position: "relative",
+          mb: 2,
+          color: "text.secondary",
+          fontSize: "0.77rem",
+          lineHeight: 1.65,
+        }}
+      >
+        {description}
+      </Typography>
+      <Stack direction="row" flexWrap="wrap" gap={1}>
+        {actions.map((action) => (
+          <Button
+            key={action.label}
+            component={Link}
+            href={action.href}
+            variant={action.variant ?? "text"}
+            size="small"
+            sx={{
+              minHeight: 30,
+              px: 1.35,
+              fontSize: "0.62rem",
+              borderColor: alpha(theme.palette.common.white, 0.18),
+              color: action.variant === "contained" ? "primary.contrastText" : "text.primary",
+              "&:hover": {
+                borderColor: "primary.main",
+                color: action.variant === "contained" ? "primary.contrastText" : "primary.main",
+              },
+            }}
+          >
+            {action.label}
+          </Button>
+        ))}
+      </Stack>
+    </Box>
   );
 }
 
@@ -81,10 +215,7 @@ export default function Hero() {
     >
       <AnimatedBackground />
 
-      <Container
-        maxWidth={false}
-        sx={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 1040 }}
-      >
+      <Container maxWidth="xl" sx={{ ...publicContainerSx, position: "relative", zIndex: 1 }}>
         <Box
           sx={{
             display: "grid",
@@ -92,7 +223,7 @@ export default function Hero() {
               xs: "minmax(0, 1fr)",
               lg: "minmax(0, 1fr) 363px",
             },
-            gap: { xs: 6, lg: 5 },
+            gap: { xs: 6, lg: 7 },
             alignItems: "center",
           }}
         >
@@ -104,7 +235,7 @@ export default function Hero() {
           >
             <Chip
               icon={<FiberManualRecordIcon />}
-              label="Open to remote opportunities"
+              label="Available for remote roles, contract work & business projects"
               variant="outlined"
               size="small"
               sx={{
@@ -162,9 +293,8 @@ export default function Hero() {
                 mb: 3.5,
               }}
             >
-              I build scalable web and mobile products — from customer-facing
-              platforms to business-critical systems. Production-ready code,
-              clean architecture, fast delivery.
+              Building production-ready web, mobile, and business software
+              solutions for companies and growing businesses.
             </Typography>
 
             <Stack spacing={1.25} sx={{ mb: 3.5 }}>
@@ -217,6 +347,14 @@ export default function Hero() {
               </Button>
               <Button
                 component={Link}
+                variant="contained"
+                href="/start-project"
+                sx={{ minHeight: 42, px: 2.5 }}
+              >
+                Start Project
+              </Button>
+              <Button
+                component={Link}
                 variant="outlined"
                 startIcon={<DescriptionOutlinedIcon />}
                 href="/resume"
@@ -242,73 +380,46 @@ export default function Hero() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <Box
-              sx={{
-                width: "100%",
-                maxWidth: { xs: 440, lg: 363 },
-                mx: { xs: "auto", lg: 0 },
-                borderRadius: 2,
-                px: { xs: 2.5, sm: 3.5 },
-                py: { xs: 3, sm: 3.5 },
-                bgcolor: alpha(theme.palette.background.paper, 0.82),
-                border: `1px solid ${alpha(theme.palette.common.white, 0.12)}`,
-                boxShadow: `0 24px 70px ${alpha(theme.palette.common.black, 0.25)}`,
-              }}
-            >
-              <Stack alignItems="center" spacing={1}>
-                <BrandMark />
-                <Typography sx={{ fontWeight: 800, fontSize: "0.9rem" }}>
-                  Shevon Chisholm
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Full-Stack Engineer
-                </Typography>
-              </Stack>
-
-              <Divider sx={{ my: 3, borderColor: alpha(theme.palette.common.white, 0.09) }} />
-
+            <Stack spacing={2} sx={{ width: "100%", maxWidth: { xs: 440, lg: 363 }, mx: { xs: "auto", lg: 0 } }}>
+              <AudienceCard
+                icon={<BusinessCenterOutlinedIcon />}
+                eyebrow="For Companies"
+                title="Looking for a Full-Stack Engineer?"
+                description="I build scalable platforms, APIs, mobile apps, dashboards, and production-ready systems for technical teams and businesses."
+                actions={[
+                  { label: "View Resume", href: "/resume", variant: "outlined" },
+                  { label: "Experience", href: "/#experience" },
+                  { label: "Projects", href: "/#projects" },
+                ]}
+              />
+              <AudienceCard
+                highlighted
+                icon={<CorporateFareOutlinedIcon />}
+                eyebrow="For Businesses"
+                title="Need a website, system, or automation tool?"
+                description="I help businesses launch professional websites, admin portals, dashboards, and custom software that support real operations."
+                actions={[
+                  { label: "Start a Project", href: "/start-project", variant: "contained" },
+                  { label: "View Services", href: "/services", variant: "outlined" },
+                ]}
+              />
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                  gap: 1,
-                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  px: 1,
+                  color: "text.secondary",
+                  fontSize: "0.72rem",
                 }}
               >
-                {metrics.map((metric) => (
-                  <Box key={metric.label} sx={{ minWidth: 0 }}>
-                    <Typography
-                      sx={{
-                        color: "primary.main",
-                        fontFamily: '"Montserrat", sans-serif',
-                        fontSize: { xs: "1.25rem", sm: "1.45rem" },
-                        fontWeight: 800,
-                      }}
-                    >
-                      {metric.value}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        color: "text.secondary",
-                        fontSize: { xs: "0.56rem", sm: "0.62rem" },
-                        lineHeight: 1.35,
-                      }}
-                    >
-                      {metric.label}
-                    </Typography>
-                  </Box>
-                ))}
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                  <BrandMark size={20} />
+                  <span>Systems built around real workflows</span>
+                </Stack>
+                <ArrowOutwardIcon sx={{ color: "primary.main", fontSize: 15 }} />
               </Box>
-
-              <Divider sx={{ my: 3, borderColor: alpha(theme.palette.common.white, 0.09) }} />
-
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <Typography variant="body2" color="text.secondary">
-                  Let&apos;s work together
-                </Typography>
-                <ArrowOutwardIcon sx={{ color: "primary.main", fontSize: 17 }} />
-              </Box>
-            </Box>
+            </Stack>
           </motion.div>
         </Box>
       </Container>

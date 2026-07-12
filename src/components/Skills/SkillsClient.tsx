@@ -23,6 +23,7 @@ import {
   StorageOutlined as DatabaseIcon,
 } from "@mui/icons-material";
 import { m as motion } from "framer-motion";
+import { publicContainerSx } from "@/theme/layout";
 
 type SkillsClientProps = {
   skillCategories: SkillCategoryWithSkills[];
@@ -100,7 +101,7 @@ export default function SkillsClient({ skillCategories }: SkillsClientProps) {
         borderTop: `1px solid ${alpha(theme.palette.common.white, 0.08)}`,
       }}
     >
-      <Container maxWidth={false} sx={{ width: "100%", maxWidth: 1040 }}>
+      <Container maxWidth="xl" sx={publicContainerSx}>
         <Box
           sx={{
             display: "flex",

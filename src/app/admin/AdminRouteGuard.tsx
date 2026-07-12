@@ -8,6 +8,7 @@ import { useMeQuery } from "@/lib/api/auth-api";
 import { clearStoredSession } from "@/lib/auth/auth-storage";
 import { clearSession, setContext } from "@/lib/auth/auth-slice";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import { isPlatformAdminRoute } from "@/lib/auth/admin-routes";
 
 type AdminRouteGuardProps = {
   children: ReactNode;
@@ -20,7 +21,8 @@ export default function AdminRouteGuard({ children }: AdminRouteGuardProps) {
   const dispatch = useAppDispatch();
   const { accessToken, context, hydrated } = useAppSelector((state) => state.auth);
   const isLoginRoute = pathname === "/admin/login";
-  const shouldVerify = hydrated && Boolean(accessToken) && !isLoginRoute;
+  const isPlatformRoute = isPlatformAdminRoute(pathname);
+  const shouldVerify = hydrated && Boolean(accessToken) && isPlatformRoute;
   const { data, error, isFetching, isLoading } = useMeQuery(undefined, {
     skip: !shouldVerify,
     refetchOnMountOrArgChange: true,
@@ -28,7 +30,7 @@ export default function AdminRouteGuard({ children }: AdminRouteGuardProps) {
 
   const activeContext = data ?? context;
   const checkingSession =
-    !isLoginRoute &&
+    isPlatformRoute &&
     (!hydrated || (shouldVerify && !activeContext && (isLoading || isFetching)));
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function AdminRouteGuard({ children }: AdminRouteGuardProps) {
   }, [data, dispatch]);
 
   useEffect(() => {
-    if (isLoginRoute || !hydrated) return;
+    if (isLoginRoute || !isPlatformRoute || !hydrated) return;
 
     if (!accessToken) {
       router.replace("/admin/login");
@@ -61,10 +63,11 @@ export default function AdminRouteGuard({ children }: AdminRouteGuardProps) {
     error,
     hydrated,
     isLoginRoute,
+    isPlatformRoute,
     router,
   ]);
 
-  if (isLoginRoute) {
+  if (isLoginRoute || !isPlatformRoute) {
     return children;
   }
 

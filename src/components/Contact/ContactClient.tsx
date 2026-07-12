@@ -24,6 +24,8 @@ import {
   SendOutlined as SendIcon,
 } from "@mui/icons-material";
 import { m as motion } from "framer-motion";
+import { useSubmitPublicContactMutation } from "@/lib/api/public-services-api";
+import { publicContainerSx } from "@/theme/layout";
 
 type ContactClientProps = {
   settings: PortfolioContactSettings;
@@ -44,7 +46,7 @@ function phoneHref(phone: string) {
 export default function ContactClient({ settings }: ContactClientProps) {
   const theme = useTheme();
   const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
-  const [loading, setLoading] = useState(false);
+  const [submitContact, submitContactState] = useSubmitPublicContactMutation();
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -64,15 +66,11 @@ export default function ContactClient({ settings }: ContactClientProps) {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setLoading(true);
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to send message");
+      await submitContact({
+        ...formData,
+        source: "portfolio-contact-form",
+      }).unwrap();
       setSnackbar({ open: true, message: "Message sent successfully!", severity: "success" });
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch {
@@ -81,8 +79,6 @@ export default function ContactClient({ settings }: ContactClientProps) {
         message: "Failed to send message. You can also reach me directly by email.",
         severity: "error",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -103,7 +99,7 @@ export default function ContactClient({ settings }: ContactClientProps) {
         borderTop: `1px solid ${alpha(theme.palette.common.white, 0.08)}`,
       }}
     >
-      <Container maxWidth={false} sx={{ width: "100%", maxWidth: 1040 }}>
+      <Container maxWidth="xl" sx={publicContainerSx}>
         <Box
           sx={{
             display: "flex",
@@ -253,9 +249,9 @@ export default function ContactClient({ settings }: ContactClientProps) {
                   gap: 1.5,
                 }}
               >
-                <TextField fullWidth required placeholder="Name *" name="name" value={formData.name} onChange={handleChange} disabled={loading} />
-                <TextField fullWidth required type="email" placeholder="Email *" name="email" value={formData.email} onChange={handleChange} disabled={loading} />
-                <TextField fullWidth placeholder="Subject" name="subject" value={formData.subject} onChange={handleChange} disabled={loading} sx={{ gridColumn: "1 / -1" }} />
+                <TextField fullWidth required placeholder="Name *" name="name" value={formData.name} onChange={handleChange} disabled={submitContactState.isLoading} />
+                <TextField fullWidth required type="email" placeholder="Email *" name="email" value={formData.email} onChange={handleChange} disabled={submitContactState.isLoading} />
+                <TextField fullWidth placeholder="Subject" name="subject" value={formData.subject} onChange={handleChange} disabled={submitContactState.isLoading} sx={{ gridColumn: "1 / -1" }} />
                 <TextField
                   fullWidth
                   required
@@ -265,18 +261,18 @@ export default function ContactClient({ settings }: ContactClientProps) {
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={submitContactState.isLoading}
                   sx={{ gridColumn: "1 / -1" }}
                 />
                 <Button
                   type="submit"
                   variant="contained"
                   fullWidth
-                  disabled={loading}
+                  disabled={submitContactState.isLoading}
                   startIcon={<SendIcon />}
                   sx={{ gridColumn: "1 / -1", minHeight: 40 }}
                 >
-                  {loading ? "Sending..." : "Send Message"}
+                  {submitContactState.isLoading ? "Sending..." : "Send Message"}
                 </Button>
               </Box>
             </Box>

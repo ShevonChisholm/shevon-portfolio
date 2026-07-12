@@ -14,6 +14,7 @@ import { alpha } from "@mui/material/styles";
 import { ArrowForward as ArrowForwardIcon } from "@mui/icons-material";
 import { m } from "framer-motion";
 import Image from "next/image";
+import { publicContainerSx } from "@/theme/layout";
 
 type AboutClientProps = {
   about: AboutSettingsValue;
@@ -88,7 +89,7 @@ export default function AboutClient({ about }: AboutClientProps) {
         borderTop: `1px solid ${alpha(theme.palette.common.white, 0.08)}`,
       }}
     >
-      <Container maxWidth={false} sx={{ width: "100%", maxWidth: 1040 }}>
+      <Container maxWidth="xl" sx={publicContainerSx}>
         <Box
           sx={{
             display: "grid",

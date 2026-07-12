@@ -27,6 +27,7 @@ import DetailPageToolbar from "@/components/DetailPageToolbar/DetailPageToolbar"
 import ProjectShowcaseCarousel from "@/components/Projects/ProjectShowcaseCarousel";
 import ProjectVideoDialog from "@/components/Projects/ProjectVideoDialog";
 import ProjectVideosSection from "@/components/Projects/ProjectVideosSection";
+import { publicContainerSx } from "@/theme/layout";
 
 type ProjectDetailsClientProps = {
   project: PublicProject;
@@ -96,16 +97,8 @@ export default function ProjectDetailsClient({ project }: ProjectDetailsClientPr
       />
 
       <Container
-        maxWidth={false}
-        sx={{
-          width: { xs: "calc(100% - 32px)", sm: "calc(100% - 48px)" },
-          maxWidth: 1040,
-          minWidth: 0,
-          mx: "auto",
-          px: 0,
-          pt: { xs: 4, md: 5 },
-          pb: { xs: 7, md: 10 },
-        }}
+        maxWidth="xl"
+        sx={{ ...publicContainerSx, minWidth: 0, pt: { xs: 4, md: 5 }, pb: { xs: 7, md: 10 } }}
       >
         <Typography
           component="h1"

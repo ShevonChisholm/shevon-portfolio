@@ -66,22 +66,68 @@ export type LeadStatusHistory = {
 };
 
 export type LeadFollowUp = {
-  id?: string;
-  lead_id?: string;
+  id: string;
+  lead_id: string;
   title?: string | null;
-  description?: string | null;
+  notes?: string | null;
   due_at?: string | null;
   status?: string | null;
+  assigned_admin_profile_id?: string | null;
+  completed_at?: string | null;
   created_at?: string | null;
+  updated_at?: string | null;
 };
 
 export type DiscoveryResponse = {
-  id?: string;
-  lead_id?: string;
+  id: string;
+  lead_id: string;
   question_key?: string | null;
   question_label?: string | null;
-  response?: unknown;
+  answer?: unknown;
+  business_goals?: string | null;
+  pain_points?: string | null;
+  requested_features?: string[] | null;
+  budget_range?: string | null;
+  timeline?: string | null;
+  recommended_package_id?: string | null;
+  readiness_score?: number | null;
+  internal_notes?: string | null;
   created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type FollowUpStatus = "Pending" | "Completed" | "Cancelled" | "Overdue";
+
+export type FollowUpInput = {
+  title: string;
+  notes?: string;
+  due_at: string;
+  status?: FollowUpStatus;
+};
+
+export type ListFollowUpsQuery = {
+  page?: number;
+  limit?: number;
+  lead_id?: string;
+  status?: string;
+  due_from?: string;
+  due_to?: string;
+  overdue?: "true" | "false";
+  today?: "true" | "false";
+  this_week?: "true" | "false";
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
+};
+
+export type DiscoveryResponseInput = {
+  business_goals?: string;
+  pain_points?: string;
+  requested_features?: string[];
+  budget_range?: string;
+  timeline?: string;
+  recommended_package_id?: string;
+  readiness_score?: number;
+  internal_notes?: string;
 };
 
 export type LeadDetail = Lead & {
@@ -175,6 +221,84 @@ export const leadsApi = platformApi.injectEndpoints({
         "Leads",
       ],
     }),
+    listFollowUps: builder.query<
+      PaginatedResult<LeadFollowUp>,
+      ListFollowUpsQuery | void
+    >({
+      query: (params) => ({
+        url: "/admin/follow-ups",
+        params: {
+          page: 1,
+          limit: 50,
+          sort_by: "due_at",
+          sort_order: "asc",
+          ...(params ?? {}),
+        },
+      }),
+      transformResponse: (response: ApiResponse<PaginatedResult<LeadFollowUp>>) =>
+        unwrapApiResponse(response),
+      providesTags: ["FollowUps"],
+    }),
+    createFollowUp: builder.mutation<
+      LeadFollowUp,
+      { leadId: string; body: FollowUpInput }
+    >({
+      query: ({ leadId, body }) => ({
+        url: `/admin/leads/${leadId}/follow-ups`,
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response: ApiResponse<LeadFollowUp>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: ["FollowUps", "Leads"],
+    }),
+    updateFollowUp: builder.mutation<
+      LeadFollowUp,
+      { id: string; body: FollowUpInput }
+    >({
+      query: ({ id, body }) => ({
+        url: `/admin/follow-ups/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      transformResponse: (response: ApiResponse<LeadFollowUp>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: ["FollowUps", "Leads"],
+    }),
+    completeFollowUp: builder.mutation<LeadFollowUp, string>({
+      query: (id) => ({
+        url: `/admin/follow-ups/${id}/complete`,
+        method: "POST",
+      }),
+      transformResponse: (response: ApiResponse<LeadFollowUp>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: ["FollowUps", "Leads"],
+    }),
+    deleteFollowUp: builder.mutation<{ id: string; deleted: boolean }, string>({
+      query: (id) => ({ url: `/admin/follow-ups/${id}`, method: "DELETE" }),
+      transformResponse: (response: ApiResponse<{ id: string; deleted: boolean }>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: ["FollowUps", "Leads"],
+    }),
+    listDiscoveryResponses: builder.query<DiscoveryResponse[], void>({
+      query: () => "/admin/discovery-responses",
+      transformResponse: (response: ApiResponse<DiscoveryResponse[]>) =>
+        unwrapApiResponse(response),
+      providesTags: ["DiscoveryResponses"],
+    }),
+    updateDiscoveryResponse: builder.mutation<
+      DiscoveryResponse,
+      { id: string; body: DiscoveryResponseInput }
+    >({
+      query: ({ id, body }) => ({
+        url: `/admin/discovery-responses/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      transformResponse: (response: ApiResponse<DiscoveryResponse>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: ["DiscoveryResponses", "Leads"],
+    }),
   }),
 });
 
@@ -184,4 +308,11 @@ export const {
   useUpdateLeadStatusMutation,
   useArchiveLeadMutation,
   useCreateLeadNoteMutation,
+  useListFollowUpsQuery,
+  useCreateFollowUpMutation,
+  useUpdateFollowUpMutation,
+  useCompleteFollowUpMutation,
+  useDeleteFollowUpMutation,
+  useListDiscoveryResponsesQuery,
+  useUpdateDiscoveryResponseMutation,
 } = leadsApi;

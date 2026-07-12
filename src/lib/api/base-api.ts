@@ -80,6 +80,8 @@ export const platformApi = createApi({
     "AdminUsers",
     "ActivityLogs",
     "Leads",
+    "FollowUps",
+    "DiscoveryResponses",
     "Clients",
     "ClientProjects",
     "ClientTasks",

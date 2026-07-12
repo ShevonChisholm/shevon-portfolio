@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isPlatformAdminRoute } from "@/lib/auth/admin-routes";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabasePublishableKey =
@@ -83,11 +84,16 @@ async function updateSession(request: NextRequest) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const session = await updateSession(request);
 
-  if (!pathname.startsWith("/admin") || pathname === "/admin/login") {
-    return session.response;
+  if (
+    !pathname.startsWith("/admin") ||
+    pathname === "/admin/login" ||
+    isPlatformAdminRoute(pathname)
+  ) {
+    return NextResponse.next({ request });
   }
+
+  const session = await updateSession(request);
 
   if (session.unavailable || !session.supabase) {
     return redirectToLogin(request, session.response, "supabase_unavailable");

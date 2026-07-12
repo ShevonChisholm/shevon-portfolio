@@ -4,6 +4,7 @@ import { Box, Container, Typography, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { m } from 'framer-motion';
 import { ReactNode } from 'react';
+import { publicContainerSx } from '@/theme/layout';
 
 interface SectionContainerProps {
   id: string;
@@ -32,7 +33,7 @@ export default function SectionContainer({ id, title, subtitle, children }: Sect
             : 'transparent',
       }}
     >
-      <Container maxWidth="xl" sx={{ width: '100%', minWidth: 0, px: { xs: 2.5, sm: 4, lg: 6 } }}>
+      <Container maxWidth="xl" sx={{ ...publicContainerSx, minWidth: 0 }}>
         <m.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

@@ -20,6 +20,7 @@ import {
   WorkOutline as WorkOutlineIcon,
 } from "@mui/icons-material";
 import { m as motion } from "framer-motion";
+import { publicContainerSx } from "@/theme/layout";
 
 type JourneyClientProps = {
   experiences: ExperienceItem[];
@@ -238,7 +239,7 @@ export default function JourneyClient({
         overflow: "hidden",
       }}
     >
-      <Container maxWidth={false} sx={{ width: "100%", maxWidth: 1040 }}>
+      <Container maxWidth="xl" sx={publicContainerSx}>
         <Box component="section" id="experience" aria-labelledby="experience-heading">
           <Box id="experience-heading">
             <SectionHeading eyebrow="EXPERIENCE" prefix="Where I've" accent="worked" />

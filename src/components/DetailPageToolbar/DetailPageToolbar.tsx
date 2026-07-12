@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Box, Button, Container, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { publicContainerSx } from "@/theme/layout";
 
 type DetailPageToolbarProps = {
   backLabel: string;
@@ -38,15 +39,7 @@ export default function DetailPageToolbar({
         boxShadow: `0 10px 28px ${alpha(theme.palette.common.black, 0.32)}`,
       }}
     >
-      <Container
-        maxWidth={false}
-        sx={{
-          width: { xs: "calc(100% - 32px)", sm: "calc(100% - 48px)" },
-          maxWidth: 1040,
-          mx: "auto",
-          px: 0,
-        }}
-      >
+      <Container maxWidth="xl" sx={publicContainerSx}>
         <Box
           sx={{
             minHeight: { xs: 58, sm: 54 },

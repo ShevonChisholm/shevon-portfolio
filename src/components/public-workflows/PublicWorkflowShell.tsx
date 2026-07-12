@@ -7,6 +7,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Container,
   Paper,
   Stack,
   Typography,
@@ -14,6 +15,7 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { publicContainerSx } from "@/theme/layout";
 
 export function PublicWorkflowShell({
   eyebrow,
@@ -32,7 +34,6 @@ export function PublicWorkflowShell({
     <Box
       sx={{
         minHeight: "100vh",
-        px: { xs: 2, md: 4 },
         py: { xs: 2, md: 3 },
         background: `linear-gradient(180deg, ${alpha(
           theme.palette.primary.main,
@@ -40,7 +41,7 @@ export function PublicWorkflowShell({
         )}, transparent 34%), ${theme.palette.background.default}`,
       }}
     >
-      <Box sx={{ maxWidth: 1120, mx: "auto" }}>
+      <Container maxWidth="xl" sx={publicContainerSx}>
         <Paper
           component="header"
           elevation={0}
@@ -137,7 +138,7 @@ export function PublicWorkflowShell({
           </Box>
           {children}
         </Stack>
-      </Box>
+      </Container>
     </Box>
   );
 }

@@ -1,384 +1,314 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   AppBar,
-  Toolbar,
-  Button,
   Box,
-  useScrollTrigger,
+  Button,
   Container,
   IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemText,
+  Stack,
+  Toolbar,
+  Typography,
   useTheme,
-} from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import MenuIcon from '@mui/icons-material/Menu';
-import { usePathname, useRouter } from 'next/navigation';
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import {
+  ArrowForward as ArrowForwardIcon,
+  Close as CloseIcon,
+  DescriptionOutlined as DescriptionOutlinedIcon,
+  LockOutlined as LockOutlinedIcon,
+  Menu as MenuIcon,
+  OpenInNew as OpenInNewIcon,
+} from "@mui/icons-material";
+import ThemeToggle from "@/components/ThemeToggle/ThemeToggle";
+import { publicContainerSx } from "@/theme/layout";
 
 const navItems = [
-  { label: 'Home', id: 'home' },
-  { label: 'About', id: 'about' },
-  { label: 'Skills', id: 'skills' },
-  { label: 'Projects', id: 'projects' },
-  { label: 'Blog', id: 'blog' },
-  { label: 'Contact', id: 'contact' },
+  { label: "Home", href: "/", id: "home", type: "link" },
+  { label: "Services", href: "/services", id: "services", type: "link" },
+  { label: "Projects", href: "/#projects", id: "projects", type: "anchor" },
+  { label: "Experience", href: "/#experience", id: "experience", type: "anchor" },
+  { label: "Blog", href: "/#blog", id: "blog", type: "anchor" },
+  { label: "Contact", href: "/#contact", id: "contact", type: "anchor" },
 ];
 
+function LogoMark({ size = 40 }: { size?: number }) {
+  return (
+    <Box
+      component="img"
+      src="/sc-logo.svg"
+      alt="Shevon Chisholm logo"
+      sx={{ width: size, height: size, display: "block", flexShrink: 0 }}
+    />
+  );
+}
+
 export default function Navbar() {
-  const [activeSection, setActiveSection] = useState('home');
-  const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
   const pathname = usePathname();
   const router = useRouter();
-
-  const shouldShowResume = pathname !== '/resume';
-
-  const [isScrolling, setIsScrolling] = useState(false);
-
-
-  const trigger = useScrollTrigger({
-    disableHysteresis: true,
-    threshold: 100,
-  });
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    if (pathname === '/') {
-      const hash = window.location.hash.replace('#', '');
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-      if (hash && navItems.some(item => item.id === hash)) {
-        const element = document.getElementById(hash);
-        if (element) {
-          requestAnimationFrame(() => {
-            element.scrollIntoView({ behavior: 'smooth' });
-            setActiveSection(hash);
-          });
-        }
-      }
+  const navigateToAnchor = (href: string) => {
+    setMobileOpen(false);
 
-      const handleScroll = () => {
-        if (isScrolling) return;
-
-        const sections = navItems.map(item => ({
-          id: item.id,
-          offset: document.getElementById(item.id)?.offsetTop || 0,
-        }));
-
-        const scrollPosition = window.scrollY + 100;
-
-        const currentSection = sections.reduce((acc, section) => {
-          return scrollPosition >= section.offset ? section.id : acc;
-        }, 'home');
-
-        setActiveSection(currentSection);
-
-        const newHash = `#${currentSection}`;
-        if (window.location.hash !== newHash) {
-          window.history.replaceState(null, '', newHash);
-        }
-      };
-
-      window.addEventListener('scroll', handleScroll);
-      return () => window.removeEventListener('scroll', handleScroll);
-    }
-  }, [isScrolling, pathname]);
-
-
-  const handleNavClick = (id: string) => {
-    setIsScrolling(true);
-
-    if (pathname !== '/') {
-      router.push(`/#${id}`);
-      setTimeout(() => {
-        const element = document.getElementById(id);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-          setActiveSection(id);
-        }
-        setTimeout(() => setIsScrolling(false), 1000);
-      }, 100);
-    } else {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-        setActiveSection(id);
-        window.history.pushState(null, '', `#${id}`);
-        setTimeout(() => setIsScrolling(false), 1000);
-      }
+    if (!href.includes("#")) {
+      router.push(href);
+      return;
     }
 
-    if (mobileOpen) setMobileOpen(false);
+    const [, id] = href.split("#");
+    if (pathname !== "/") {
+      router.push(href);
+      return;
+    }
+
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    window.history.pushState(null, "", href);
   };
 
-  const NavLinks = () => (
-    <>
-      {navItems.map((item) => (
-        <Button
-          key={item.id}
-          onClick={() => handleNavClick(item.id)}
-          sx={{
-            color:
-              activeSection === item.id
-                ? theme.palette.text.primary
-                : theme.palette.text.secondary,
-            position: 'relative',
-            px: 1.25,
-            py: 1,
-            minWidth: 0,
-            fontSize: '0.82rem',
-            fontWeight: 700,
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: 0,
-              left: '50%',
-              transform: activeSection === item.id ? 'translateX(-50%)' : 'translateX(-50%) scaleX(0)',
-              width: 'calc(100% - 20px)',
-              height: '2px',
-              bgcolor: theme.palette.primary.main,
-              transition: 'transform 0.3s ease-in-out',
-            },
-            '&:hover::after': {
-              transform: 'translateX(-50%) scaleX(1)',
-            },
-          }}
-        >
-          {item.label}
-        </Button>
-      ))}
-    </>
-  );
+  const navButtonSx = (active: boolean) => ({
+    minWidth: 0,
+    px: 0.5,
+    py: 0.5,
+    color: active ? "primary.main" : "text.secondary",
+    fontSize: "0.76rem",
+    fontWeight: 800,
+    whiteSpace: "nowrap",
+    "&:hover": { color: "primary.main", bgcolor: "transparent" },
+  });
 
   return (
-    <>
-      <AppBar
-        position="fixed"
-        elevation={0}
-        sx={{
-          width: '100%',
-          maxWidth: '100%',
-          overflowX: 'clip',
-          bgcolor: alpha(theme.palette.background.default, trigger ? 0.94 : 0.82),
-          transition: 'all 0.3s ease-in-out',
-          backdropFilter: {
-            xs: 'blur(14px)',
-            md: trigger ? 'blur(16px)' : 'blur(12px)',
-          },
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, trigger ? 0.16 : 0.08)}`,
-        }}
-      >
-        <Container maxWidth={false} sx={{ width: '100%', maxWidth: 1040 }}>
-          <Toolbar
-            disableGutters
+    <AppBar
+      position="fixed"
+      elevation={0}
+      sx={{
+        width: "100%",
+        maxWidth: "100%",
+        overflowX: "clip",
+        bgcolor: alpha(theme.palette.background.default, isScrolled ? 0.9 : 1),
+        backdropFilter: isScrolled ? "blur(16px)" : "none",
+        borderBottom: `1px solid ${
+          isScrolled
+            ? alpha(theme.palette.common.white, 0.1)
+            : alpha(theme.palette.common.white, 0.04)
+        }`,
+        transition: "background-color 180ms ease, border-color 180ms ease",
+      }}
+    >
+      <Container maxWidth="xl" sx={publicContainerSx}>
+        <Toolbar
+          disableGutters
+          sx={{
+            minHeight: { xs: 68, md: isScrolled ? 64 : 72 },
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 2,
+            transition: "min-height 180ms ease",
+          }}
+        >
+          <Box
+            component={Link}
+            href="/"
             sx={{
-              minHeight: { xs: 64, md: 62 },
-              justifyContent: 'space-between',
-              position: 'relative',
+              display: "flex",
+              alignItems: "center",
+              gap: 1.25,
               minWidth: 0,
-              gap: { xs: 1, md: 2 },
+              flexShrink: 0,
+              color: "inherit",
+              textDecoration: "none",
             }}
           >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                minWidth: 0,
-                flex: { xs: '1 1 auto', md: '0 1 auto' },
-              }}
-            >
-              <Box
-                onClick={() => handleNavClick("home")}
+            <LogoMark />
+            <Box sx={{ display: { xs: "none", sm: "block" }, minWidth: 0 }}>
+              <Typography
                 sx={{
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  minWidth: 0,
+                  fontFamily: '"Montserrat", sans-serif',
+                  fontSize: "0.82rem",
+                  fontWeight: 900,
+                  lineHeight: 1.15,
+                  whiteSpace: "nowrap",
                 }}
               >
-                <Box
-                  component="img"
-                  src="/sc-logo.svg"
-                  alt="Shevon Chisholm logo"
-                  sx={{
-                    width: { xs: 34, sm: 34 },
-                    height: { xs: 34, sm: 34 },
-                    display: "block",
-                    flexShrink: 0,
-                  }}
-                />
+                Shevon Chisholm
+              </Typography>
+              <Typography
+                sx={{
+                  color: "primary.main",
+                  fontSize: "0.56rem",
+                  fontWeight: 900,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Full-Stack Engineer
+              </Typography>
+            </Box>
+          </Box>
 
-                <Box
+          <Stack
+            component="nav"
+            direction="row"
+            spacing={1.8}
+            sx={{ display: { xs: "none", lg: "flex" }, alignItems: "center", width: "auto" }}
+            aria-label="Primary navigation"
+          >
+            {navItems.map((item) => {
+              const active =
+                item.href === "/"
+                  ? pathname === "/"
+                  : item.type === "link"
+                    ? pathname === item.href
+                    : false;
+
+              if (item.type === "link") {
+                return (
+                  <Button key={item.label} component={Link} href={item.href} sx={navButtonSx(active)}>
+                    {item.label}
+                  </Button>
+                );
+              }
+
+              return (
+                <Button key={item.label} onClick={() => navigateToAnchor(item.href)} sx={navButtonSx(active)}>
+                  {item.label}
+                </Button>
+              );
+            })}
+            <Button
+              component={Link}
+              href="/client"
+              startIcon={<LockOutlinedIcon sx={{ fontSize: 15 }} />}
+              sx={navButtonSx(pathname.startsWith("/client"))}
+            >
+              Client Portal
+            </Button>
+          </Stack>
+
+          <Stack direction="row" spacing={1.1} sx={{ display: { xs: "none", lg: "flex" }, alignItems: "center", width: "max-content" }}>
+            <ThemeToggle />
+            <Button
+              component={Link}
+              href="/resume"
+              variant="outlined"
+              endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+              sx={{
+                minHeight: 36,
+                px: 2,
+                borderRadius: 999,
+                whiteSpace: "nowrap",
+                color: "text.primary",
+                borderColor: alpha(theme.palette.common.white, 0.16),
+                "&:hover": { borderColor: "primary.main", color: "primary.main" },
+              }}
+            >
+              View Resume
+            </Button>
+            <Button
+              component={Link}
+              href="/start-project"
+              variant="contained"
+              endIcon={<ArrowForwardIcon sx={{ fontSize: 15 }} />}
+              sx={{ minHeight: 36, px: 2, borderRadius: 999, whiteSpace: "nowrap" }}
+            >
+              Start a Project
+            </Button>
+          </Stack>
+
+          <Stack direction="row" spacing={0.75} sx={{ display: { xs: "flex", lg: "none" }, alignItems: "center" }}>
+            <ThemeToggle />
+            <IconButton
+              onClick={() => setMobileOpen((current) => !current)}
+              aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+              aria-expanded={mobileOpen}
+              sx={{ color: "text.primary" }}
+            >
+              {mobileOpen ? <CloseIcon /> : <MenuIcon />}
+            </IconButton>
+          </Stack>
+        </Toolbar>
+      </Container>
+
+      {mobileOpen && (
+        <Box
+          sx={{
+            display: { xs: "block", lg: "none" },
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            width: "100%",
+            bgcolor: alpha(theme.palette.background.default, 0.98),
+            borderBottom: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+            boxShadow: `0 24px 60px ${alpha(theme.palette.common.black, 0.38)}`,
+          }}
+        >
+          <Container maxWidth="xl" sx={{ ...publicContainerSx, py: 1.2 }}>
+            <Stack component="nav" aria-label="Mobile navigation">
+              {navItems.map((item) => (
+                <Button
+                  key={item.label}
+                  component={item.type === "link" ? Link : "button"}
+                  href={item.type === "link" ? item.href : undefined}
+                  onClick={() => item.type === "anchor" && navigateToAnchor(item.href)}
                   sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    lineHeight: 1.1,
-                    minWidth: 0,
+                    justifyContent: "flex-start",
+                    minHeight: 46,
+                    color: "text.primary",
+                    borderBottom: `1px solid ${alpha(theme.palette.common.white, 0.06)}`,
+                    borderRadius: 1,
                   }}
                 >
-                  <Box
-                    component="span"
-                    sx={{
-                      color: theme.palette.text.primary,
-                      fontWeight: 800,
-                      fontSize: { xs: "0.92rem", sm: "0.9rem" },
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    Shevon Chisholm
-                  </Box>
-
-                  <Box
-                    component="span"
-                    sx={{
-                      color: theme.palette.primary.main,
-                      fontWeight: 600,
-                      fontSize: "0.58rem",
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    Full-Stack Engineer
-                  </Box>
-                </Box>
-              </Box>
-
-            </Box>
-
-            <Box
-              sx={{
-                display: { xs: 'none', md: 'flex' },
-                position: 'absolute',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                alignItems: 'center',
-                gap: 0.5,
-              }}
-            >
-              <NavLinks />
-            </Box>
-
-            <IconButton
-              color="inherit"
-              aria-label="Open navigation"
-              onClick={() => setMobileOpen(true)}
-              sx={{
-                display: { xs: 'inline-flex', md: 'none' },
-                flexShrink: 0,
-                color: theme.palette.text.primary,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
-                backgroundColor: alpha(theme.palette.background.paper, 0.7),
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                },
-              }}
-            >
-              <MenuIcon />
-            </IconButton>
-
-            <Box
-              sx={{
-                display: { xs: 'none', md: 'flex' },
-                gap: 2,
-                alignItems: 'center',
-              }}
-            >
-              {shouldShowResume && (
+                  {item.label}
+                </Button>
+              ))}
+              <Button
+                component={Link}
+                href="/client"
+                startIcon={<LockOutlinedIcon />}
+                onClick={() => setMobileOpen(false)}
+                sx={{ justifyContent: "flex-start", minHeight: 46, color: "text.primary" }}
+              >
+                Client Portal
+              </Button>
+              <Stack spacing={1.1} sx={{ pt: 1.5, pb: 1 }}>
                 <Button
-                  variant="contained"
-                  color="primary"
+                  component={Link}
                   href="/resume"
-                  sx={{
-                    borderRadius: '8px',
-                    textTransform: 'none',
-                    minHeight: 36,
-                    px: 2.5,
-                  }}
+                  variant="outlined"
+                  startIcon={<DescriptionOutlinedIcon />}
+                  onClick={() => setMobileOpen(false)}
+                  fullWidth
                 >
                   View Resume
                 </Button>
-              )}
-            </Box>
-          </Toolbar>
-        </Container>
-      </AppBar>
-
-      <Drawer
-        anchor="right"
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        ModalProps={{ keepMounted: true }}
-        sx={{
-          display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': {
-            width: 'min(88vw, 340px)',
-            bgcolor: alpha(theme.palette.background.default, 0.98),
-            borderLeft: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
-            boxShadow: `-24px 0 60px ${alpha(theme.palette.common.black, 0.45)}`,
-          },
-        }}
-      >
-        <Box sx={{ p: 3, borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.14)}` }}>
-          <Box
-            component="img"
-            src="/sc-logo.svg"
-            alt="Shevon Chisholm logo"
-            sx={{
-              width: 44,
-              height: 44,
-              display: "block",
-              mb: 1.5,
-            }}
-          />
-          <Box sx={{ fontWeight: 800, fontSize: '1.2rem' }}>Shevon Chisholm</Box>
-          <Box sx={{ color: 'primary.main', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Full-Stack Engineer
-          </Box>
+                <Button
+                  component={Link}
+                  href="/start-project"
+                  variant="contained"
+                  endIcon={<ArrowForwardIcon />}
+                  onClick={() => setMobileOpen(false)}
+                  fullWidth
+                >
+                  Start a Project
+                </Button>
+              </Stack>
+            </Stack>
+          </Container>
         </Box>
-        <List sx={{ mt: 2, px: 1.5 }}>
-          {navItems.map((item) => (
-            <ListItem
-              key={item.id}
-              onClick={() => handleNavClick(item.id)}
-              sx={{
-                mb: 0.75,
-                borderRadius: 1.5,
-                cursor: 'pointer',
-                bgcolor:
-                  activeSection === item.id
-                    ? alpha(theme.palette.primary.main, 0.14)
-                    : 'transparent',
-                color:
-                  activeSection === item.id
-                    ? theme.palette.primary.main
-                    : theme.palette.text.primary,
-              }}
-            >
-              <ListItemText
-                primary={item.label}
-                primaryTypographyProps={{ fontWeight: 700 }}
-              />
-            </ListItem>
-          ))}
-          {shouldShowResume && (
-            <ListItem sx={{ px: 0.5 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                href="/resume"
-                sx={{ mt: 2, borderRadius: '8px', textTransform: 'none' }}
-              >
-                View Resume
-              </Button>
-            </ListItem>
-          )}
-        </List>
-      </Drawer>
-    </>
+      )}
+    </AppBar>
   );
-} 
+}

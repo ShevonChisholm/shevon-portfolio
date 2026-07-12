@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import type { PublicBlogPost } from "@/lib/cms/public-blog";
+import { publicContainerSx } from "@/theme/layout";
 
 type BlogClientProps = {
   posts: PublicBlogPost[];
@@ -39,7 +40,7 @@ export default function BlogClient({ posts }: BlogClientProps) {
         borderTop: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
       }}
     >
-      <Container maxWidth={false} sx={{ width: "100%", maxWidth: 1040 }}>
+      <Container maxWidth="xl" sx={publicContainerSx}>
         <Box
           sx={{
             display: "grid",

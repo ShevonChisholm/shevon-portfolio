@@ -11,6 +11,7 @@ import TimelineOppositeContent from "@mui/lab/TimelineOppositeContent";
 import { School as SchoolIcon } from "@mui/icons-material";
 import { m as motion } from "framer-motion";
 import type { EducationItem } from "@/types/cms";
+import { publicContainerSx } from "@/theme/layout";
 
 type EducationClientProps = {
   educationItems: EducationItem[];
@@ -23,7 +24,7 @@ export default function EducationClient({
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 9, md: 15 }, px: { xs: 2.5, sm: 4, lg: 6 } }}>
+    <Container maxWidth="xl" sx={{ ...publicContainerSx, py: { xs: 9, md: 15 } }}>
       <Typography variant="overline" sx={{ color: "primary.main", fontWeight: 800, letterSpacing: "0.12em" }}>
         Foundation
       </Typography>

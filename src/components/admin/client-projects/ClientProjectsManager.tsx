@@ -6,6 +6,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
   CircularProgress,
   Dialog,
@@ -14,6 +15,7 @@ import {
   DialogTitle,
   Divider,
   Drawer,
+  FormControlLabel,
   IconButton,
   LinearProgress,
   MenuItem,
@@ -40,6 +42,8 @@ import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import PercentOutlinedIcon from "@mui/icons-material/PercentOutlined";
@@ -58,11 +62,17 @@ import {
   clientProjectPaymentStatuses,
   clientProjectStages,
   clientProjectStatuses,
+  projectMilestoneStatuses,
   type ClientProjectDetail,
   type ClientProjectPaymentStatus,
   type ClientProjectStage,
   type ClientProjectStatus,
   type ClientProjectSummary,
+  type ProjectMilestone,
+  type ProjectMilestoneInput,
+  type ProjectMilestoneStatus,
+  type ProjectUpdate,
+  type ProjectUpdateInput,
   type UpsertClientProjectInput,
   useArchiveClientProjectMutation,
   useCompleteClientProjectMutation,
@@ -71,6 +81,13 @@ import {
   useGetClientProjectsSummaryQuery,
   useListClientProjectsQuery,
   useUpdateClientProjectMutation,
+  useCompleteProjectMilestoneMutation,
+  useCreateProjectMilestoneMutation,
+  useCreateProjectUpdateMutation,
+  useDeleteProjectMilestoneMutation,
+  useDeleteProjectUpdateMutation,
+  useUpdateProjectMilestoneMutation,
+  useUpdateProjectUpdateMutation,
 } from "@/lib/api/client-projects-api";
 import { useListLeadsQuery } from "@/lib/api/leads-api";
 import { useListProposalsQuery } from "@/lib/api/proposals-api";
@@ -790,23 +807,234 @@ function ProjectDialog({
   );
 }
 
+type MilestoneFormState = {
+  title: string;
+  description: string;
+  stage: ClientProjectStage;
+  status: ProjectMilestoneStatus;
+  start_date: string;
+  sort_order: string;
+  visible_to_client: boolean;
+};
+
+type UpdateFormState = {
+  title: string;
+  description: string;
+  stage: ClientProjectStage;
+  visible_to_client: boolean;
+  requires_client_action: boolean;
+};
+
+const emptyMilestoneForm: MilestoneFormState = {
+  title: "",
+  description: "",
+  stage: "Discovery",
+  status: "Not Started",
+  start_date: "",
+  sort_order: "0",
+  visible_to_client: true,
+};
+
+const emptyUpdateForm: UpdateFormState = {
+  title: "",
+  description: "",
+  stage: "Discovery",
+  visible_to_client: true,
+  requires_client_action: false,
+};
+
+function milestoneForm(milestone?: ProjectMilestone): MilestoneFormState {
+  return milestone
+    ? {
+        title: milestone.title ?? "",
+        description: milestone.description ?? "",
+        stage: (milestone.stage as ClientProjectStage) ?? "Discovery",
+        status: (milestone.status as ProjectMilestoneStatus) ?? "Not Started",
+        start_date: toDateInput(milestone.start_date),
+        sort_order: String(milestone.sort_order ?? 0),
+        visible_to_client: milestone.visible_to_client ?? true,
+      }
+    : emptyMilestoneForm;
+}
+
+function updateForm(update?: ProjectUpdate): UpdateFormState {
+  return update
+    ? {
+        title: update.title ?? "",
+        description: update.description ?? "",
+        stage: (update.stage as ClientProjectStage) ?? "Discovery",
+        visible_to_client: update.visible_to_client ?? true,
+        requires_client_action: update.requires_client_action ?? false,
+      }
+    : emptyUpdateForm;
+}
+
+function MilestoneDialog({
+  open,
+  milestone,
+  saving,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  milestone: ProjectMilestone | null;
+  saving: boolean;
+  onClose: () => void;
+  onSave: (value: ProjectMilestoneInput) => void;
+}) {
+  const [form, setForm] = useState<MilestoneFormState>(emptyMilestoneForm);
+
+  const reset = () => setForm(milestoneForm(milestone ?? undefined));
+
+  return (
+    <Dialog open={open} onClose={onClose} TransitionProps={{ onEnter: reset }} fullWidth maxWidth="sm">
+      <DialogTitle>{milestone ? "Edit Milestone" : "Add Milestone"}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          <TextField label="Title" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} inputProps={{ maxLength: 240 }} required fullWidth />
+          <TextField label="Description" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} inputProps={{ maxLength: 5000 }} multiline minRows={3} fullWidth />
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <TextField select label="Stage" value={form.stage} onChange={(event) => setForm({ ...form, stage: event.target.value as ClientProjectStage })} fullWidth>{clientProjectStages.map((stage) => <MenuItem key={stage} value={stage}>{stage}</MenuItem>)}</TextField>
+            <TextField select label="Status" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as ProjectMilestoneStatus })} fullWidth>{projectMilestoneStatuses.map((status) => <MenuItem key={status} value={status}>{status}</MenuItem>)}</TextField>
+          </Stack>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <TextField label="Start date" type="date" value={form.start_date} onChange={(event) => setForm({ ...form, start_date: event.target.value })} InputLabelProps={{ shrink: true }} fullWidth />
+            <TextField label="Sort order" type="number" value={form.sort_order} onChange={(event) => setForm({ ...form, sort_order: event.target.value })} inputProps={{ min: 0 }} fullWidth />
+          </Stack>
+          <FormControlLabel control={<Checkbox checked={form.visible_to_client} onChange={(event) => setForm({ ...form, visible_to_client: event.target.checked })} />} label="Visible to client" />
+        </Stack>
+      </DialogContent>
+      <DialogActions><Button color="inherit" onClick={onClose}>Cancel</Button><Button variant="contained" disabled={saving || !form.title.trim()} onClick={() => onSave({ title: form.title.trim(), description: optional(form.description), stage: form.stage, status: form.status, start_date: toApiDate(form.start_date), sort_order: optionalNumber(form.sort_order), visible_to_client: form.visible_to_client })}>{saving ? "Saving..." : "Save Milestone"}</Button></DialogActions>
+    </Dialog>
+  );
+}
+
+function ProjectUpdateDialog({
+  open,
+  update,
+  saving,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  update: ProjectUpdate | null;
+  saving: boolean;
+  onClose: () => void;
+  onSave: (value: ProjectUpdateInput) => void;
+}) {
+  const [form, setForm] = useState<UpdateFormState>(emptyUpdateForm);
+  const reset = () => setForm(updateForm(update ?? undefined));
+
+  return (
+    <Dialog open={open} onClose={onClose} TransitionProps={{ onEnter: reset }} fullWidth maxWidth="sm">
+      <DialogTitle>{update ? "Edit Project Update" : "Post Project Update"}</DialogTitle>
+      <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
+        <TextField label="Title" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} inputProps={{ maxLength: 240 }} required fullWidth />
+        <TextField label="Update" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} inputProps={{ maxLength: 10000 }} multiline minRows={5} required fullWidth />
+        <TextField select label="Stage" value={form.stage} onChange={(event) => setForm({ ...form, stage: event.target.value as ClientProjectStage })} fullWidth>{clientProjectStages.map((stage) => <MenuItem key={stage} value={stage}>{stage}</MenuItem>)}</TextField>
+        <FormControlLabel control={<Checkbox checked={form.visible_to_client} onChange={(event) => setForm({ ...form, visible_to_client: event.target.checked })} />} label="Visible to client" />
+        <FormControlLabel control={<Checkbox checked={form.requires_client_action} onChange={(event) => setForm({ ...form, requires_client_action: event.target.checked })} />} label="Requires client action" />
+      </Stack></DialogContent>
+      <DialogActions><Button color="inherit" onClick={onClose}>Cancel</Button><Button variant="contained" disabled={saving || !form.title.trim() || !form.description.trim()} onClick={() => onSave({ title: form.title.trim(), description: form.description.trim(), stage: form.stage, visible_to_client: form.visible_to_client, requires_client_action: form.requires_client_action })}>{saving ? "Saving..." : "Save Update"}</Button></DialogActions>
+    </Dialog>
+  );
+}
+
 function ProjectDrawer({
   project,
   open,
   loading,
   onClose,
   onEdit,
+  onMessage,
 }: {
   project?: ClientProjectDetail;
   open: boolean;
   loading: boolean;
   onClose: () => void;
   onEdit: () => void;
+  onMessage: (message: AdminNotificationMessage) => void;
 }) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const [milestoneEditorOpen, setMilestoneEditorOpen] = useState(false);
+  const [updateEditorOpen, setUpdateEditorOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState<ProjectMilestone | null>(null);
+  const [editingUpdate, setEditingUpdate] = useState<ProjectUpdate | null>(null);
+  const [createMilestone, createMilestoneState] = useCreateProjectMilestoneMutation();
+  const [updateMilestone, updateMilestoneState] = useUpdateProjectMilestoneMutation();
+  const [completeMilestone, completeMilestoneState] = useCompleteProjectMilestoneMutation();
+  const [deleteMilestone, deleteMilestoneState] = useDeleteProjectMilestoneMutation();
+  const [createUpdate, createUpdateState] = useCreateProjectUpdateMutation();
+  const [updateUpdate, updateUpdateState] = useUpdateProjectUpdateMutation();
+  const [deleteUpdate, deleteUpdateState] = useDeleteProjectUpdateMutation();
+  const milestoneSaving = createMilestoneState.isLoading || updateMilestoneState.isLoading;
+  const updateSaving = createUpdateState.isLoading || updateUpdateState.isLoading;
+
+  const saveMilestone = async (body: ProjectMilestoneInput) => {
+    if (!project) return;
+    try {
+      if (editingMilestone?.id) {
+        await updateMilestone({ projectId: project.id, milestoneId: editingMilestone.id, body }).unwrap();
+      } else {
+        await createMilestone({ projectId: project.id, body }).unwrap();
+      }
+      setMilestoneEditorOpen(false);
+      setEditingMilestone(null);
+      onMessage({ type: "success", text: editingMilestone ? "Milestone updated." : "Milestone added." });
+    } catch (error) {
+      onMessage({ type: "error", text: getErrorMessage(error, "Could not save the milestone.") });
+    }
+  };
+
+  const saveUpdate = async (body: ProjectUpdateInput) => {
+    if (!project) return;
+    try {
+      if (editingUpdate?.id) {
+        await updateUpdate({ projectId: project.id, updateId: editingUpdate.id, body }).unwrap();
+      } else {
+        await createUpdate({ projectId: project.id, body }).unwrap();
+      }
+      setUpdateEditorOpen(false);
+      setEditingUpdate(null);
+      onMessage({ type: "success", text: editingUpdate ? "Project update edited." : "Project update posted." });
+    } catch (error) {
+      onMessage({ type: "error", text: getErrorMessage(error, "Could not save the project update.") });
+    }
+  };
+
+  const runCompleteMilestone = async (milestoneId: string) => {
+    if (!project) return;
+    try {
+      await completeMilestone({ projectId: project.id, milestoneId }).unwrap();
+      onMessage({ type: "success", text: "Milestone marked complete." });
+    } catch (error) {
+      onMessage({ type: "error", text: getErrorMessage(error, "Could not complete the milestone.") });
+    }
+  };
+
+  const runDeleteMilestone = async (milestoneId: string) => {
+    if (!project || !window.confirm("Delete this milestone?")) return;
+    try {
+      await deleteMilestone({ projectId: project.id, milestoneId }).unwrap();
+      onMessage({ type: "success", text: "Milestone deleted." });
+    } catch (error) {
+      onMessage({ type: "error", text: getErrorMessage(error, "Could not delete the milestone.") });
+    }
+  };
+
+  const runDeleteUpdate = async (updateId: string) => {
+    if (!project || !window.confirm("Delete this project update?")) return;
+    try {
+      await deleteUpdate({ projectId: project.id, updateId }).unwrap();
+      onMessage({ type: "success", text: "Project update deleted." });
+    } catch (error) {
+      onMessage({ type: "error", text: getErrorMessage(error, "Could not delete the project update.") });
+    }
+  };
 
   return (
+    <>
     <Drawer
       anchor="right"
       open={open}
@@ -949,9 +1177,10 @@ function ProjectDrawer({
               </Box>
 
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
-                  Milestones
-                </Typography>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 900 }}>Milestones</Typography>
+                  <Button size="small" startIcon={<AddIcon />} onClick={() => { setEditingMilestone(null); setMilestoneEditorOpen(true); }}>Add</Button>
+                </Stack>
                 <Stack spacing={1.25}>
                   {project.milestones?.length ? (
                     project.milestones.map((milestone) => (
@@ -964,8 +1193,8 @@ function ProjectDrawer({
                           backgroundColor: alpha(theme.palette.background.paper, 0.62),
                         }}
                       >
-                        <Stack direction="row" spacing={1.25} sx={{ justifyContent: "space-between" }}>
-                          <Box>
+                        <Stack direction="row" spacing={1.25} sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                          <Box sx={{ minWidth: 0 }}>
                             <Typography sx={{ fontWeight: 900 }}>
                               {milestone.title}
                             </Typography>
@@ -974,11 +1203,12 @@ function ProjectDrawer({
                               {formatShortDate(milestone.start_date)}
                             </Typography>
                           </Box>
-                          <Chip
-                            label={milestone.status || "Unknown"}
-                            size="small"
-                            color={statusColor(milestone.status)}
-                          />
+                          <Stack direction="row" spacing={0.35} sx={{ alignItems: "center", flexShrink: 0 }}>
+                            <Chip label={milestone.status || "Unknown"} size="small" color={statusColor(milestone.status)} />
+                            {milestone.status !== "Completed" && milestone.id && <Tooltip title="Complete"><span><IconButton size="small" color="success" disabled={completeMilestoneState.isLoading} onClick={() => void runCompleteMilestone(milestone.id!)}><CheckCircleOutlineIcon fontSize="small" /></IconButton></span></Tooltip>}
+                            <Tooltip title="Edit"><IconButton size="small" onClick={() => { setEditingMilestone(milestone); setMilestoneEditorOpen(true); }}><EditOutlinedIcon fontSize="small" /></IconButton></Tooltip>
+                            {milestone.id && <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={deleteMilestoneState.isLoading} onClick={() => void runDeleteMilestone(milestone.id!)}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>}
+                          </Stack>
                         </Stack>
                       </Paper>
                     ))
@@ -991,12 +1221,13 @@ function ProjectDrawer({
               </Box>
 
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 900, mb: 1.5 }}>
-                  Recent Updates
-                </Typography>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 900 }}>Project Updates</Typography>
+                  <Button size="small" startIcon={<AddIcon />} onClick={() => { setEditingUpdate(null); setUpdateEditorOpen(true); }}>Post Update</Button>
+                </Stack>
                 <Stack spacing={1.25}>
                   {project.updates?.length ? (
-                    project.updates.slice(0, 4).map((update) => (
+                    project.updates.map((update) => (
                       <Paper
                         key={update.id}
                         variant="outlined"
@@ -1006,11 +1237,11 @@ function ProjectDrawer({
                           backgroundColor: alpha(theme.palette.background.paper, 0.62),
                         }}
                       >
-                        <Typography sx={{ fontWeight: 900 }}>{update.title}</Typography>
-                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                          {formatShortDate(update.created_at)}
-                          {update.requires_client_action ? " / Client action required" : ""}
-                        </Typography>
+                        <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <Box sx={{ minWidth: 0 }}><Typography sx={{ fontWeight: 900 }}>{update.title}</Typography><Typography variant="body2" sx={{ color: "text.secondary" }}>{formatShortDate(update.created_at)}{update.requires_client_action ? " / Client action required" : ""}</Typography></Box>
+                          <Stack direction="row" spacing={0.35} sx={{ flexShrink: 0 }}><Tooltip title="Edit"><IconButton size="small" onClick={() => { setEditingUpdate(update); setUpdateEditorOpen(true); }}><EditOutlinedIcon fontSize="small" /></IconButton></Tooltip>{update.id && <Tooltip title="Delete"><span><IconButton size="small" color="error" disabled={deleteUpdateState.isLoading} onClick={() => void runDeleteUpdate(update.id!)}><DeleteOutlineIcon fontSize="small" /></IconButton></span></Tooltip>}</Stack>
+                        </Stack>
+                        {update.description && <Typography sx={{ color: "text.secondary", mt: 1, fontSize: "0.82rem", whiteSpace: "pre-wrap" }}>{update.description}</Typography>}
                       </Paper>
                     ))
                   ) : (
@@ -1025,6 +1256,9 @@ function ProjectDrawer({
         </Stack>
       </Box>
     </Drawer>
+    <MilestoneDialog open={milestoneEditorOpen} milestone={editingMilestone} saving={milestoneSaving} onClose={() => setMilestoneEditorOpen(false)} onSave={(value) => void saveMilestone(value)} />
+    <ProjectUpdateDialog open={updateEditorOpen} update={editingUpdate} saving={updateSaving} onClose={() => setUpdateEditorOpen(false)} onSave={(value) => void saveUpdate(value)} />
+    </>
   );
 }
 
@@ -1300,6 +1534,7 @@ export default function ClientProjectsManager() {
         loading={loadingSelected}
         onClose={() => setSelectedId(null)}
         onEdit={() => openEditDialog(selectedProject)}
+        onMessage={setMessage}
       />
 
       <ProjectDialog

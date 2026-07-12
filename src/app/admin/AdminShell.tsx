@@ -42,6 +42,7 @@ import PersonSearchOutlinedIcon from "@mui/icons-material/PersonSearchOutlined";
 import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
+import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 import ThemeToggle from "@/components/ThemeToggle/ThemeToggle";
 import { clearStoredSession } from "@/lib/auth/auth-storage";
 import { clearSession } from "@/lib/auth/auth-slice";
@@ -68,6 +69,7 @@ const navigationIcons = {
   packages: Inventory2OutlinedIcon,
   discovery: SearchOutlinedIcon,
   followUps: CalendarMonthOutlinedIcon,
+  onboarding: FactCheckOutlinedIcon,
 };
 
 type NavigationItem = {
@@ -95,6 +97,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
     items: [
       { label: "Clients", href: "/admin/clients", iconKey: "clients" },
       { label: "Client Projects", href: "/admin/client-projects", iconKey: "clientProjects" },
+      { label: "Onboarding", href: "/admin/onboarding", iconKey: "onboarding" },
     ],
   },
   {

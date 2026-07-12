@@ -39,6 +39,7 @@ import RocketLaunchOutlinedIcon from "@mui/icons-material/RocketLaunchOutlined";
 import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined";
 import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
+import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 import { useLogoutMutation } from "@/lib/api/auth-api";
 import { clearStoredSession } from "@/lib/auth/auth-storage";
 import { clearSession } from "@/lib/auth/auth-slice";
@@ -64,6 +65,7 @@ const navigationIcons = {
   testimonial: RateReviewOutlinedIcon,
   caseStudies: ArticleOutlinedIcon,
   documents: FolderOutlinedIcon,
+  onboarding: FactCheckOutlinedIcon,
 };
 
 type NavigationItem = {
@@ -79,6 +81,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
     items: [
       { label: "Dashboard", href: "/client/dashboard", iconKey: "dashboard" },
       { label: "Project Timeline", href: "/client/project", iconKey: "project" },
+      { label: "Onboarding", href: "/client/onboarding", iconKey: "onboarding" },
       { label: "My Tasks", href: "/client/tasks", iconKey: "tasks" },
       { label: "Assets", href: "/client/assets", iconKey: "assets" },
       { label: "Approvals", href: "/client/approvals", iconKey: "approvals" },

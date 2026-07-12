@@ -82,6 +82,25 @@ export type ProjectUpdate = {
   updated_at?: string | null;
 };
 
+export type ProjectMilestoneInput = {
+  title: string;
+  description?: string;
+  stage?: ClientProjectStage;
+  status?: ProjectMilestoneStatus;
+  start_date?: string;
+  completed_at?: string;
+  sort_order?: number;
+  visible_to_client?: boolean;
+};
+
+export type ProjectUpdateInput = {
+  title: string;
+  description: string;
+  stage?: ClientProjectStage;
+  visible_to_client?: boolean;
+  requires_client_action?: boolean;
+};
+
 export type ProjectCounterSummary = {
   total?: number;
   pending?: number;
@@ -264,6 +283,115 @@ export const clientProjectsApi = platformApi.injectEndpoints({
       ) => unwrapApiResponse(response),
       invalidatesTags: ["ClientProjects"],
     }),
+    createProjectMilestone: builder.mutation<
+      ProjectMilestone,
+      { projectId: string; body: ProjectMilestoneInput }
+    >({
+      query: ({ projectId, body }) => ({
+        url: `/admin/client-projects/${projectId}/milestones`,
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response: ApiResponse<ProjectMilestone>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: (_result, _error, { projectId }) => [
+        { type: "ClientProjects", id: projectId },
+        "ClientProjects",
+      ],
+    }),
+    updateProjectMilestone: builder.mutation<
+      ProjectMilestone,
+      { projectId: string; milestoneId: string; body: ProjectMilestoneInput }
+    >({
+      query: ({ projectId, milestoneId, body }) => ({
+        url: `/admin/client-projects/${projectId}/milestones/${milestoneId}`,
+        method: "PATCH",
+        body,
+      }),
+      transformResponse: (response: ApiResponse<ProjectMilestone>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: (_result, _error, { projectId }) => [
+        { type: "ClientProjects", id: projectId },
+        "ClientProjects",
+      ],
+    }),
+    completeProjectMilestone: builder.mutation<
+      ProjectMilestone,
+      { projectId: string; milestoneId: string }
+    >({
+      query: ({ projectId, milestoneId }) => ({
+        url: `/admin/client-projects/${projectId}/milestones/${milestoneId}/complete`,
+        method: "POST",
+      }),
+      transformResponse: (response: ApiResponse<ProjectMilestone>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: (_result, _error, { projectId }) => [
+        { type: "ClientProjects", id: projectId },
+        "ClientProjects",
+      ],
+    }),
+    deleteProjectMilestone: builder.mutation<
+      { id: string; deleted: boolean },
+      { projectId: string; milestoneId: string }
+    >({
+      query: ({ projectId, milestoneId }) => ({
+        url: `/admin/client-projects/${projectId}/milestones/${milestoneId}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response: ApiResponse<{ id: string; deleted: boolean }>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: (_result, _error, { projectId }) => [
+        { type: "ClientProjects", id: projectId },
+        "ClientProjects",
+      ],
+    }),
+    createProjectUpdate: builder.mutation<
+      ProjectUpdate,
+      { projectId: string; body: ProjectUpdateInput }
+    >({
+      query: ({ projectId, body }) => ({
+        url: `/admin/client-projects/${projectId}/updates`,
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response: ApiResponse<ProjectUpdate>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: (_result, _error, { projectId }) => [
+        { type: "ClientProjects", id: projectId },
+        "ClientProjects",
+      ],
+    }),
+    updateProjectUpdate: builder.mutation<
+      ProjectUpdate,
+      { projectId: string; updateId: string; body: ProjectUpdateInput }
+    >({
+      query: ({ projectId, updateId, body }) => ({
+        url: `/admin/client-projects/${projectId}/updates/${updateId}`,
+        method: "PATCH",
+        body,
+      }),
+      transformResponse: (response: ApiResponse<ProjectUpdate>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: (_result, _error, { projectId }) => [
+        { type: "ClientProjects", id: projectId },
+        "ClientProjects",
+      ],
+    }),
+    deleteProjectUpdate: builder.mutation<
+      { id: string; deleted: boolean },
+      { projectId: string; updateId: string }
+    >({
+      query: ({ projectId, updateId }) => ({
+        url: `/admin/client-projects/${projectId}/updates/${updateId}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response: ApiResponse<{ id: string; deleted: boolean }>) =>
+        unwrapApiResponse(response),
+      invalidatesTags: (_result, _error, { projectId }) => [
+        { type: "ClientProjects", id: projectId },
+        "ClientProjects",
+      ],
+    }),
   }),
 });
 
@@ -275,4 +403,11 @@ export const {
   useUpdateClientProjectMutation,
   useCompleteClientProjectMutation,
   useArchiveClientProjectMutation,
+  useCreateProjectMilestoneMutation,
+  useUpdateProjectMilestoneMutation,
+  useCompleteProjectMilestoneMutation,
+  useDeleteProjectMilestoneMutation,
+  useCreateProjectUpdateMutation,
+  useUpdateProjectUpdateMutation,
+  useDeleteProjectUpdateMutation,
 } = clientProjectsApi;

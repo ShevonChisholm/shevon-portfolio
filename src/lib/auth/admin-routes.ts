@@ -6,6 +6,7 @@ const platformAdminRoutePrefixes = [
   "/admin/clients",
   "/admin/proposals",
   "/admin/client-projects",
+  "/admin/onboarding",
   "/admin/packages",
 ] as const;
 

@@ -84,6 +84,7 @@ export const platformApi = createApi({
     "DiscoveryResponses",
     "Clients",
     "ClientProjects",
+    "Onboarding",
     "ClientTasks",
     "ClientAssets",
     "ApprovalRequests",

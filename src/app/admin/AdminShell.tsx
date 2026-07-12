@@ -43,6 +43,12 @@ import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
+import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
+import AltRouteOutlinedIcon from "@mui/icons-material/AltRouteOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import CreditCardOutlinedIcon from "@mui/icons-material/CreditCardOutlined";
 import ThemeToggle from "@/components/ThemeToggle/ThemeToggle";
 import { clearStoredSession } from "@/lib/auth/auth-storage";
 import { clearSession } from "@/lib/auth/auth-slice";
@@ -70,6 +76,12 @@ const navigationIcons = {
   discovery: SearchOutlinedIcon,
   followUps: CalendarMonthOutlinedIcon,
   onboarding: FactCheckOutlinedIcon,
+  clientTasks: TaskAltOutlinedIcon,
+  clientAssets: ImageOutlinedIcon,
+  approvals: AssignmentTurnedInOutlinedIcon,
+  changeRequests: AltRouteOutlinedIcon,
+  documents: DescriptionOutlinedIcon,
+  payments: CreditCardOutlinedIcon,
 };
 
 type NavigationItem = {
@@ -98,6 +110,12 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
       { label: "Clients", href: "/admin/clients", iconKey: "clients" },
       { label: "Client Projects", href: "/admin/client-projects", iconKey: "clientProjects" },
       { label: "Onboarding", href: "/admin/onboarding", iconKey: "onboarding" },
+      { label: "Client Tasks", href: "/admin/client-tasks", iconKey: "clientTasks" },
+      { label: "Assets", href: "/admin/client-assets", iconKey: "clientAssets" },
+      { label: "Approvals", href: "/admin/approvals", iconKey: "approvals" },
+      { label: "Change Requests", href: "/admin/change-requests", iconKey: "changeRequests" },
+      { label: "Documents", href: "/admin/documents", iconKey: "documents" },
+      { label: "Payments", href: "/admin/payments", iconKey: "payments" },
     ],
   },
   {

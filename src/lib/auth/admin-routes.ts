@@ -7,6 +7,12 @@ const platformAdminRoutePrefixes = [
   "/admin/proposals",
   "/admin/client-projects",
   "/admin/onboarding",
+  "/admin/client-tasks",
+  "/admin/client-assets",
+  "/admin/approvals",
+  "/admin/change-requests",
+  "/admin/documents",
+  "/admin/payments",
   "/admin/packages",
 ] as const;
 
